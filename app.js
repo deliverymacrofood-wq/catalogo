@@ -85,6 +85,58 @@ async function load(){
     console.error('Erro ao carregar catálogo:',e);
   }
 }
+
+async function openSuggestion(){
+  try{
+    const {data:{session}}=await client.auth.getSession();
+    if(!session){
+      alert('Entre na sua conta para enviar uma sugestão de produto.');
+      location.href='login.html';
+      return;
+    }
+    const {data:profile}=await client.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
+    if(profile?.role==='admin'){
+      alert('A área de sugestão é destinada aos clientes.');
+      return;
+    }
+    $('suggestionName').value='';
+    $('suggestionImage').value='';
+    $('suggestionNote').value='';
+    $('suggestionMsg').textContent='';
+    $('suggestionMsg').style.color='';
+    $('suggestionModal').style.display='flex';
+  }catch(e){
+    alert('Não foi possível abrir a sugestão: '+(e?.message||e));
+  }
+}
+function closeSuggestion(){
+  if($('suggestionModal')) $('suggestionModal').style.display='none';
+}
+async function submitSuggestion(){
+  const name=$('suggestionName').value.trim();
+  const file=$('suggestionImage').files?.[0];
+  const note=$('suggestionNote').value.trim();
+  const out=$('suggestionMsg');
+  const setMsg=(text,color)=>{out.textContent=text;out.style.color=color||'#a00000'};
+  if(name.length<2)return setMsg('Informe o nome do produto.');
+  if(!file)return setMsg('Escolha uma foto do produto.');
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type))return setMsg('Use JPG, PNG ou WEBP.');
+  if(file.size>5*1024*1024)return setMsg('A foto precisa ter no máximo 5 MB.');
+  const {data:{session}}=await client.auth.getSession();
+  if(!session){closeSuggestion();alert('Sua sessão expirou. Entre novamente para enviar a sugestão.');location.href='login.html';return;}
+  const {data:profile}=await client.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
+  if(profile?.role==='admin')return setMsg('Somente clientes podem enviar sugestões.');
+  setMsg('Enviando sugestão...','#7a4b00');
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;
+  const {error:up}=await client.storage.from('product-suggestions').upload(path,file,{contentType:file.type,upsert:false});
+  if(up)return setMsg('Não foi possível enviar a foto: '+up.message);
+  const {error}=await client.from('product_suggestions').insert({user_id:session.user.id,product_name:name,note:note||null,storage_path:path});
+  if(error){await client.storage.from('product-suggestions').remove([path]);return setMsg('Não foi possível salvar a sugestão: '+error.message)}
+  setMsg('Sugestão enviada com sucesso! Obrigado.','#18733b');
+  setTimeout(closeSuggestion,900);
+}
+
 function reviewInfo(p){
   const rs=reviews.filter(r=>r.product_id===p.id);
   const avg=rs.length?rs.reduce((s,r)=>s+Number(r.rating),0)/rs.length:0;

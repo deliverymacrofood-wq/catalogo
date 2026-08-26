@@ -212,3 +212,40 @@ drop policy if exists "admins update orders" on public.orders;
 create policy "admins update orders" on public.orders for update to authenticated using(public.is_admin()) with check(public.is_admin());
 drop policy if exists "admins delete orders" on public.orders;
 create policy "admins delete orders" on public.orders for delete to authenticated using(public.is_admin());
+
+
+-- Sugestões de produtos enviadas somente por clientes autenticados.
+-- As fotos ficam em um bucket PRIVADO e só administradores conseguem lê-las.
+create table if not exists public.product_suggestions(
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  product_name text not null,
+  note text,
+  storage_path text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists product_suggestions_created_idx on public.product_suggestions(created_at desc);
+create index if not exists product_suggestions_user_idx on public.product_suggestions(user_id);
+
+grant select, insert, delete on public.product_suggestions to authenticated;
+alter table public.product_suggestions enable row level security;
+drop policy if exists "clients insert own product suggestions" on public.product_suggestions;
+create policy "clients insert own product suggestions" on public.product_suggestions for insert to authenticated
+with check (user_id=auth.uid() and not public.is_admin());
+drop policy if exists "admins read product suggestions" on public.product_suggestions;
+create policy "admins read product suggestions" on public.product_suggestions for select to authenticated
+using(public.is_admin());
+drop policy if exists "admins delete product suggestions" on public.product_suggestions;
+create policy "admins delete product suggestions" on public.product_suggestions for delete to authenticated
+using(public.is_admin());
+
+insert into storage.buckets(id,name,public) values('product-suggestions','product-suggestions',false) on conflict(id) do update set public=false;
+drop policy if exists "clients upload own product suggestions" on storage.objects;
+create policy "clients upload own product suggestions" on storage.objects for insert to authenticated
+with check(bucket_id='product-suggestions' and (storage.foldername(name))[1]=auth.uid()::text and not public.is_admin());
+drop policy if exists "admins read product suggestion images" on storage.objects;
+create policy "admins read product suggestion images" on storage.objects for select to authenticated
+using(bucket_id='product-suggestions' and public.is_admin());
+drop policy if exists "admins delete product suggestion images" on storage.objects;
+create policy "admins delete product suggestion images" on storage.objects for delete to authenticated
+using(bucket_id='product-suggestions' and public.is_admin());

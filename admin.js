@@ -26,6 +26,7 @@ function panel(){
         <button onclick="showTab('banners')" data-nav="banners">▧ <span>Banners</span></button>
         <button onclick="showTab('clients')" data-nav="clients">♟ <span>Clientes</span></button>
         <button onclick="showTab('orders')" data-nav="orders">🛍 <span>Pedidos</span><b id="orderBadge" class="nav-badge hidden">0</b></button>
+        <button onclick="showTab('suggestions')" data-nav="suggestions">💡 <span>Sugestões</span><b id="suggestionBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('settings')" data-nav="settings">⚙ <span>Configurações</span></button>
       </nav>
       <div class="side-bottom"><div class="admin-note">🛡<br><b>Área Administrativa</b><small>Somente administradores possuem acesso a esta área.</small></div><button class="logout-side" id="logout">↪ <span>Sair</span></button></div>
@@ -41,7 +42,7 @@ function panel(){
 function nav(t){document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===t));closeMobileSidebar()}
 function toggleMobileSidebar(){document.body.classList.toggle('sidebar-open')}
 function closeMobileSidebar(){document.body.classList.remove('sidebar-open')}
-async function showTab(t){nav(t);if(t==='dashboard')return dashboardTab();if(t==='prod')return productTab();if(t==='categories')return categoriesTab();if(t==='promo')return promoTab();if(t==='banners')return bannersTab();if(t==='clients')return clientsTab();if(t==='orders')return ordersTab();return settingsTab()}
+async function showTab(t){nav(t);if(t==='dashboard')return dashboardTab();if(t==='prod')return productTab();if(t==='categories')return categoriesTab();if(t==='promo')return promoTab();if(t==='banners')return bannersTab();if(t==='clients')return clientsTab();if(t==='orders')return ordersTab();if(t==='suggestions')return suggestionsTab();return settingsTab()}
 function pageTitle(title,subtitle){return `<div class="page-head"><div><h1>${title}</h1><p>${subtitle}</p></div></div>`}
 async function dashboardTab(){
   const [{count:clientCount},{count:productCount},{count:orderCount},{count:newCount}]=await Promise.all([
@@ -84,6 +85,35 @@ async function markPaid(id){const {error}=await client.from('orders').update({st
 async function markCompleted(id){const {error}=await client.from('orders').update({status:'completed',updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);ordersTab()}
 async function cancelOrder(id){if(!confirm('Cancelar este pedido?'))return;const {error}=await client.from('orders').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);ordersTab();refreshOrderBadge()}
 function contactCustomer(phone,name,status,number){const p=String(phone||'').replace(/\D/g,'');let msg='';if(status==='ready_payment')msg=`Olá, ${name}! Seu pedido #${number} foi conferido e está pronto para pagamento. Por favor, entre em contato conosco para concluir o pagamento. 🍔`;else if(status==='paid')msg=`Olá, ${name}! Recebemos a confirmação do pagamento do pedido #${number}. Estamos entrando em contato para combinar a entrega/retirada. Obrigado!`;else msg=`Olá, ${name}! Estamos falando sobre o seu pedido #${number} da Macrofood.`;location.href=`https://wa.me/${p}?text=${encodeURIComponent(msg)}`}
+
+async function suggestionsTab(){
+  const {data,error}=await client.from('product_suggestions').select('id,user_id,product_name,note,storage_path,created_at').order('created_at',{ascending:false});
+  if(error){$('tab').innerHTML='<div class="notice">Não foi possível carregar as sugestões: '+esc(error.message)+'</div>';return}
+  const rows=data||[];
+  if(!rows.length){
+    $('tab').innerHTML=`${pageTitle('Sugestões de clientes','Fotos e sugestões enviadas somente por clientes logados.')}<div class="panel-card empty-state">💡 Nenhuma sugestão recebida ainda.</div>`;
+    return;
+  }
+  const userIds=[...new Set(rows.map(x=>x.user_id).filter(Boolean))];
+  let profiles=[];
+  if(userIds.length){
+    const r=await client.from('profiles').select('id,email,nickname,avatar_url').in('id',userIds);
+    profiles=r.data||[];
+  }
+  const map=new Map(profiles.map(x=>[x.id,x]));
+  const cards=await Promise.all(rows.map(async s=>{
+    let url='';
+    if(s.storage_path){
+      const signed=await client.storage.from('product-suggestions').createSignedUrl(s.storage_path,3600);
+      url=signed.data?.signedUrl||'';
+    }
+    const profile=map.get(s.user_id)||{};
+    return `<article class="suggestion-card">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(url)}" alt="Foto sugerida por cliente"></a>`:`<div class="suggestion-image-missing">📷 Foto indisponível</div>`}<div class="suggestion-card-body"><h3>${esc(s.product_name)}</h3><p><b>Cliente:</b> ${esc(profile.nickname||'Cliente')} ${profile.email?`• ${esc(profile.email)}`:''}</p>${s.note?`<p><b>Observação:</b> ${esc(s.note)}</p>`:''}<small>${new Date(s.created_at).toLocaleString('pt-BR')}</small><div class="suggestion-card-actions">${url?`<a class="outline-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">🔎 Ver foto</a>`:''}<button class="danger" onclick="removeSuggestion('${s.id}','${esc(s.storage_path||'')}')">🗑 Excluir</button></div></div></article>`;
+  }));
+  $('tab').innerHTML=`${pageTitle('Sugestões de clientes','Veja as fotos e produtos sugeridos pelos clientes. Essas imagens não aparecem no catálogo público.')}<div class="metric-grid compact"><div class="metric orange"><span>💡</span><div><small>Total de sugestões</small><strong>${rows.length}</strong><em>Enviadas por clientes</em></div></div></div><div class="suggestion-admin-grid">${cards.join('')}</div>`;
+}
+async function removeSuggestion(id,path){if(!confirm('Excluir esta sugestão e a foto enviada pelo cliente?'))return;const {error}=await client.from('product_suggestions').delete().eq('id',id);if(error)return alert('Não foi possível excluir: '+error.message);if(path)await client.storage.from('product-suggestions').remove([path]);suggestionsTab()}
+
 async function settingsTab(){const {data}=await client.from('site_settings').select('*').eq('key','whatsapp_orders').maybeSingle();$('tab').innerHTML=`${pageTitle('Configurações','Ajustes básicos do atendimento.') }<div class="panel-card"><label>WhatsApp da Macrofood<input id="wa" value="${esc(data?.value||'5581971178793')}" placeholder="5581999999999"></label><button class="primary" onclick="saveWa()">Salvar WhatsApp</button><div class="notice">Os pedidos agora ficam no painel. O WhatsApp é usado somente quando o administrador clicar para avisar ou contatar o cliente.</div></div>`}
 async function saveWa(){let v=$('wa').value.replace(/\D/g,'');const {error}=await client.from('site_settings').upsert({key:'whatsapp_orders',value:v});if(error)alert(error.message);else alert('WhatsApp salvo!')}
 init();
