@@ -11,7 +11,31 @@ async function init(){
       const {data:p}=await client.from('profiles').select('role,email,nickname,avatar_url').eq('id',session.user.id).maybeSingle();
       const nickname=p?.nickname?.trim()||session.user.user_metadata?.nickname?.trim()||'Cliente';
       const avatar=p?.avatar_url||'';
-      $('authApp').innerHTML=`<div class="panel login account-card"><div class="profile-photo-wrap"><img id="profilePhoto" class="profile-photo" src="${esc(avatar||'') }" alt="Foto do cliente" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="profile-photo-placeholder" style="display:${avatar?'none':'flex'}">👤</div></div><h2>Olá, ${esc(nickname)}!</h2><p>${esc(session.user.email)}</p><label class="photo-label">📷 Alterar foto<input id="avatarInput" type="file" accept="image/*" hidden></label><small class="photo-help">JPG, PNG ou WEBP. Recomendado até 2 MB.</small>${p?.role==='admin'?'<a class="primary" href="admin.html">⚙️ Painel do administrador</a>':''}<a class="secondary" href="pedidos.html">📦 Meus pedidos</a><button class="secondary" id="logout">Sair da conta</button><a class="secondary" href="index.html">Voltar ao catálogo</a></div>`;
+      $('authApp').innerHTML=`<div class="account-page">
+        <section class="account-hero-card">
+          <div class="account-identity">
+            <div class="profile-photo-wrap"><img id="profilePhoto" class="profile-photo" src="${esc(avatar||'')}" alt="Foto de ${esc(nickname)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="profile-photo-placeholder" style="display:${avatar?'none':'flex'}">👤</div></div>
+            <div class="account-intro"><h2>Olá, ${esc(nickname)}! <span>👋</span></h2><p>Gerencie suas informações, pedidos e preferências.</p><div class="account-meta"><span>✉️ ${esc(session.user.email)}</span><span>👤 Cliente</span></div></div>
+          </div>
+          <label class="photo-label account-photo-btn">📷 Alterar foto<input id="avatarInput" type="file" accept="image/*" hidden></label>
+        </section>
+
+        <h3 class="account-section-title">Acesso rápido</h3>
+        <section class="account-quick-grid">
+          <a class="account-quick-card" href="pedidos.html"><span class="quick-icon wine">🛍</span><span><b>Meus pedidos</b><small>Acompanhe e gerencie seus pedidos.</small></span><strong>›</strong></a>
+          <div class="account-quick-card"><span class="quick-icon orange">👤</span><span><b>Dados da conta</b><small>Seu apelido e e-mail cadastrados.</small></span><strong>✓</strong></div>
+          <div class="account-quick-card"><span class="quick-icon green">🔒</span><span><b>Segurança</b><small>Senha protegida pelo Supabase.</small></span><strong>✓</strong></div>
+          ${p?.role==='admin'?'<a class="account-quick-card admin-quick" href="admin.html"><span class="quick-icon purple">⚙️</span><span><b>Painel do administrador</b><small>Acessar a área administrativa.</small></span><strong>›</strong></a>':''}
+        </section>
+
+        <h3 class="account-section-title">Gerenciar conta</h3>
+        <section class="account-actions-card">
+          <button id="logout" class="account-action"><span class="action-icon">↪</span><span><b>Sair da conta</b><small>Encerra sua sessão neste dispositivo.</small></span><strong>›</strong></button>
+          <a class="account-action" href="pedidos.html"><span class="action-icon">📦</span><span><b>Meus pedidos</b><small>Veja o andamento dos seus pedidos.</small></span><strong>›</strong></a>
+          <a class="account-action" href="index.html"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
+        </section>
+        <p class="account-footer">♥ Obrigado por escolher a MacroFood!<small>Qualidade e praticidade para o seu dia a dia.</small></p>
+      </div>`;
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
       return;
