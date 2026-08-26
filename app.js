@@ -152,8 +152,21 @@ function priceHtml(p){
   }
   return `<div class="price-box"><div class="price">Por: ${money(p.price)}</div></div>`;
 }
+function renderFeatured(){
+  const el=$('featuredGrid');
+  if(!el)return;
+  let featured=products.filter(p=>p.is_featured===true || p.featured===true);
+  if(!featured.length) featured=products.slice(0,4);
+  featured=featured.slice(0,8);
+  el.innerHTML=featured.length?featured.map(p=>`<article class="featured-card">
+    <div class="featured-pic">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦'}<span class="featured-badge">⭐ DESTAQUE</span></div>
+    <div class="featured-info"><div class="sector">${esc(p.sector)}</div><div class="name">${esc(p.name)}</div>${priceHtml(p)}${stars(p)}<button class="primary featured-action" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar ao carrinho'}</button></div>
+  </article>`).join(''):'<div class="notice">Nenhum produto em destaque.</div>';
+}
+
 function render(){
   renderCats();
+  renderFeatured();
   $('cartCount').textContent=cart.reduce((n,x)=>n+x.qty,0);
   let q=$('search').value.toLowerCase().trim();
   let list=products.filter(p=>{
