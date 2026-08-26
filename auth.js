@@ -1,6 +1,7 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
 const msg=(t,c='#a00000')=>{const el=$('msg');if(el){el.textContent=t;el.style.color=c}};
+async function updateCatalogHeader(){try{const {data:{session}}=await client.auth.getSession();if(!session)return;const {data:p}=await client.from('profiles').select('nickname,avatar_url').eq('id',session.user.id).maybeSingle();}catch(e){}}
 async function init(){
   try{
     const {data:{session},error}=await client.auth.getSession();
@@ -24,19 +25,27 @@ async function init(){
         <section class="account-quick-grid">
           <a class="account-quick-card" href="pedidos.html"><span class="quick-icon wine">🛍</span><span><b>Meus pedidos</b><small>Acompanhe e gerencie seus pedidos.</small></span><strong>›</strong></a>
           <div class="account-quick-card"><span class="quick-icon orange">👤</span><span><b>Dados da conta</b><small>Seu apelido e e-mail cadastrados.</small></span><strong>✓</strong></div>
+          <a class="account-quick-card" href="suporte.html"><span class="quick-icon purple">💬</span><span><b>Suporte ao cliente</b><small>Converse diretamente com a MacroFood.</small></span><strong>›</strong></a>
           <div class="account-quick-card"><span class="quick-icon green">🔒</span><span><b>Segurança</b><small>Senha protegida pelo Supabase.</small></span><strong>✓</strong></div>
           ${p?.role==='admin'?'<a class="account-quick-card admin-quick" href="admin.html"><span class="quick-icon purple">⚙️</span><span><b>Painel do administrador</b><small>Acessar a área administrativa.</small></span><strong>›</strong></a>':''}
         </section>
 
+        <h3 class="account-section-title">Dados da conta</h3>
+        <section class="account-edit-card">
+          <form id="nicknameForm" class="nickname-form"><label>Apelido<input id="nicknameEdit" type="text" maxlength="30" value="${esc(nickname)}" placeholder="Seu apelido"></label><button class="primary" type="submit">Salvar apelido</button></form>
+          <p id="nicknameMsg" class="muted" style="margin:8px 0 0;font-size:12px">O apelido aparece no topo do catálogo quando você estiver logado.</p>
+        </section>
         <h3 class="account-section-title">Gerenciar conta</h3>
         <section class="account-actions-card">
           <button id="logout" class="account-action"><span class="action-icon">↪</span><span><b>Sair da conta</b><small>Encerra sua sessão neste dispositivo.</small></span><strong>›</strong></button>
           <a class="account-action" href="pedidos.html"><span class="action-icon">📦</span><span><b>Meus pedidos</b><small>Veja o andamento dos seus pedidos.</small></span><strong>›</strong></a>
+          <a class="account-action" href="suporte.html"><span class="action-icon">💬</span><span><b>Suporte ao cliente</b><small>Fale com o administrador pelo chat.</small></span><strong>›</strong></a>
           <a class="account-action" href="index.html"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
         </section>
         <p class="account-footer">♥ Obrigado por escolher a MacroFood!<small>Qualidade e praticidade para o seu dia a dia.</small></p>
       </div>`;
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
+      $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.from('profiles').update({nickname:value}).eq('id',session.user.id);if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
       $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
       return;
     }

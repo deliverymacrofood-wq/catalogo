@@ -27,6 +27,7 @@ function panel(){
         <button onclick="showTab('clients')" data-nav="clients">♟ <span>Clientes</span></button>
         <button onclick="showTab('orders')" data-nav="orders">🛍 <span>Pedidos</span><b id="orderBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('suggestions')" data-nav="suggestions">💡 <span>Sugestões</span><b id="suggestionBadge" class="nav-badge hidden">0</b></button>
+        <button onclick="showTab('support')" data-nav="support">💬 <span>Suporte</span><b id="supportBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('settings')" data-nav="settings">⚙ <span>Configurações</span></button>
       </nav>
       <div class="side-bottom"><div class="admin-note">🛡<br><b>Área Administrativa</b><small>Somente administradores possuem acesso a esta área.</small></div><button class="logout-side" id="logout">↪ <span>Sair</span></button></div>
@@ -37,7 +38,7 @@ function panel(){
   $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
   showTab('dashboard');
   refreshOrderBadge();
-  setInterval(refreshOrderBadge,30000);
+  setInterval(refreshOrderBadge,30000);setInterval(refreshSupportBadge,30000);
 }
 function nav(t){document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===t));closeMobileSidebar()}
 function toggleMobileSidebar(){document.body.classList.toggle('sidebar-open')}
@@ -114,6 +115,20 @@ async function suggestionsTab(){
 }
 async function removeSuggestion(id,path){if(!confirm('Excluir esta sugestão e a foto enviada pelo cliente?'))return;const {error}=await client.from('product_suggestions').delete().eq('id',id);if(error)return alert('Não foi possível excluir: '+error.message);if(path)await client.storage.from('product-suggestions').remove([path]);suggestionsTab()}
 
+async function supportTab(){
+  const {data:rows,error}=await client.from('support_messages').select('id,user_id,sender_role,message,created_at').order('created_at',{ascending:false});
+  if(error){$('tab').innerHTML='<div class="notice">Não foi possível carregar o suporte: '+esc(error.message)+'</div>';return}
+  const all=rows||[],ids=[...new Set(all.map(x=>x.user_id).filter(Boolean))];let profiles=[];
+  if(ids.length){const r=await client.from('profiles').select('id,email,nickname,avatar_url').in('id',ids);profiles=r.data||[]}
+  const map=new Map(profiles.map(p=>[p.id,p]));const convs=ids.map(uid=>{const list=all.filter(m=>m.user_id===uid);const p=map.get(uid)||{};return {uid,p,last:list[0],count:list.length}});
+  window.supportRows=all;window.supportProfiles=map;
+  $('tab').innerHTML=`${pageTitle('Suporte ao cliente','Converse com clientes pelo chat do painel administrativo.')}<div class="support-admin-layout"><div class="support-conversations" id="supportConversations">${convs.length?convs.map((c,i)=>`<button class="support-conv ${i===0?'active':''}" onclick="openSupportConversation('${c.uid}',this)"><b>${esc(c.p.nickname||'Cliente')}</b><small>${esc(c.p.email||'')} • ${c.count} mensagem(ns)</small><small>${esc((c.last?.message||'').slice(0,70))}</small></button>`).join(''):'<div class="support-empty">Nenhuma conversa ainda.</div>'}</div><div class="admin-chat-card"><div class="admin-chat-head"><h3 id="supportChatTitle">${convs.length?esc(convs[0].p.nickname||'Cliente'):'Selecione um cliente'}</h3><small id="supportChatEmail">${convs.length?esc(convs[0].p.email||''):''}</small></div><div id="adminChatMessages" class="admin-chat-messages">${convs.length?'':'<div class="support-empty">Selecione uma conversa.</div>'}</div><form id="adminChatForm" class="admin-chat-compose" style="${convs.length?'':'display:none'}"><textarea id="adminChatText" maxlength="1000" placeholder="Digite uma resposta..."></textarea><button class="primary">Enviar</button></form></div></div>`;
+  window.selectedSupportUser=convs[0]?.uid||null;if(window.selectedSupportUser){renderAdminChat(window.selectedSupportUser);$('adminChatForm').onsubmit=sendAdminSupport}refreshSupportBadge();
+}
+function openSupportConversation(uid,btn){document.querySelectorAll('.support-conv').forEach(x=>x.classList.remove('active'));btn.classList.add('active');window.selectedSupportUser=uid;const p=window.supportProfiles.get(uid)||{};$('supportChatTitle').textContent=p.nickname||'Cliente';$('supportChatEmail').textContent=p.email||'';$('adminChatForm').style.display='flex';renderAdminChat(uid)}
+function renderAdminChat(uid){const rows=(window.supportRows||[]).filter(m=>m.user_id===uid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));$('adminChatMessages').innerHTML=rows.length?rows.map(m=>`<div class="support-msg ${m.sender_role==='admin'?'admin':'user'}">${esc(m.message).replace(/\n/g,'<br>')}<small>${m.sender_role==='admin'?'Administrador':'Cliente'} • ${new Date(m.created_at).toLocaleString('pt-BR')}</small></div>`).join(''):'<div class="support-empty">Nenhuma mensagem.</div>';const el=$('adminChatMessages');el.scrollTop=el.scrollHeight}
+async function sendAdminSupport(e){e.preventDefault();const text=$('adminChatText').value.trim(),uid=window.selectedSupportUser;if(!text||!uid)return;const {error}=await client.from('support_messages').insert({user_id:uid,sender_role:'admin',message:text});if(error)return alert('Não foi possível enviar: '+error.message);$('adminChatText').value='';const {data}=await client.from('support_messages').select('id,user_id,sender_role,message,created_at').order('created_at',{ascending:false});window.supportRows=data||[];renderAdminChat(uid);}
+async function refreshSupportBadge(){const {count}=await client.from('support_messages').select('id',{count:'exact',head:true}).eq('sender_role','user');const b=$('supportBadge');if(b){b.textContent=count||0;b.classList.toggle('hidden',!count)}}
 async function settingsTab(){const {data}=await client.from('site_settings').select('*').eq('key','whatsapp_orders').maybeSingle();$('tab').innerHTML=`${pageTitle('Configurações','Ajustes básicos do atendimento.') }<div class="panel-card"><label>WhatsApp da Macrofood<input id="wa" value="${esc(data?.value||'5581971178793')}" placeholder="5581999999999"></label><button class="primary" onclick="saveWa()">Salvar WhatsApp</button><div class="notice">Os pedidos agora ficam no painel. O WhatsApp é usado somente quando o administrador clicar para avisar ou contatar o cliente.</div></div>`}
 async function saveWa(){let v=$('wa').value.replace(/\D/g,'');const {error}=await client.from('site_settings').upsert({key:'whatsapp_orders',value:v});if(error)alert(error.message);else alert('WhatsApp salvo!')}
 init();

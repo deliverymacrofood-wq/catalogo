@@ -288,3 +288,23 @@ grant execute on function public.cancel_my_order(uuid) to authenticated;
 drop policy if exists "customers insert orders" on public.orders;
 create policy "customers insert orders" on public.orders for insert to authenticated
 with check(user_id=auth.uid());
+
+-- Suporte ao cliente: chat privado entre cada cliente e os administradores.
+create table if not exists public.support_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  sender_role text not null check (sender_role in ('user','admin')),
+  message text not null check (char_length(trim(message)) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists support_messages_user_created_idx on public.support_messages(user_id, created_at);
+alter table public.support_messages enable row level security;
+drop policy if exists "customers read own support messages" on public.support_messages;
+create policy "customers read own support messages" on public.support_messages for select to authenticated using(user_id=auth.uid() or public.is_admin());
+drop policy if exists "customers send support messages" on public.support_messages;
+create policy "customers send support messages" on public.support_messages for insert to authenticated with check(user_id=auth.uid() and sender_role='user');
+drop policy if exists "admins send support messages" on public.support_messages;
+create policy "admins send support messages" on public.support_messages for insert to authenticated with check(public.is_admin() and sender_role='admin');
+drop policy if exists "admins delete support messages" on public.support_messages;
+create policy "admins delete support messages" on public.support_messages for delete to authenticated using(public.is_admin());
+grant select,insert,delete on public.support_messages to authenticated;
