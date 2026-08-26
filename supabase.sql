@@ -4,6 +4,8 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text unique,
+  nickname text,
+  avatar_url text,
   role text not null default 'user' check (role in ('user','admin')),
   created_at timestamptz not null default now()
 );
@@ -20,6 +22,10 @@ create table if not exists public.products (
   updated_at timestamptz not null default now(),
   constraint products_product_code_check check (product_code is null or product_code ~ '^[0-9]{1,6}$')
 );
+
+-- Perfil do cliente: apelido exibido no catálogo.
+alter table public.profiles add column if not exists nickname text;
+alter table public.profiles add column if not exists avatar_url text;
 
 -- Compatibilidade com versões anteriores.
 alter table public.products add column if not exists product_code varchar(6);
@@ -42,7 +48,7 @@ grant select on public.products to anon, authenticated;
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path=public as $$
 begin
-  insert into public.profiles(id,email) values(new.id,new.email) on conflict(id) do nothing;
+  insert into public.profiles(id,email,nickname) values(new.id,new.email,nullif(trim(new.raw_user_meta_data->>'nickname'),'')) on conflict(id) do update set email=excluded.email, nickname=coalesce(public.profiles.nickname, excluded.nickname);
   return new;
 end; $$;
 
@@ -59,6 +65,8 @@ alter table public.products enable row level security;
 
 drop policy if exists "profiles own read" on public.profiles;
 create policy "profiles own read" on public.profiles for select to authenticated using(id=auth.uid());
+drop policy if exists "profiles own update" on public.profiles;
+create policy "profiles own update" on public.profiles for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
 
 drop policy if exists "public active products" on public.products;
 create policy "public active products" on public.products for select to anon,authenticated using(coalesce(active,true)=true or public.is_admin());
@@ -70,6 +78,15 @@ create policy "admin update products" on public.products for update to authentic
 drop policy if exists "admin delete products" on public.products;
 create policy "admin delete products" on public.products for delete to authenticated using(public.is_admin());
 
+insert into storage.buckets(id,name,public) values('avatars','avatars',true) on conflict(id) do update set public=true;
+drop policy if exists "public avatar images" on storage.objects;
+create policy "public avatar images" on storage.objects for select to public using(bucket_id='avatars');
+drop policy if exists "users upload own avatar" on storage.objects;
+create policy "users upload own avatar" on storage.objects for insert to authenticated with check(bucket_id='avatars' and (storage.foldername(name))[1]=auth.uid()::text);
+drop policy if exists "users update own avatar" on storage.objects;
+create policy "users update own avatar" on storage.objects for update to authenticated using(bucket_id='avatars' and (storage.foldername(name))[1]=auth.uid()::text) with check(bucket_id='avatars' and (storage.foldername(name))[1]=auth.uid()::text);
+drop policy if exists "users delete own avatar" on storage.objects;
+create policy "users delete own avatar" on storage.objects for delete to authenticated using(bucket_id='avatars' and (storage.foldername(name))[1]=auth.uid()::text);
 insert into storage.buckets(id,name,public) values('product-images','product-images',true) on conflict(id) do update set public=true;
 drop policy if exists "public product images" on storage.objects;
 create policy "public product images" on storage.objects for select to public using(bucket_id='product-images');

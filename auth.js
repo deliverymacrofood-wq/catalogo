@@ -8,8 +8,11 @@ async function init(){
     const isRecovery=window.location.hash.includes('type=recovery') || new URLSearchParams(window.location.search).get('type')==='recovery';
     if(session && isRecovery){return showResetPassword()}
     if(session){
-      const {data:p}=await client.from('profiles').select('role,email').eq('id',session.user.id).maybeSingle();
-      $('authApp').innerHTML=`<div class="panel login"><h2>Olá!</h2><p>${esc(session.user.email)}</p>${p?.role==='admin'?'<a class="primary" href="admin.html">⚙️ Painel do administrador</a>':''}<button class="secondary" id="logout">Sair da conta</button><a class="secondary" href="index.html">Voltar ao catálogo</a></div>`;
+      const {data:p}=await client.from('profiles').select('role,email,nickname,avatar_url').eq('id',session.user.id).maybeSingle();
+      const nickname=p?.nickname?.trim()||session.user.user_metadata?.nickname?.trim()||'Cliente';
+      const avatar=p?.avatar_url||'';
+      $('authApp').innerHTML=`<div class="panel login account-card"><div class="profile-photo-wrap"><img id="profilePhoto" class="profile-photo" src="${esc(avatar||'') }" alt="Foto do cliente" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="profile-photo-placeholder" style="display:${avatar?'none':'flex'}">👤</div></div><h2>Olá, ${esc(nickname)}!</h2><p>${esc(session.user.email)}</p><label class="photo-label">📷 Alterar foto<input id="avatarInput" type="file" accept="image/*" hidden></label><small class="photo-help">JPG, PNG ou WEBP. Recomendado até 2 MB.</small>${p?.role==='admin'?'<a class="primary" href="admin.html">⚙️ Painel do administrador</a>':''}<button class="secondary" id="logout">Sair da conta</button><a class="secondary" href="index.html">Voltar ao catálogo</a></div>`;
+      $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
       return;
     }
@@ -33,6 +36,8 @@ function showResetPassword(){
 }
 function showLogin(){
   $('authApp').innerHTML=`<div class="panel login"><h2>Minha conta</h2><p>Entre ou crie sua conta gratuitamente.</p>
+  <input id="nickname" type="text" autocomplete="nickname" placeholder="Apelido (para aparecer no site)" maxlength=30>
+  <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
   <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
   <input id="pass" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" required>
   <button class="primary" id="login">Entrar</button><button class="secondary" id="signup">Criar minha conta</button>
@@ -51,13 +56,39 @@ async function login(){
   location.href='index.html';
 }
 async function signup(){
-  const email=$('email').value.trim().toLowerCase(),password=$('pass').value;
+  const nickname=$('nickname').value.trim(),email=$('email').value.trim().toLowerCase(),password=$('pass').value;
+  if(nickname.length<2)return msg('Informe um apelido com pelo menos 2 caracteres.');
+  if(nickname.length>30)return msg('O apelido pode ter no máximo 30 caracteres.');
   if(!email||!/^\S+@\S+\.\S+$/.test(email))return msg('Informe um e-mail válido.');
   if(password.length<6)return msg('A senha precisa ter pelo menos 6 caracteres.');
-  const {data,error}=await client.auth.signUp({email,password});
+  const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname}}});
   if(error)return msg('Não foi possível criar a conta: '+error.message);
-  if(data.session){msg('Conta criada e você já está conectado.','green');setTimeout(()=>location.href='index.html',500);}
+  if(data.session){
+    await client.from('profiles').update({nickname}).eq('id',data.user.id);
+    const file=$('avatar')?.files?.[0];
+    if(file) await uploadAvatar(file, data.user.id);
+    msg('Conta criada e você já está conectado.','green');setTimeout(()=>location.href='index.html',500);
+  }
   else msg('Conta criada! Verifique seu e-mail para confirmar a conta e depois faça login.','green');
+}
+async function uploadAvatar(file,userId){
+  if(!file)return;
+  if(!file.type.startsWith('image/'))return msg('Escolha uma imagem válida.');
+  if(file.size>2*1024*1024)return msg('A foto precisa ter no máximo 2 MB.');
+  const uid=userId||((await client.auth.getUser()).data.user?.id);
+  if(!uid)return msg('Entre na conta para alterar a foto.');
+  msg('Enviando foto...','#7a4b00');
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${uid}/avatar.${ext}`;
+  const {error:up}=await client.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+  if(up)return msg('Não foi possível enviar a foto: '+up.message);
+  const {data}=client.storage.from('avatars').getPublicUrl(path);
+  const avatarUrl=data.publicUrl+'?v='+Date.now();
+  const {error}=await client.from('profiles').update({avatar_url:avatarUrl}).eq('id',uid);
+  if(error)return msg('Foto enviada, mas não foi possível salvar o perfil: '+error.message);
+  const img=$('profilePhoto');
+  if(img){img.src=avatarUrl;img.style.display='block';if(img.nextElementSibling)img.nextElementSibling.style.display='none';}
+  msg('Foto atualizada com sucesso!','green');
 }
 async function forgot(){
   const email=$('email').value.trim().toLowerCase();

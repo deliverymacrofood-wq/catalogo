@@ -17,7 +17,7 @@ async function init(){
 }
 function panel(){
   $('app').innerHTML=`<div class="admin-shell">
-    <aside class="sidebar"><div class="side-brand"><img src="logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div></div>
+    <aside class="sidebar"><div class="side-brand"><img src="logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div><button class="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeMobileSidebar()">×</button></div>
       <nav class="side-nav">
         <button onclick="showTab('dashboard')" data-nav="dashboard">⌂ <span>Dashboard</span></button>
         <button onclick="showTab('prod')" data-nav="prod">◈ <span>Produtos</span></button>
@@ -30,14 +30,17 @@ function panel(){
       </nav>
       <div class="side-bottom"><div class="admin-note">🛡<br><b>Área Administrativa</b><small>Somente administradores possuem acesso a esta área.</small></div><button class="logout-side" id="logout">↪ <span>Sair</span></button></div>
     </aside>
-    <section class="admin-main"><header class="admin-top"><button class="menu-btn" onclick="document.body.classList.toggle('sidebar-open')">☰</button><div class="top-spacer"></div><div class="admin-profile"><div class="avatar">●</div><div><b>Administrador</b><small>${esc(currentAdminEmail)}</small></div><span>⌄</span></div></header><main class="admin-content"><div id="tab"></div></main></section>
+    <div class="sidebar-backdrop" onclick="closeMobileSidebar()" aria-hidden="true"></div>
+    <section class="admin-main"><header class="admin-top"><button class="menu-btn" type="button" aria-label="Abrir menu" onclick="toggleMobileSidebar()">☰</button><div class="top-spacer"></div><div class="admin-profile"><div class="avatar">●</div><div><b>Administrador</b><small>${esc(currentAdminEmail)}</small></div><span>⌄</span></div></header><main class="admin-content"><div id="tab"></div></main></section>
   </div>`;
   $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
   showTab('dashboard');
   refreshOrderBadge();
   setInterval(refreshOrderBadge,30000);
 }
-function nav(t){document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===t));}
+function nav(t){document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x.dataset.nav===t));closeMobileSidebar()}
+function toggleMobileSidebar(){document.body.classList.toggle('sidebar-open')}
+function closeMobileSidebar(){document.body.classList.remove('sidebar-open')}
 async function showTab(t){nav(t);if(t==='dashboard')return dashboardTab();if(t==='prod')return productTab();if(t==='categories')return categoriesTab();if(t==='promo')return promoTab();if(t==='banners')return bannersTab();if(t==='clients')return clientsTab();if(t==='orders')return ordersTab();return settingsTab()}
 function pageTitle(title,subtitle){return `<div class="page-head"><div><h1>${title}</h1><p>${subtitle}</p></div></div>`}
 async function dashboardTab(){

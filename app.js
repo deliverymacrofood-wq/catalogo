@@ -5,6 +5,27 @@ const money=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const $=id=>document.getElementById(id);
 
+
+async function loadAccountHeader(){
+  const el=document.querySelector('.admin');
+  if(!el)return;
+  try{
+    const {data:{session}}=await client.auth.getSession();
+    if(!session){ el.textContent='👤 Minha conta'; el.href='login.html'; return; }
+    let nickname=session.user.user_metadata?.nickname?.trim()||'';
+    try{
+      const {data:p}=await client.from('profiles').select('nickname,avatar_url').eq('id',session.user.id).maybeSingle();
+      if(p?.nickname?.trim()) nickname=p.nickname.trim();
+    }catch(_){}
+    el.innerHTML=`${p?.avatar_url?`<img class="mini-avatar" src="${esc(p.avatar_url)}" alt="">`:''}👤 ${esc(nickname||'Minha conta')}`;
+    el.href='login.html';
+    el.title='Abrir minha conta';
+  }catch(e){
+    el.textContent='👤 Minha conta';
+    el.href='login.html';
+  }
+}
+
 function renderBanners(){
   const el=$('bannerArea'); if(!el)return;
   clearInterval(bannerTimer);
@@ -48,6 +69,7 @@ async function load(){
   banners=bnErr?[]:(bn||[]).filter(b=>b.active===undefined || b.active===null || b.active===true);
   renderBanners();
   render();
+  loadAccountHeader();
   } catch (e) {
     if(grid) grid.innerHTML=`<div class="notice"><b>Não foi possível carregar o catálogo.</b><br>${esc(e?.message||e)}<br><small>Verifique a conexão com o Supabase e as permissões da tabela products.</small></div>`;
     console.error('Erro ao carregar catálogo:',e);
@@ -171,3 +193,5 @@ if (document.readyState === 'loading') {
 } else {
   load();
 }
+
+loadAccountHeader();
