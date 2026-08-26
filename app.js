@@ -318,3 +318,16 @@ if (document.readyState === 'loading') {
 }
 
 loadAccountHeader();
+
+function toggleMobileMenu(){
+  const menu=document.getElementById('mobileMenu');
+  if(!menu)return;
+  const open=menu.classList.toggle('open');
+  menu.setAttribute('aria-hidden',String(!open));
+}
+function closeMobileMenu(){
+  const menu=document.getElementById('mobileMenu');
+  if(!menu)return;
+  menu.classList.remove('open');
+  menu.setAttribute('aria-hidden','true');
+}

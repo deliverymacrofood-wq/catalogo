@@ -31,6 +31,7 @@ alter table public.profiles add column if not exists avatar_url text;
 alter table public.products add column if not exists product_code varchar(6);
 alter table public.products add column if not exists in_stock boolean not null default true;
 alter table public.products add column if not exists promo_price numeric(12,2);
+alter table public.products add column if not exists is_featured boolean not null default false;
 alter table public.products add column if not exists image_url text;
 alter table public.products add column if not exists active boolean not null default true;
 alter table public.products add column if not exists created_at timestamptz not null default now();
@@ -308,3 +309,21 @@ create policy "admins send support messages" on public.support_messages for inse
 drop policy if exists "admins delete support messages" on public.support_messages;
 create policy "admins delete support messages" on public.support_messages for delete to authenticated using(public.is_admin());
 grant select,insert,delete on public.support_messages to authenticated;
+
+-- Suporte: estado da conversa (aberta/resolvida)
+create table if not exists public.support_conversations (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  status text not null default 'open' check (status in ('open','resolved')),
+  resolved_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table public.support_conversations enable row level security;
+drop policy if exists "customers read own support conversation" on public.support_conversations;
+create policy "customers read own support conversation" on public.support_conversations for select to authenticated using(user_id=auth.uid() or public.is_admin());
+drop policy if exists "customers upsert own support conversation" on public.support_conversations;
+create policy "customers upsert own support conversation" on public.support_conversations for insert to authenticated with check(user_id=auth.uid());
+drop policy if exists "customers update own support conversation" on public.support_conversations;
+create policy "customers update own support conversation" on public.support_conversations for update to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
+drop policy if exists "admins manage support conversations" on public.support_conversations;
+create policy "admins manage support conversations" on public.support_conversations for all to authenticated using(public.is_admin()) with check(public.is_admin());
+grant select,insert,update on public.support_conversations to authenticated;

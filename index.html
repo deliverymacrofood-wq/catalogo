@@ -25,8 +25,19 @@
     <a href="suporte.html">💬 Suporte</a>
     <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
   </nav>
-  <div class="mobile-head"><button onclick="document.body.classList.toggle('mobile-menu-open')">☰</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
+  <div class="mobile-head"><button onclick="toggleMobileMenu()" aria-label="Abrir menu">⋮</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
   <div class="mobile-search"><div class="search"><input id="mobileSearch" placeholder="Buscar produtos..." oninput="syncSearch(this.value)"><span>🔎</span></div></div>
+  <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-head"><b>Menu MacroFood</b><button type="button" onclick="closeMobileMenu()">×</button></div>
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Início</a>
+    <button onclick="closeMobileMenu();document.getElementById('cats').scrollIntoView({behavior:'smooth'})">📂 Todas as categorias</button>
+    <button onclick="active='Promoções';render();closeMobileMenu();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
+    <button onclick="closeMobileMenu();document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">⭐ Produtos em destaque</button>
+    <a href="pedidos.html" onclick="closeMobileMenu()">📦 Meus pedidos</a>
+    <a href="suporte.html" onclick="closeMobileMenu()">💬 Suporte ao cliente</a>
+    <button onclick="closeMobileMenu();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🛍️ Todos os produtos</button>
+    <a href="login.html" onclick="closeMobileMenu()">👤 Minha conta</a>
+  </div>
 </header>
 
 <section class="hero-home">

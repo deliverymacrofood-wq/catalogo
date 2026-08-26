@@ -68,15 +68,30 @@ function showResetPassword(){
   };
 }
 function showLogin(){
-  $('authApp').innerHTML=`<div class="panel login"><h2>Minha conta</h2><p>Entre ou crie sua conta gratuitamente.</p>
-  <input id="nickname" type="text" autocomplete="nickname" placeholder="Apelido (para aparecer no site)" maxlength=30>
-  <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
-  <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
-  <input id="pass" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" required>
-  <button class="primary" id="login">Entrar</button><button class="secondary" id="signup">Criar minha conta</button>
-  <button class="secondary" id="forgot">Esqueci minha senha</button><p id="msg"></p></div>`;
-  $('login').onclick=login;$('signup').onclick=signup;$('forgot').onclick=forgot;
+  $('authApp').innerHTML=`<div class="panel login auth-card">
+    <div class="auth-brand-mini"><span>👤</span><div><h2>Entrar na minha conta</h2><p>Acesse seus pedidos, suporte e seus dados.</p></div></div>
+    <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="Senha" required>
+    <button class="primary auth-main-btn" id="login">Entrar</button>
+    <button class="secondary auth-register-btn" id="goSignup">Ainda não tenho conta — Criar conta</button>
+    <button class="link-btn" id="forgot">Esqueci minha senha</button>
+    <p id="msg"></p>
+  </div>`;
+  $('login').onclick=login;$('goSignup').onclick=showSignup;$('forgot').onclick=forgot;
   $('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+}
+function showSignup(){
+  $('authApp').innerHTML=`<div class="panel login auth-card">
+    <div class="auth-brand-mini"><span>✨</span><div><h2>Criar minha conta</h2><p>Cadastre seus dados para acessar o catálogo completo.</p></div></div>
+    <label>Apelido<input id="nickname" type="text" autocomplete="nickname" placeholder="Como quer aparecer no site" maxlength="30" required></label>
+    <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
+    <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
+    <input id="pass" type="password" autocomplete="new-password" placeholder="Senha (mínimo 6 caracteres)" required>
+    <button class="primary auth-main-btn" id="signup">Criar minha conta</button>
+    <button class="secondary auth-register-btn" id="goLogin">Já tenho conta — Entrar</button>
+    <p id="msg"></p>
+  </div>`;
+  $('signup').onclick=signup;$('goLogin').onclick=showLogin;
 }
 async function login(){
   const email=$('email').value.trim().toLowerCase(),password=$('pass').value;
