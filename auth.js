@@ -67,10 +67,15 @@ function showResetPassword(){
     setTimeout(()=>{history.replaceState({},document.title,'login.html');location.href='login.html'},900);
   };
 }
+let signupMethod='email';
+let pendingPhone='';
+let pendingPhonePassword='';
+
 function showLogin(){
   $('authApp').innerHTML=`<div class="panel login auth-card">
     <div class="auth-brand-mini"><span>👤</span><div><h2>Entrar na minha conta</h2><p>Acesse seus pedidos, suporte e seus dados.</p></div></div>
-    <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
+    <div class="auth-choice"><button type="button" class="active" id="loginEmailChoice" onclick="setLoginMethod('email')">✉️ E-mail</button><button type="button" id="loginPhoneChoice" onclick="setLoginMethod('phone')">📱 Celular</button></div>
+    <div id="loginIdentity"><input id="email" type="email" autocomplete="email" placeholder="E-mail" required></div>
     <input id="pass" type="password" autocomplete="current-password" placeholder="Senha" required>
     <button class="primary auth-main-btn" id="login">Entrar</button>
     <button class="secondary auth-register-btn" id="goSignup">Ainda não tenho conta — Criar conta</button>
@@ -80,12 +85,20 @@ function showLogin(){
   $('login').onclick=login;$('goSignup').onclick=showSignup;$('forgot').onclick=forgot;
   $('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 }
+function setLoginMethod(method){
+  const emailBtn=$('loginEmailChoice'),phoneBtn=$('loginPhoneChoice'),box=$('loginIdentity');
+  if(!emailBtn||!phoneBtn||!box)return;
+  emailBtn.classList.toggle('active',method==='email'); phoneBtn.classList.toggle('active',method==='phone');
+  box.innerHTML=method==='email'?'<input id="email" type="email" autocomplete="email" placeholder="E-mail" required>':'<input id="email" type="tel" autocomplete="tel" placeholder="Celular com DDD" inputmode="tel" required>';
+  box.dataset.method=method;
+}
 function showSignup(){
   $('authApp').innerHTML=`<div class="panel login auth-card">
-    <div class="auth-brand-mini"><span>✨</span><div><h2>Criar minha conta</h2><p>Cadastre seus dados para acessar o catálogo completo.</p></div></div>
+    <div class="auth-brand-mini"><span>✨</span><div><h2>Criar minha conta</h2><p>Escolha como deseja confirmar sua conta.</p></div></div>
     <label>Apelido<input id="nickname" type="text" autocomplete="nickname" placeholder="Como quer aparecer no site" maxlength="30" required></label>
     <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
-    <input id="email" type="email" autocomplete="email" placeholder="E-mail" required>
+    <div class="auth-choice"><button type="button" class="active" id="signupEmailChoice" onclick="setSignupMethod('email')">✉️ Confirmar por e-mail</button><button type="button" id="signupPhoneChoice" onclick="setSignupMethod('phone')">📱 Confirmar por celular</button></div>
+    <div id="signupIdentity"><input id="email" type="email" autocomplete="email" placeholder="E-mail" required></div>
     <input id="pass" type="password" autocomplete="new-password" placeholder="Senha (mínimo 6 caracteres)" required>
     <button class="primary auth-main-btn" id="signup">Criar minha conta</button>
     <button class="secondary auth-register-btn" id="goLogin">Já tenho conta — Entrar</button>
@@ -93,32 +106,68 @@ function showSignup(){
   </div>`;
   $('signup').onclick=signup;$('goLogin').onclick=showLogin;
 }
+function setSignupMethod(method){
+  signupMethod=method;
+  $('signupEmailChoice')?.classList.toggle('active',method==='email');$('signupPhoneChoice')?.classList.toggle('active',method==='phone');
+  const box=$('signupIdentity'); if(!box)return;
+  box.innerHTML=method==='email'?'<input id="email" type="email" autocomplete="email" placeholder="E-mail" required>':'<input id="email" type="tel" autocomplete="tel" placeholder="Celular com DDD (ex.: 81999999999)" inputmode="tel" required>';
+}
 async function login(){
-  const email=$('email').value.trim().toLowerCase(),password=$('pass').value;
-  if(!email||!password)return msg('Preencha e-mail e senha.');
-  const {error}=await client.auth.signInWithPassword({email,password});
+  const identity=$('email').value.trim(),password=$('pass').value;
+  if(!identity||!password)return msg('Preencha seus dados.');
+  const isPhone=$('loginIdentity')?.dataset.method==='phone';
+  const credentials=isPhone?{phone:normalizePhoneAuth(identity),password}:{email:identity.toLowerCase(),password};
+  if(isPhone && credentials.phone.length<10)return msg('Informe um celular válido com DDD.');
+  const {error}=await client.auth.signInWithPassword(credentials);
   if(error){
-    if(/email not confirmed/i.test(error.message)) return msg('Seu e-mail ainda não foi confirmado. Abra o e-mail enviado pelo Supabase e confirme a conta.');
+    if(/email not confirmed/i.test(error.message)) return msg('Seu e-mail ainda não foi confirmado. Use o link enviado para seu e-mail e depois tente novamente.');
+    if(/phone not confirmed/i.test(error.message)) return msg('Seu celular ainda não foi confirmado. Use o código SMS recebido.');
     return msg('Não foi possível entrar: '+error.message);
   }
   location.href='index.html';
 }
+function normalizePhoneAuth(v){let n=String(v||'').replace(/\D/g,'');if(n.length===11)n='55'+n;return n;}
 async function signup(){
-  const nickname=$('nickname').value.trim(),email=$('email').value.trim().toLowerCase(),password=$('pass').value;
+  const nickname=$('nickname').value.trim(),identity=$('email').value.trim(),password=$('pass').value;
   if(nickname.length<2)return msg('Informe um apelido com pelo menos 2 caracteres.');
   if(nickname.length>30)return msg('O apelido pode ter no máximo 30 caracteres.');
-  if(!email||!/^\S+@\S+\.\S+$/.test(email))return msg('Informe um e-mail válido.');
   if(password.length<6)return msg('A senha precisa ter pelo menos 6 caracteres.');
-  const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname}}});
-  if(error)return msg('Não foi possível criar a conta: '+error.message);
-  if(data.session){
-    await client.from('profiles').update({nickname}).eq('id',data.user.id);
-    const file=$('avatar')?.files?.[0];
-    if(file) await uploadAvatar(file, data.user.id);
-    msg('Conta criada e você já está conectado.','green');setTimeout(()=>location.href='index.html',500);
+  const file=$('avatar')?.files?.[0];
+  if(file && file.size>2*1024*1024)return msg('A foto precisa ter no máximo 2 MB.');
+  if(signupMethod==='email'){
+    const email=identity.toLowerCase();
+    if(!/^\S+@\S+\.\S+$/.test(email))return msg('Informe um e-mail válido.');
+    const redirectTo=new URL('login.html',window.location.href).href;
+    const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname},emailRedirectTo:redirectTo}});
+    if(error)return msg('Não foi possível criar a conta: '+error.message);
+    if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada e confirmada.','green');setTimeout(()=>location.href='index.html',500);}
+    else showEmailConfirmation(email);
+  }else{
+    const phone=normalizePhoneAuth(identity);
+    if(phone.length<12)return msg('Informe um celular válido com DDD.');
+    const {data,error}=await client.auth.signUp({phone,password,options:{data:{nickname}}});
+    if(error)return msg('Não foi possível criar a conta: '+error.message);
+    if(data.user){pendingPhone=phone;pendingPhonePassword=password;showPhoneVerification(phone,nickname,file);}
   }
-  else msg('Conta criada! Verifique seu e-mail para confirmar a conta e depois faça login.','green');
 }
+function showEmailConfirmation(email){
+  $('authApp').innerHTML=`<div class="panel login auth-card"><div class="auth-brand-mini"><span>✉️</span><div><h2>Confirme seu e-mail</h2><p>Enviamos um link de confirmação para <b>${esc(email)}</b>.</p></div></div><div class="verify-box"><p>Abra a mensagem do Supabase e clique em <b>Confirmar seu e-mail</b>. Depois volte para esta página.</p></div><button class="primary" onclick="showLogin()">Já confirmei — entrar</button><button class="secondary auth-register-btn" onclick="showSignup()">Voltar ao cadastro</button><p id="msg"></p></div>`;
+}
+function showPhoneVerification(phone,nickname,file){
+  window.pendingNickname=nickname;window.pendingAvatar=file||null;
+  $('authApp').innerHTML=`<div class="panel login auth-card"><div class="auth-brand-mini"><span>📱</span><div><h2>Confirme seu celular</h2><p>Enviamos um código SMS para <b>${esc(phone)}</b>.</p></div></div><div class="verify-box"><input id="phoneOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button class="primary" style="width:100%;margin-top:10px" onclick="verifyPhoneCode()">Confirmar código</button></div><button class="secondary auth-register-btn" onclick="resendPhoneCode()">Reenviar código</button><button class="link-btn" onclick="showSignup()">Voltar</button><p id="msg"></p></div>`;
+}
+async function verifyPhoneCode(){
+  const token=$('phoneOtp').value.trim();if(token.length<4)return msg('Digite o código recebido por SMS.');
+  const {data,error}=await client.auth.verifyOtp({phone:pendingPhone,token,type:'sms'});
+  if(error)return msg('Código inválido ou expirado: '+error.message);
+  if(data.user){await finishProfile(data.user,window.pendingNickname,window.pendingAvatar);msg('Celular confirmado! Conta criada.','green');setTimeout(()=>location.href='index.html',500);}
+}
+async function resendPhoneCode(){const {error}=await client.auth.signInWithOtp({phone:pendingPhone});if(error)return msg('Não foi possível reenviar: '+error.message);msg('Novo código enviado por SMS.','green');}
+async function finishProfile(user,nickname,file){
+  try{await client.from('profiles').update({nickname,phone:user.phone||null}).eq('id',user.id);if(file)await uploadAvatar(file,user.id);}catch(e){}
+}
+
 async function uploadAvatar(file,userId){
   if(!file)return;
   if(!file.type.startsWith('image/'))return msg('Escolha uma imagem válida.');

@@ -1,5 +1,6 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-const sectors=['Todos','Promoções','Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
+const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
+let sectors=['Todos','Promoções',...defaultSectors];
 let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=JSON.parse(localStorage.getItem('macrofood_cart')||'[]');
 const money=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -65,7 +66,8 @@ async function load(){
   const productsReq=client.from('products').select('*').order('name');
   const reviewsReq=client.from('product_reviews').select('product_id,rating,user_id');
   const bannersReq=client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});
-  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr}]=await Promise.all([productsReq,reviewsReq,bannersReq]);
+  const categoriesReq=client.from('categories').select('name').order('name');
+  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr},{data:cats,error:catErr}]=await Promise.all([productsReq,reviewsReq,bannersReq,categoriesReq]);
 
   if(error){
     $('grid').innerHTML=`<div class="notice"><b>Não foi possível carregar os produtos.</b><br>${esc(error.message)}<br><small>Confira se a tabela products existe e se a política de leitura pública foi criada no Supabase.</small></div>`;
@@ -76,6 +78,8 @@ async function load(){
   // somente produtos ativos são mostrados. Se não existir, todos são exibidos.
   products=(data||[]).filter(p=>p.active===undefined || p.active===null || p.active===true);
   reviews=rvErr?[]:(rv||[]);
+  const dynamicCats=(!catErr&&cats?.length)?cats.map(c=>c.name).filter(Boolean):defaultSectors;
+  sectors=['Todos','Promoções',...dynamicCats];
   banners=bnErr?[]:(bn||[]).filter(b=>b.active===undefined || b.active===null || b.active===true);
   renderBanners();
   render();
@@ -166,7 +170,7 @@ function productCard(p,featured=false){
       <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>
       ${featured&&p.product_code?`<small class="muted">Código: ${esc(p.product_code)}</small>`:''}
       ${featured?price:priceHtml(p)}
-      ${featured?`<button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
+      ${featured?`<div class="feature-rating">${stars(p)} <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div><button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
     </div>
   </article>`;
 }
@@ -194,11 +198,61 @@ function render(){
   });
   $('grid').innerHTML=list.length?list.map(p=>productCard(p,false)).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
 }
+let pendingCartProduct=null;
+let pendingCartQty=1;
+
 function addCart(id){
-  const p=products.find(x=>x.id===id);if(!p||p.in_stock===false)return;
-  const x=cart.find(x=>x.id===id);
-  if(x)x.qty++;else cart.push({id:p.id,name:p.name,image_url:p.image_url||'',price:Number(p.promo_price??p.price),qty:1});
-  localStorage.setItem('macrofood_cart',JSON.stringify(cart));render();openCart();
+  const p=products.find(x=>x.id===id);
+  if(!p||p.in_stock===false)return;
+  pendingCartProduct=p;
+  pendingCartQty=1;
+  const qty=$('addQtyInput');
+  if(qty)qty.value='1';
+  const title=$('addQtyTitle');
+  const price=$('addQtyPrice');
+  const img=$('addQtyImage');
+  if(title)title.textContent=p.name;
+  if(price)price.textContent=money(Number(p.promo_price??p.price))+' cada';
+  if(img){img.src=p.image_url||'';img.style.display=p.image_url?'block':'none';}
+  updatePendingTotal();
+  const modal=$('addQtyModal');
+  if(modal)modal.style.display='flex';
+}
+function closeAddQty(){
+  const modal=$('addQtyModal');
+  if(modal)modal.style.display='none';
+  pendingCartProduct=null;
+  pendingCartQty=1;
+}
+function changePendingQty(delta){
+  const input=$('addQtyInput');
+  if(!input)return;
+  let value=parseInt(input.value,10)||1;
+  value=Math.max(1,Math.min(99,value+delta));
+  input.value=value;
+  updatePendingTotal();
+}
+function updatePendingTotal(){
+  const input=$('addQtyInput');
+  const total=$('addQtyTotal');
+  if(!input||!total||!pendingCartProduct)return;
+  const qty=Math.max(1,Math.min(99,parseInt(input.value,10)||1));
+  input.value=qty;
+  total.textContent=money(Number(pendingCartProduct.promo_price??pendingCartProduct.price)*qty);
+}
+function confirmAddCart(){
+  if(!pendingCartProduct)return;
+  const input=$('addQtyInput');
+  const qty=Math.max(1,Math.min(99,parseInt(input?.value,10)||1));
+  const p=pendingCartProduct;
+  const x=cart.find(x=>x.id===p.id);
+  if(x)x.qty+=qty;
+  else cart.push({id:p.id,name:p.name,image_url:p.image_url||'',price:Number(p.promo_price??p.price),qty});
+  localStorage.setItem('macrofood_cart',JSON.stringify(cart));
+  closeAddQty();
+  render();
+  const toast=$('cartToast');
+  if(toast){toast.textContent=qty===1?'Produto adicionado ao carrinho!':`${qty} unidades adicionadas ao carrinho!`;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800);}
 }
 function openCart(){
   $('cartItems').innerHTML=cart.length?`${cart.map((x,i)=>`<div class="cart-row">
@@ -229,12 +283,13 @@ function selectRating(n){window.currentRating=n;document.querySelectorAll('#rati
 function closeRating(){$('ratingModal').style.display='none'}
 async function saveRating(id){
   const {data:{session}}=await client.auth.getSession();
-  if(!session)return;
+  if(!session){closeRating();return alert('Entre na sua conta para avaliar este produto.');}
   if(!window.currentRating)return alert('Escolha uma nota de 1 a 5 estrelas.');
-  const {error}=await client.from('product_reviews').upsert({product_id:id,user_id:session.user.id,rating:window.currentRating},{onConflict:'product_id,user_id'});
-  if(error)return alert('Não foi possível salvar: '+error.message);
-  const {data:rv}=await client.from('product_reviews').select('product_id,rating,user_id');
-  reviews=rv||[];closeRating();render();alert('Avaliação salva com sucesso!');
+  const {error}=await client.from('product_reviews').upsert({product_id:id,user_id:session.user.id,rating:Number(window.currentRating)},{onConflict:'product_id,user_id'});
+  if(error){console.error(error);return alert('Não foi possível salvar sua avaliação. Verifique se a tabela product_reviews e as políticas do Supabase foram criadas.');}
+  const {data:rv,error:rvErr}=await client.from('product_reviews').select('product_id,rating,user_id');
+  if(!rvErr)reviews=rv||[];
+  closeRating();render();alert('Avaliação salva com sucesso!');
 }
 function showCheckoutForm(){
   if(!cart.length)return alert('Carrinho vazio.');
@@ -253,9 +308,10 @@ function normalizeDoc(v){return String(v||'').replace(/\D/g,'')}
 function toggleCustomerType(){
   const has=$('customerHasSalesCadastro')?.value==='yes';
   const noBox=$('newCustomerFields');
+  const salesBox=$('salesCustomerFields');
   const docType=$('customerDocType');
-  const common=$('customerCommonFields');
   if(noBox) noBox.classList.toggle('hidden',has);
+  if(salesBox) salesBox.classList.toggle('hidden',!has);
   const cnpj=!has && docType?.value==='cnpj';
   const nameInput=$('customerName');
   const docInput=$('customerCpfCnpj');
@@ -279,11 +335,11 @@ async function submitOrder(){
   if(!cart.length)return alert('Carrinho vazio.');
   const hasCadastro=$('customerHasSalesCadastro').value==='yes';
   const docType=hasCadastro?'cpf':$('customerDocType').value;
-  const name=$('customerName').value.trim();
-  const whatsapp=normalizePhone($('customerWhatsapp').value);
-  const email=$('customerEmail').value.trim().toLowerCase();
-  const cpfCnpj=normalizeDoc($('customerCpfCnpj').value);
-  const cep=normalizeDoc($('customerCep').value);
+  const name=(hasCadastro?$('salesCustomerName')?.value:$('customerName')?.value||'').trim();
+  const whatsapp=normalizePhone($('customerWhatsapp')?.value);
+  const email=($('customerEmail')?.value||'').trim().toLowerCase();
+  const cpfCnpj=normalizeDoc((hasCadastro?$('salesCustomerCpf')?.value:$('customerCpfCnpj')?.value)||'');
+  const cep=normalizeDoc($('customerCep')?.value);
   const note=$('customerNote').value.trim();
   if(hasCadastro){
     if(name.length<2)return alert('Informe o nome completo.');

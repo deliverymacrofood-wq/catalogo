@@ -1,6 +1,7 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-let editing=null,products=[],currentUserId=null,currentAdminEmail='';
-const sectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
+let editing=null,products=[],categories=[],currentUserId=null,currentAdminEmail='';
+const defaultCategories=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
+let sectors=[...defaultCategories];
 const $=id=>document.getElementById(id);
 const money=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -55,7 +56,13 @@ async function dashboardTab(){
 }
 function orderRow(o){return `<div class="order-mini"><div class="order-icon">🛍</div><div class="grow"><b>Pedido #${o.order_number}</b><small>${esc(o.customer_name)} • ${esc(o.customer_phone)}</small></div><span class="status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span><strong>${money(o.total)}</strong></div>`}
 async function refreshOrderBadge(){const {count}=await client.from('orders').select('id',{count:'exact',head:true}).eq('status','received');const b=$('orderBadge');if(!b)return;b.textContent=count||0;b.classList.toggle('hidden',!count)}
-function productTab(){
+async function ensureCategories(){
+  const {data,error}=await client.from('categories').select('id,name').order('name');
+  if(!error && data?.length){categories=data.map(x=>x.name);sectors=[...categories];}
+  else {categories=[...defaultCategories];sectors=[...defaultCategories];}
+}
+async function productTab(){
+  await ensureCategories();
   $('tab').innerHTML=`${pageTitle('Produtos','Gerencie os produtos exibidos no catálogo.')}
   <div class="panel-card"><div class="card-head"><div><h3>${editing?'Editar produto':'Cadastrar produto'}</h3><p>Preencha os dados do produto.</p></div></div><form class="form" id="pf"><label>Nome<input id="name" required></label><label>Preço normal<input id="price" type="number" step="0.01" min="0" required></label><label>Setor<select id="sector">${sectors.map(s=>`<option>${s}</option>`).join('')}</select></label><label>Imagem<input id="image" type="file" accept="image/*"></label><label>Estoque<select id="stock"><option value="true">Com estoque</option><option value="false">Sem estoque</option></select></label><label>Preço promocional<input id="promo" type="number" step="0.01" min="0" placeholder="Opcional"></label><label class="featured-toggle"><input id="featured" type="checkbox"><span>⭐ Colocar este produto em destaque no catálogo</span></label><div class="form-actions full"><button class="primary">${editing?'Salvar alterações':'Cadastrar produto'}</button>${editing?'<button type="button" class="secondary" onclick="editing=null;productTab()">Cancelar</button>':''}</div></form></div><div class="panel-card"><div class="card-head"><div><h3>Produtos cadastrados</h3></div></div><div id="list"></div></div>`;
   $('pf').onsubmit=save;load();
@@ -65,7 +72,26 @@ async function upload(file){if(!file)return null;const path=`${crypto.randomUUID
 async function save(e){e.preventDefault();const price=Number($('price').value),promo=$('promo').value?Number($('promo').value):null;if(promo!==null&&promo>=price)return alert('O preço promocional deve ser menor que o preço normal.');const payload={name:$('name').value.trim(),price,sector:$('sector').value,in_stock:$('stock').value==='true',promo_price:promo,is_featured:$('featured').checked,active:true,updated_at:new Date().toISOString()};const f=$('image').files[0];try{if(f)payload.image_url=await upload(f);const r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);if(r.error)throw r.error;editing=null;productTab();alert('Produto salvo!')}catch(e){alert('Erro: '+e.message)}}
 function edit(id){const p=products.find(x=>x.id===id);if(!p)return;editing=id;productTab();setTimeout(()=>{$('name').value=p.name;$('price').value=p.price;$('sector').value=p.sector;$('stock').value=String(p.in_stock!==false);$('promo').value=p.promo_price??'';$('featured').checked=p.is_featured===true;window.scrollTo({top:0,behavior:'smooth'})},0)}
 async function removeProduct(id){if(!confirm('Excluir este produto?'))return;const {error}=await client.from('products').delete().eq('id',id);if(error)alert(error.message);else load()}
-async function categoriesTab(){ $('tab').innerHTML=`${pageTitle('Categorias','As categorias disponíveis no catálogo.') }<div class="panel-card"><div class="category-grid">${['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados','🔥 Promoções'].map((s,i)=>`<div class="category-card"><span>${i===8?'🔥':'▦'}</span><b>${s}</b><small>${i===8?'Produtos com preço promocional':'Categoria do catálogo'}</small></div>`).join('')}</div></div>`}
+async function categoriesTab(){
+  const {data,error}=await client.from('categories').select('id,name,created_at').order('name');
+  if(error){$('tab').innerHTML=`${pageTitle('Categorias','Gerencie as categorias do catálogo.')}<div class="panel-card"><div class="notice">Não foi possível carregar as categorias: ${esc(error.message)}<br><small>Execute o bloco de categorias do supabase.sql.</small></div></div>`;return}
+  categories=data||[];sectors=categories.map(x=>x.name);
+  $('tab').innerHTML=`${pageTitle('Categorias','Adicione, edite e remova categorias do catálogo.')}
+  <div class="panel-card"><div class="card-head"><div><h3>Nova categoria</h3><p>Ela ficará disponível no cadastro de produtos e no catálogo.</p></div></div><form id="categoryForm" class="category-add-form"><input id="newCategoryName" required maxlength=50 placeholder="Ex.: Bebidas"><button class="primary">+ Adicionar categoria</button></form></div>
+  <div class="panel-card"><div class="card-head"><div><h3>Categorias cadastradas</h3><p>Promoções é automática e não precisa ser criada aqui.</p></div></div><div class="category-grid">${categories.map(c=>`<div class="category-card"><span>▦</span><b>${esc(c.name)}</b><small>Categoria do catálogo</small><button class="danger" onclick="removeCategory('${c.id}','${esc(c.name)}')">Excluir</button></div>`).join('')}<div class="category-card promo-category"><span>🔥</span><b>Promoções</b><small>Produtos com preço promocional</small><span class="muted">Automática</span></div></div></div>`;
+  $('categoryForm').onsubmit=addCategory;
+}
+async function addCategory(e){
+  e.preventDefault();const name=$('newCategoryName').value.trim();if(name.length<2)return alert('Digite um nome de categoria válido.');
+  if(name.toLowerCase()==='promoções')return alert('A categoria Promoções é automática.');
+  const {error}=await client.from('categories').insert({name});if(error)return alert('Não foi possível adicionar: '+error.message);categoriesTab();
+}
+async function removeCategory(id,name){
+  const {count}=await client.from('products').select('id',{count:'exact',head:true}).eq('sector',name);
+  if((count||0)>0)return alert('Não é possível excluir esta categoria porque existem produtos cadastrados nela. Altere os produtos para outra categoria primeiro.');
+  if(!confirm(`Excluir a categoria “${name}”?`))return;
+  const {error}=await client.from('categories').delete().eq('id',id);if(error)return alert('Não foi possível excluir: '+error.message);categoriesTab();
+}
 async function promoTab(){const {data,error}=await client.from('products').select('*').order('name');if(error)return $('tab').innerHTML='<div class="notice">'+esc(error.message)+'</div>';products=data||[];$('tab').innerHTML=`${pageTitle('Promoções','Defina ou remova preços promocionais.') }<div class="panel-card"><div class="promo-list">${products.map(p=>`<div class="promo-row"><div class="grow"><b>${esc(p.name)}</b><small>Preço normal: ${money(p.price)} ${p.promo_price!=null?'• Atual: '+money(p.promo_price):''}</small></div><input id="pr_${p.id}" type="number" step="0.01" min="0" value="${p.promo_price??''}" placeholder="Preço oferta"><button class="primary" onclick="setPromo('${p.id}')">Salvar</button></div>`).join('')}</div></div>`}
 async function setPromo(id){const v=$(`pr_${id}`).value,p=products.find(x=>x.id===id)||(await client.from('products').select('*').eq('id',id).single()).data;if(v&&Number(v)>=Number(p.price))return alert('O preço promocional deve ser menor que o preço normal.');const {error}=await client.from('products').update({promo_price:v?Number(v):null,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else{alert('Promoção atualizada!');promoTab()}}
 async function bannersTab(){const {data,error}=await client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});if(error){$('tab').innerHTML='<div class="notice">'+esc(error.message)+'</div>';return}const banners=data||[];$('tab').innerHTML=`${pageTitle('Banners','Até 5 banners no topo do site para todos os visitantes.') }<div class="panel-card"><p>Adicione imagens horizontais. Elas aparecem automaticamente no topo do catálogo.</p>${banners.length<5?`<form class="form" id="bf"><label class="full">Imagem do banner<input id="bannerImage" type="file" accept="image/*" required></label><div id="bannerPreview" class="full banner-preview"><span>Selecione uma imagem para visualizar</span></div><button class="primary full">Adicionar banner (${banners.length}/5)</button></form>`:`<div class="notice">Você já possui 5 banners. Remova um para adicionar outro.</div>`}<div class="banner-admin-list">${banners.length?banners.map((b,i)=>`<div class="banner-admin-row"><div class="banner-number">${i+1}</div><img src="${esc(b.image_url)}" alt="Banner ${i+1}" class="banner-admin-img"><div class="grow"><b>Banner ${i+1}</b><small>${b.active?'Visível no site':'Oculto'}</small></div><button class="danger" onclick="removeBanner('${b.id}','${esc(b.storage_path||'')}')">Remover</button></div>`).join(''):'<div class="empty-state">Nenhum banner cadastrado.</div>'}</div></div>`;if($('bf')){$('bannerImage').onchange=()=>{const f=$('bannerImage').files[0];if(!f)return;const url=URL.createObjectURL(f);$('bannerPreview').innerHTML=`<img src="${url}" alt="Pré-visualização">`};$('bf').onsubmit=addBanner}}

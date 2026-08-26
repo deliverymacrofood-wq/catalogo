@@ -26,6 +26,7 @@ create table if not exists public.products (
 -- Perfil do cliente: apelido exibido no catálogo.
 alter table public.profiles add column if not exists nickname text;
 alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists phone text;
 
 -- Compatibilidade com versões anteriores.
 alter table public.products add column if not exists product_code varchar(6);
@@ -37,9 +38,6 @@ alter table public.products add column if not exists active boolean not null def
 alter table public.products add column if not exists created_at timestamptz not null default now();
 alter table public.products add column if not exists updated_at timestamptz not null default now();
 alter table public.products drop constraint if exists products_sector_check;
-alter table public.products add constraint products_sector_check check (sector in (
-  'Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'
-));
 
 create index if not exists products_active_sector_idx on public.products(active, sector);
 -- Reparo/compatibilidade do catálogo público.
@@ -60,6 +58,23 @@ create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path=public as $$
   select exists(select 1 from public.profiles where id=auth.uid() and role='admin');
 $$;
+
+-- Categorias personalizáveis do catálogo.
+create table if not exists public.categories(
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  created_at timestamptz not null default now()
+);
+
+insert into public.categories(name) values
+('Chocolates'),('Confeitaria'),('Sorveteria'),('Padaria'),('Restaurante'),('Ocidental'),('Frios'),('Congelados')
+on conflict(name) do nothing;
+
+alter table public.categories enable row level security;
+drop policy if exists "public read categories" on public.categories;
+create policy "public read categories" on public.categories for select to anon,authenticated using(true);
+drop policy if exists "admins manage categories" on public.categories;
+create policy "admins manage categories" on public.categories for all to authenticated using(public.is_admin()) with check(public.is_admin());
 
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;

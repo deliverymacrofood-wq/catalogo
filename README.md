@@ -21,3 +21,15 @@
 - Clientes podem inserir pedidos, mas só administradores podem listar, alterar ou cancelar pedidos.
 - A senha dos clientes nunca fica visível no painel. A redefinição usa o fluxo seguro do Supabase Authentication.
 - Não coloque a `service_role key` no frontend.
+
+## Confirmação de conta por e-mail ou celular
+
+O cadastro agora permite escolher **Confirmar por e-mail** ou **Confirmar por celular (SMS)**.
+
+### E-mail
+No Supabase, em Authentication > URL Configuration, adicione a URL pública do `login.html` em Redirect URLs (por exemplo, `https://SEU-USUARIO.github.io/SEU-REPOSITORIO/login.html`). O e-mail de confirmação deve estar habilitado.
+
+### Celular
+No Supabase, em Authentication > Providers, habilite **Phone** e configure um provedor de SMS. Sem um provedor SMS configurado, o Supabase não consegue enviar o código e o cadastro por celular não funcionará.
+
+Depois de alterar o banco, execute o `supabase.sql` para adicionar o campo `profiles.phone`.

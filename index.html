@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#a9003f">
   <meta name="description" content="MacroFood - Catálogo de produtos">
   <title>MacroFood — Catálogo</title>
-  <link rel="stylesheet" href="styles.css?v=20260826-mobile-final">
+  <link rel="stylesheet" href="styles.css?v=20260827-cat-review">
 </head>
 <body>
 <header class="site-header">
@@ -69,4 +69,62 @@
 </main>
 <footer>Macrofood • Catálogo Online<br><br>WhatsApp: <a href="https://wa.me/5581971178793">81 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
 <nav class="mobile-bottom"><a href="index.html">⌂<span>Início</span></a><a href="#cats">☰<span>Categorias</span></a><button onclick="document.getElementById('mobileSearch').focus();window.scrollTo({top:0,behavior:'smooth'})">⌕<span>Buscar</span></button><a href="pedidos.html">▣<span>Pedidos</span></a><a href="login.html">♙<span>Perfil</span></a></nav>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260826"></script><script src="app.js?v=20260826-mobilefix"></script></body></html>
+
+<div id="addQtyModal" class="modal add-qty-modal" role="dialog" aria-modal="true" aria-labelledby="addQtyTitle">
+  <div class="modal-box add-qty-box">
+    <button class="close" type="button" onclick="closeAddQty()" aria-label="Fechar">×</button>
+    <div class="add-qty-product">
+      <img id="addQtyImage" class="add-qty-image" alt="Produto">
+      <div class="add-qty-info">
+        <h3 id="addQtyTitle">Produto</h3>
+        <p id="addQtyPrice" class="add-qty-price"></p>
+      </div>
+    </div>
+    <div class="add-qty-label">Quantidade</div>
+    <div class="add-qty-controls">
+      <button type="button" onclick="changePendingQty(-1)" aria-label="Diminuir quantidade">−</button>
+      <input id="addQtyInput" type="number" min="1" max="99" value="1" inputmode="numeric" oninput="updatePendingTotal()">
+      <button type="button" onclick="changePendingQty(1)" aria-label="Aumentar quantidade">+</button>
+    </div>
+    <div class="add-qty-total"><span>Total deste produto</span><strong id="addQtyTotal">R$ 0,00</strong></div>
+    <button type="button" class="primary add-qty-confirm" onclick="confirmAddCart()">🛒 Adicionar ao carrinho</button>
+    <button type="button" class="secondary add-qty-cancel" onclick="closeAddQty()">Cancelar</button>
+  </div>
+</div>
+<div id="cartToast" class="cart-toast" role="status" aria-live="polite"></div>
+<div id="cartModal" class="modal cart-modal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="modal-box cart-box">
+    <button class="close" type="button" onclick="closeCart()" aria-label="Fechar">×</button>
+    <h2 id="cartTitle">🛒 Meu carrinho</h2>
+    <div id="cartItems" class="cart-items"></div>
+    <div id="checkoutForm" class="checkout-form hidden">
+      <h3>Dados para finalizar o pedido</h3>
+      <label>Você já tem cadastro no WhatsApp de vendas?
+        <select id="customerHasSalesCadastro" onchange="toggleCustomerType()"><option value="no">Não</option><option value="yes">Sim</option></select>
+      </label>
+      <div id="newCustomerFields">
+        <label>Tipo de documento<select id="customerDocType" onchange="toggleCustomerType()"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></label>
+        <label id="customerNameLabel">Nome completo<input id="customerName" placeholder="Nome completo"></label>
+        <label>CPF/CNPJ<input id="customerCpfCnpj" placeholder="000.000.000-00"></label>
+        <label id="customerCepLabel">CEP<input id="customerCep" inputmode="numeric" placeholder="00000-000"></label>
+        <label id="customerWhatsappLabel">Celular / WhatsApp<input id="customerWhatsapp" inputmode="tel" placeholder="(81) 99999-9999"></label>
+        <label class="full">E-mail<input id="customerEmail" type="email" placeholder="seu@email.com"></label>
+      </div>
+      <div id="salesCustomerFields">
+        <label>Nome<input id="salesCustomerName" placeholder="Nome cadastrado"></label>
+        <label>CPF<input id="salesCustomerCpf" inputmode="numeric" placeholder="000.000.000-00"></label>
+      </div>
+      <label>Observação<textarea id="customerNote" rows="3" placeholder="Alguma observação?" style="width:100%;margin-top:5px;border:1px solid #ccc;border-radius:8px;padding:10px"></textarea></label>
+      <button type="button" class="primary" id="submitOrderButton" onclick="submitOrder()">Confirmar pedido</button>
+      <button type="button" class="secondary" onclick="hideCheckoutForm()">Voltar ao carrinho</button>
+    </div>
+    <button id="checkoutButton" type="button" class="primary checkout-button" onclick="showCheckoutForm()">Continuar para finalizar pedido</button>
+  </div>
+</div>
+<div id="orderSuccessModal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-box success-box"><h2>✅ Pedido recebido!</h2><p id="orderSuccessText"></p><button class="primary" onclick="closeOrderSuccess()">Fechar</button></div>
+</div>
+<div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">×</button><div id="ratingItems"></div></div></div>
+<div id="suggestionModal" class="modal"><div class="modal-box"><button class="close" onclick="closeSuggestion()">×</button><div id="suggestionContent"><h2>💡 Sugerir produto</h2><p>Envie o nome e uma foto do produto que gostaria de encontrar.</p><label>Nome do produto<input id="suggestionName" type="text" placeholder="Nome do produto"></label><label style="display:block;margin-top:10px">Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label style="display:block;margin-top:10px">Observação<textarea id="suggestionNote" rows="3" placeholder="Opcional" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea></label><button class="primary" style="width:100%;margin-top:12px" onclick="submitSuggestion()">Enviar sugestão</button><p id="suggestionMsg"></p></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260826"></script><script src="app.js?v=20260827-cat-review"></script></body></html>
