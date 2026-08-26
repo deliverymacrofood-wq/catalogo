@@ -221,30 +221,72 @@ function showCheckoutForm(){
   if(!cart.length)return alert('Carrinho vazio.');
   $('checkoutForm').classList.remove('hidden');
   $('checkoutButton').classList.add('hidden');
-  $('customerName').focus();
+  toggleCustomerType();
+  $('customerHasSalesCadastro').focus();
 }
 function hideCheckoutForm(){
   $('checkoutForm').classList.add('hidden');
   $('checkoutButton').classList.remove('hidden');
 }
-function closeOrderSuccess(){$('orderSuccessModal').style.display='none';closeCart()}
+function closeOrderSuccess(){ $('orderSuccessModal').style.display='none'; closeCart(); }
 function normalizePhone(v){return String(v||'').replace(/\D/g,'')}
+function normalizeDoc(v){return String(v||'').replace(/\D/g,'')}
+function toggleCustomerType(){
+  const has=$('customerHasSalesCadastro')?.value==='yes';
+  const noBox=$('newCustomerFields');
+  const docType=$('customerDocType');
+  const common=$('customerCommonFields');
+  if(noBox) noBox.classList.toggle('hidden',has);
+  const cnpj=!has && docType?.value==='cnpj';
+  const nameInput=$('customerName');
+  const docInput=$('customerCpfCnpj');
+  const nameLabel=nameInput?.parentElement;
+  const docLabel=docInput?.parentElement;
+  if(nameLabel) nameLabel.style.display=cnpj?'none':'block';
+  if(docLabel){
+    const label=docLabel.firstChild;
+    if(label) label.textContent=cnpj?'CNPJ':'CPF';
+  }
+  if(docInput) docInput.placeholder=cnpj?'00.000.000/0000-00':'000.000.000-00';
+  if(nameInput) nameInput.required=!cnpj;
+  if(docInput) docInput.required=true;
+  const cep=$('customerCep'), phone=$('customerWhatsapp');
+  if(cep) cep.required=!has && !cnpj;
+  if(phone) phone.required=!has && !cnpj;
+  if(!has && !cnpj && nameInput) nameInput.focus();
+}
+
 async function submitOrder(){
   if(!cart.length)return alert('Carrinho vazio.');
+  const hasCadastro=$('customerHasSalesCadastro').value==='yes';
+  const docType=hasCadastro?'cpf':$('customerDocType').value;
   const name=$('customerName').value.trim();
   const whatsapp=normalizePhone($('customerWhatsapp').value);
+  const email=$('customerEmail').value.trim().toLowerCase();
+  const cpfCnpj=normalizeDoc($('customerCpfCnpj').value);
+  const cep=normalizeDoc($('customerCep').value);
   const note=$('customerNote').value.trim();
-  if(name.length<2)return alert('Informe seu nome completo.');
-  if(whatsapp.length<10||whatsapp.length>13)return alert('Informe um WhatsApp válido com DDD.');
+  if(hasCadastro){
+    if(name.length<2)return alert('Informe o nome completo.');
+    if(cpfCnpj.length!==11)return alert('Informe um CPF válido com 11 números.');
+  }else if(docType==='cpf'){
+    if(name.length<2)return alert('Para CPF, o nome completo é obrigatório.');
+    if(whatsapp.length<10||whatsapp.length>13)return alert('Para CPF, o número de celular/WhatsApp é obrigatório.');
+    if(cep.length!==8)return alert('Para CPF, o CEP é obrigatório com 8 números.');
+    if(cpfCnpj.length!==11)return alert('Informe um CPF válido com 11 números.');
+  }else{
+    if(cpfCnpj.length!==14)return alert('Para CNPJ, informe um CNPJ válido com 14 números.');
+  }
   const {data:{session}}=await client.auth.getSession();
+  if(!session)return alert('Você precisa estar logado para fazer um pedido.');
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
   const items=cart.map(x=>({product_id:x.id,name:x.name,qty:x.qty,unit_price:Number(x.price),subtotal:Number((x.price*x.qty).toFixed(2)),image_url:x.image_url||''}));
-  const payload={user_id:session?.user?.id||null,customer_name:name,customer_phone:whatsapp,customer_email:session?.user?.email||null,note:note||null,items,total,status:'received'};
+  const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
   const {data,error}=await client.from('orders').insert(payload).select('order_number').single();
   if(error)return alert('Não foi possível registrar o pedido: '+error.message);
   localStorage.removeItem('macrofood_cart');
   cart=[];render();hideCheckoutForm();
-  $('orderSuccessText').textContent=`Seu pedido #${data.order_number} foi enviado para a Macrofood. O administrador vai conferir e informar pelo WhatsApp quando estiver pronto para pagamento.`;
+  $('orderSuccessText').textContent=`Seu pedido #${data.order_number} foi recebido. Você pode acompanhar o andamento em “Meus pedidos”. O administrador entrará em contato pelo WhatsApp quando estiver pronto para pagamento.`;
   $('orderSuccessModal').style.display='flex';
 }
 

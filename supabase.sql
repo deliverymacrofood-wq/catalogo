@@ -249,3 +249,42 @@ using(bucket_id='product-suggestions' and public.is_admin());
 drop policy if exists "admins delete product suggestion images" on storage.objects;
 create policy "admins delete product suggestion images" on storage.objects for delete to authenticated
 using(bucket_id='product-suggestions' and public.is_admin());
+
+-- Atualização dos pedidos: cadastro comercial e acompanhamento pelo cliente.
+alter table public.orders alter column customer_name drop not null;
+alter table public.orders alter column customer_phone drop not null;
+alter table public.orders add column if not exists sales_customer boolean not null default false;
+alter table public.orders add column if not exists document_type text check (document_type in ('cpf','cnpj'));
+alter table public.orders add column if not exists document_number text;
+alter table public.orders add column if not exists zipcode text;
+
+-- O cliente logado pode acompanhar apenas seus próprios pedidos.
+drop policy if exists "customers read own orders" on public.orders;
+create policy "customers read own orders" on public.orders for select to authenticated
+using(user_id=auth.uid() or public.is_admin());
+
+-- Cancelamento seguro: o cliente não pode alterar preço, itens ou outros dados do pedido.
+create or replace function public.cancel_my_order(target_order_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  changed boolean := false;
+begin
+  update public.orders
+     set status='cancelled', updated_at=now()
+   where id=target_order_id
+     and user_id=auth.uid()
+     and status in ('received','ready_payment','paid');
+  changed := found;
+  return changed;
+end;
+$$;
+revoke all on function public.cancel_my_order(uuid) from public;
+grant execute on function public.cancel_my_order(uuid) to authenticated;
+
+drop policy if exists "customers insert orders" on public.orders;
+create policy "customers insert orders" on public.orders for insert to authenticated
+with check(user_id=auth.uid());
