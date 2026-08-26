@@ -33,3 +33,11 @@ No Supabase, em Authentication > URL Configuration, adicione a URL pública do `
 No Supabase, em Authentication > Providers, habilite **Phone** e configure um provedor de SMS. Sem um provedor SMS configurado, o Supabase não consegue enviar o código e o cadastro por celular não funcionará.
 
 Depois de alterar o banco, execute o `supabase.sql` para adicionar o campo `profiles.phone`.
+
+
+## Nova regra de confirmação de conta
+- O cadastro não pede mais confirmação de e-mail ou celular.
+- Para permitir criação de conta sem confirmação imediata, no Supabase vá em Authentication > Providers > Email e desative a exigência de confirmação de e-mail.
+- O cliente confirma e-mail ou celular posteriormente em Minha conta.
+- O checkout bloqueia a compra se nenhum dos dois estiver confirmado e encaminha o cliente para Minha conta.
+- Para confirmação por SMS, configure um provedor SMS no Supabase.

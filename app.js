@@ -354,6 +354,13 @@ async function submitOrder(){
   }
   const {data:{session}}=await client.auth.getSession();
   if(!session)return alert('Você precisa estar logado para fazer um pedido.');
+  const emailConfirmed=!!session.user.email_confirmed_at;
+  const phoneConfirmed=!!session.user.phone_confirmed_at;
+  if(!emailConfirmed && !phoneConfirmed){
+    alert('Antes de finalizar a compra, confirme seu e-mail ou celular em “Minha conta”.');
+    location.href='login.html';
+    return;
+  }
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
   const items=cart.map(x=>({product_id:x.id,name:x.name,qty:x.qty,unit_price:Number(x.price),subtotal:Number((x.price*x.qty).toFixed(2)),image_url:x.image_url||''}));
   const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
