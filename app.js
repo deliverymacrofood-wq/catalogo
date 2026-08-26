@@ -331,3 +331,10 @@ function closeMobileMenu(){
   menu.classList.remove('open');
   menu.setAttribute('aria-hidden','true');
 }
+
+document.addEventListener('click',function(e){
+  const menu=document.getElementById('mobileMenu');
+  const trigger=e.target.closest?.('.mobile-head > button:first-child');
+  if(menu && menu.classList.contains('open') && !menu.contains(e.target) && !trigger) closeMobileMenu();
+});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMobileMenu(); });

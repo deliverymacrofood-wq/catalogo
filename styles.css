@@ -98,3 +98,87 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
   .mobile-menu{top:58px}
   .resolved-banner{align-items:flex-start;flex-wrap:wrap}.resolved-banner .secondary{margin-left:30px}
 }
+
+/* ===== CORREÇÃO MOBILE DEFINITIVA - MacroFood ===== */
+@media (max-width: 760px) {
+  html, body { width:100%; max-width:100%; overflow-x:hidden; }
+  .site-header { position:sticky; top:0; z-index:1000; background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff9700)!important; }
+  .mobile-head { position:relative; z-index:1001; display:flex!important; height:58px; padding:0 14px; align-items:center; justify-content:space-between; }
+  .mobile-head > button { width:42px; height:42px; display:grid; place-items:center; padding:0; }
+  .mobile-head > b { font-size:19px; letter-spacing:.2px; }
+  .mobile-search { display:block!important; padding:8px 12px 12px; background:transparent; }
+  .mobile-search .search { width:100%; height:52px; border-radius:14px; margin:0; }
+  .mobile-search .search input { min-width:0; font-size:16px; padding:13px 14px; }
+
+  /* O menu fica escondido até tocar nos 3 pontos. */
+  .mobile-menu { 
+    display:none!important;
+    position:fixed!important;
+    top:64px!important;
+    left:10px!important;
+    right:auto!important;
+    width:min(285px,calc(100vw - 20px))!important;
+    max-height:calc(100vh - 145px)!important;
+    overflow-y:auto!important;
+    background:#fff!important;
+    color:#252525!important;
+    border:1px solid #e8e8e8!important;
+    border-radius:16px!important;
+    padding:7px!important;
+    box-shadow:0 16px 42px rgba(0,0,0,.28)!important;
+    z-index:2000!important;
+  }
+  .mobile-menu.open { display:block!important; }
+  .mobile-menu-head { display:flex!important; color:#252525!important; background:#fff!important; }
+  .mobile-menu-head b { color:#8f0038!important; font-size:16px; }
+  .mobile-menu a,
+  .mobile-menu > button {
+    display:flex!important;
+    width:100%!important;
+    min-height:46px!important;
+    align-items:center!important;
+    gap:10px!important;
+    padding:11px 12px!important;
+    margin:2px 0!important;
+    border:0!important;
+    border-radius:10px!important;
+    background:#fff!important;
+    color:#242424!important;
+    font:700 14px/1.2 Arial,Helvetica,sans-serif!important;
+    text-decoration:none!important;
+    text-align:left!important;
+  }
+  .mobile-menu a:visited { color:#242424!important; }
+  .mobile-menu a:hover,
+  .mobile-menu a:focus,
+  .mobile-menu > button:hover,
+  .mobile-menu > button:focus { background:#fff2e8!important; color:#e45c00!important; outline:none; }
+
+  .hero-home { padding:7px 8px 4px!important; }
+  .banner-area { width:100%!important; max-width:none!important; margin:0!important; border-radius:12px!important; }
+  .banner-track { width:100%!important; aspect-ratio:2/1!important; min-height:0!important; }
+  .site-banner img { object-fit:cover!important; }
+
+  .catalog-main { width:100%!important; padding:9px 8px 78px!important; }
+  .featured-section,.promo-section,.categories-section,.products-section { width:100%!important; padding:13px!important; overflow:hidden!important; }
+  .section-head { align-items:flex-start!important; }
+  .section-head > div { min-width:0; }
+  .section-head h2 { line-height:1.15!important; }
+  .see-all { flex-shrink:0!important; }
+
+  .featured-grid { display:flex!important; overflow-x:auto!important; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding:2px 2px 7px!important; }
+  .feature-card { flex:0 0 158px!important; min-width:158px!important; width:158px!important; scroll-snap-align:start; }
+  .feature-pic { height:145px!important; }
+  .promo-grid { display:flex!important; overflow-x:auto!important; -webkit-overflow-scrolling:touch; padding-bottom:5px!important; }
+  .promo-card { flex:0 0 270px!important; min-width:270px!important; }
+  .products-section .grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
+  .products-section .card { min-width:0!important; }
+  .products-section .pic { height:145px!important; }
+
+  .mobile-bottom { z-index:1900!important; height:64px!important; padding-bottom:env(safe-area-inset-bottom)!important; }
+  .mobile-bottom a,.mobile-bottom button { min-width:20%; }
+}
+
+@media (min-width:761px) {
+  .mobile-menu,.mobile-head,.mobile-search,.mobile-bottom { display:none!important; }
+}
