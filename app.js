@@ -26,15 +26,23 @@ function renderCats(){
   $('cats').innerHTML=sectors.map(s=>`<button class="cat ${s===active?'active':''}" onclick="active='${s}';render()">${s==='Promoções'?'🔥 ':''}${s}</button>`).join('');
 }
 async function load(){
-  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr}]=await Promise.all([
-    client.from('products').select('*').eq('active',true).order('name'),
-    client.from('product_reviews').select('product_id,rating,user_id'),
-    client.from('site_banners').select('*').eq('active',true).order('sort_order',{ascending:true}).order('created_at',{ascending:true})
-  ]);
-  if(error){$('grid').innerHTML=`<div class="notice">Erro ao carregar catálogo: ${esc(error.message)}</div>`;return}
-  products=data||[];
+  // O catálogo deve continuar funcionando mesmo se uma tabela opcional
+  // (avaliações/banners) ainda não tiver sido criada no Supabase.
+  const productsReq=client.from('products').select('*').order('name');
+  const reviewsReq=client.from('product_reviews').select('product_id,rating,user_id');
+  const bannersReq=client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});
+  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr}]=await Promise.all([productsReq,reviewsReq,bannersReq]);
+
+  if(error){
+    $('grid').innerHTML=`<div class="notice"><b>Não foi possível carregar os produtos.</b><br>${esc(error.message)}<br><small>Confira se a tabela products existe e se a política de leitura pública foi criada no Supabase.</small></div>`;
+    return;
+  }
+
+  // Compatibilidade com versões antigas: se a coluna active existir,
+  // somente produtos ativos são mostrados. Se não existir, todos são exibidos.
+  products=(data||[]).filter(p=>p.active===undefined || p.active===null || p.active===true);
   reviews=rvErr?[]:(rv||[]);
-  banners=bnErr?[]:(bn||[]);
+  banners=bnErr?[]:(bn||[]).filter(b=>b.active===undefined || b.active===null || b.active===true);
   renderBanners();
   render();
 }

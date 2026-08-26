@@ -35,6 +35,15 @@ alter table public.products add constraint products_sector_check check (sector i
 ));
 
 create index if not exists products_active_sector_idx on public.products(active, sector);
+-- Reparo/compatibilidade do catálogo público. Garante que produtos antigos
+-- continuem visíveis e que o frontend possa consultar a tabela.
+update public.products set active=true where active is null;
+grant select on public.products to anon, authenticated;
+drop policy if exists "public active products" on public.products;
+create policy "public active products" on public.products
+  for select to anon,authenticated
+  using (coalesce(active,true)=true or public.is_admin());
+
 
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path=public as $$
