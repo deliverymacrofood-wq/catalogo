@@ -11,17 +11,27 @@ async function loadAccountHeader(){
   if(!el)return;
   try{
     const {data:{session}}=await client.auth.getSession();
-    if(!session){ el.textContent='👤 Minha conta'; el.href='login.html'; return; }
+    if(!session){
+      el.innerHTML='👤 Minha conta';
+      el.href='login.html';
+      return;
+    }
+
     let nickname=session.user.user_metadata?.nickname?.trim()||'';
+    let avatarUrl='';
     try{
-      const {data:p}=await client.from('profiles').select('nickname,avatar_url').eq('id',session.user.id).maybeSingle();
-      if(p?.nickname?.trim()) nickname=p.nickname.trim();
+      const {data:profile}=await client.from('profiles').select('nickname,avatar_url').eq('id',session.user.id).maybeSingle();
+      if(profile?.nickname?.trim()) nickname=profile.nickname.trim();
+      avatarUrl=profile?.avatar_url||'';
     }catch(_){}
-    el.innerHTML=`${p?.avatar_url?`<img class="mini-avatar" src="${esc(p.avatar_url)}" alt="">`:''}👤 ${esc(nickname||'Minha conta')}`;
+
+    // Após o login, substitui o botão "Minha conta" pela foto + apelido do cliente.
+    el.innerHTML=`${avatarUrl?`<img class="mini-avatar" src="${esc(avatarUrl)}" alt="Foto de ${esc(nickname||'cliente')}" onerror="this.style.display='none'">`:''}<span class="account-nickname">${esc(nickname||'Minha conta')}</span>`;
     el.href='login.html';
     el.title='Abrir minha conta';
+    el.setAttribute('aria-label','Abrir minha conta');
   }catch(e){
-    el.textContent='👤 Minha conta';
+    el.innerHTML='👤 Minha conta';
     el.href='login.html';
   }
 }
