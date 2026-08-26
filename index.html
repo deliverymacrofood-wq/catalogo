@@ -1,0 +1,9 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Macrofood | Catálogo</title><link rel="stylesheet" href="styles.css"></head><body>
+<div id="banners" class="banners"></div>
+<header><div class="top"><img class="logo" src="logo-macrofood.jpg"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div><a class="admin" href="admin.html">⚙ Administração</a></div></header>
+<section class="hero"><h2>Encontre tudo para o seu negócio</h2><p>Confira nossos produtos por setor.</p><div class="search"><input id="search" placeholder="🔎 Pesquisar produto..." oninput="render()"><button onclick="openCart()">🛒 <span id="cartCount">0</span></button></div></section>
+<main><div id="promoArea"></div><div class="cats" id="cats"></div><div class="grid" id="grid"></div></main>
+<footer><b>Macrofood • Catálogo Online</b><div class="footerContact">📱 WhatsApp para pedidos: <a id="footerWhats" target="_blank"></a> &nbsp; | &nbsp; 📸 Instagram: <a href="https://instagram.com/macrofoodpe" target="_blank">@macrofoodpe</a></div></footer>
+<div id="cartModal" class="modal"><div class="modalBox"><button class="close" onclick="closeCart()">✕</button><h2>Seu pedido</h2><div id="cartItems"></div><div class="cartTotal" id="cartTotal"></div><button class="whatsBtn" onclick="sendWhatsApp()">📲 Enviar pedido pelo WhatsApp</button></div></div>
+<div id="reviewModal" class="modal"><div class="modalBox"><button class="close" onclick="closeReview()">✕</button><h2>Avaliar produto</h2><p id="reviewProduct"></p><div class="stars" id="stars">★★★★★</div><textarea id="reviewText" placeholder="Comentário (opcional)"></textarea><button class="primary" onclick="submitReview()">Enviar avaliação</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="app.js"></script></body></html>
