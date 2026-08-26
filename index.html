@@ -1,9 +1,51 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Macrofood | Catálogo</title><link rel="stylesheet" href="styles.css"></head><body>
-<header><div class="top"><img class="logo" src="logo-macrofood.jpg"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div><div class="top-links"><a class="orders-link" href="pedidos.html">📦 Meus pedidos</a><a class="admin" href="login.html">👤 Minha conta</a></div></div></header>
-<section class="hero"><div id="bannerArea" class="banner-area hidden"></div><div class="hero-copy"><span class="eyebrow">MACROFOOD • CATÁLOGO ONLINE</span><h2>Encontre tudo para o seu negócio</h2><p>Produtos selecionados, promoções e novidades para facilitar suas compras.</p></div><div class="search"><input id="search" placeholder="🔎 Pesquisar produto..." oninput="render()"><button type="button" onclick="openCart()">🛒 <b id="cartCount">0</b><span class="search-cart-label"> Carrinho</span></button></div></section>
-<section class="featured-wrap"><div class="featured-head"><div><span class="eyebrow">SELEÇÃO MACROFOOD</span><h2>⭐ Produtos em destaque</h2><p>Os produtos que merecem atenção especial.</p></div><button class="featured-next" type="button" onclick="document.getElementById('featuredGrid').scrollBy({left:320,behavior:'smooth'})">Ver mais →</button></div><div class="featured-grid" id="featuredGrid"></div></section>
-<main><div class="cats" id="cats"></div><div class="suggestion-strip"><div><b>💡 Não encontrou um produto?</b><span>Sugira para a Macrofood e envie uma foto do produto.</span></div><button class="secondary" onclick="openSuggestion()">📷 Sugerir produto</button></div><div class="grid" id="grid"></div></main><footer>Macrofood • Catálogo Online<br><br>WhatsApp: <a href="https://wa.me/5581971178793">81 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
-<div id="cartModal" class="modal"><div class="modal-box"><button class="close" onclick="closeCart()">✕</button><h2>🛒 Seu pedido</h2><div id="cartItems"></div><div id="checkoutForm" class="checkout-form hidden"><h3>📱 Finalizar pedido</h3><p>Antes de finalizar, informe se você já possui cadastro no nosso WhatsApp de vendas.</p><label>Você tem cadastro no WhatsApp de vendas?<select id="customerHasSalesCadastro" onchange="toggleCustomerType()"><option value="yes">Sim, já tenho cadastro</option><option value="no">Não, quero me cadastrar</option></select></label><div id="customerCommonFields"><label>Nome completo<input id="customerName" autocomplete="name" placeholder="Seu nome completo"></label><label for="customerCpfCnpj">CPF<input id="customerCpfCnpj" inputmode="numeric" placeholder="000.000.000-00"></label></div><div id="newCustomerFields" class="hidden"><label>Tipo de cadastro<select id="customerDocType" onchange="toggleCustomerType()"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></label><label>CEP<input id="customerCep" inputmode="numeric" placeholder="00000-000"></label><label>Celular / WhatsApp<input id="customerWhatsapp" autocomplete="tel" inputmode="tel" placeholder="(81) 99999-9999"></label><label>E-mail<input id="customerEmail" autocomplete="email" type="email" placeholder="seu@email.com"></label></div><label>Observação <small>(opcional)</small><textarea id="customerNote" rows="3" placeholder="Ex.: horário preferido, observações..."></textarea><button class="primary" onclick="submitOrder()">✅ Enviar pedido</button><button class="secondary" onclick="hideCheckoutForm()">Voltar ao carrinho</button></div><button id="checkoutButton" class="primary full-btn" onclick="showCheckoutForm()">📦 Fazer pedido</button></div></div>
-<div id="suggestionModal" class="modal"><div class="modal-box suggestion-box"><button class="close" onclick="closeSuggestion()">✕</button><h2>💡 Sugerir um produto</h2><p class="suggestion-help">Envie uma sugestão para a Macrofood. Esta sugestão será vista somente pela equipe administrativa.</p><label>Nome do produto<input id="suggestionName" maxlength="100" placeholder="Ex.: Requeijão Cremoso 200g" required></label><label>Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp" required></label><small class="photo-help">JPG, PNG ou WEBP. Máximo de 5 MB.</small><label>Observação <small>(opcional)</small><textarea id="suggestionNote" rows="3" maxlength="500" placeholder="Marca, tamanho, onde encontrou, etc."></textarea></label><button class="primary" onclick="submitSuggestion()">📤 Enviar sugestão</button><p id="suggestionMsg" class="suggestion-msg"></p></div></div><div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">✕</button><div id="ratingItems"></div></div></div>
-<div id="orderSuccessModal" class="modal"><div class="modal-box success-box"><div class="success-icon">✓</div><h2>Pedido recebido!</h2><p id="orderSuccessText"></p><button class="primary" onclick="closeOrderSuccess()">Continuar</button></div></div>
+<body>
+<header class="site-header">
+  <div class="topbar">
+    <a class="brand-wrap" href="index.html"><img class="logo" src="logo-macrofood.jpg" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
+    <div class="desktop-search"><div class="search"><input id="search" placeholder="Buscar produtos..." oninput="render()"><span>🔎</span></div></div>
+    <div class="header-contact">💬 <span>ATENDIMENTO<br><b>(81) 97117-8793</b></span></div>
+    <a class="account-top admin" href="login.html">👤 <span class="account-nickname">Minha conta</span></a>
+    <button class="cart-top" onclick="openCart()">🛒 <span class="cart-label">Carrinho</span><b id="cartCount">0</b></button>
+  </div>
+  <nav class="desktop-nav">
+    <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
+    <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
+    <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">☆ Novidades</button>
+    <a href="pedidos.html">📦 Meus pedidos</a>
+    <a href="suporte.html">💬 Suporte</a>
+    <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
+  </nav>
+  <div class="mobile-head"><button onclick="document.body.classList.toggle('mobile-menu-open')">☰</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
+  <div class="mobile-search"><div class="search"><input id="mobileSearch" placeholder="Buscar produtos..." oninput="syncSearch(this.value)"><span>🔎</span></div></div>
+</header>
+
+<section class="hero-home">
+  <div id="bannerArea" class="banner-area hidden"></div>
+</section>
+
+<main class="catalog-main">
+  <section class="featured-section" id="featuredSection">
+    <div class="section-head"><div><h2>⭐ PRODUTOS EM DESTAQUE</h2><p>Selecionamos os melhores produtos para você!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todos os destaques ›</button></div>
+    <div id="featuredGrid" class="featured-grid"></div>
+  </section>
+
+  <section class="promo-section" id="promoSection">
+    <div class="section-head"><div><h2>🔥 PROMOÇÕES</h2><p>Aproveite as ofertas especiais!</p></div><button class="see-all" onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todas as promoções ›</button></div>
+    <div id="promoGrid" class="promo-grid"></div>
+  </section>
+
+  <section class="categories-section">
+    <div class="section-head"><div><h2>▢ CATEGORIAS</h2><p>Encontre rapidamente o que procura.</p></div></div>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section class="suggestion-strip"><div><b>💡 Não encontrou um produto?</b><span>Sugira para a MacroFood e envie uma foto do produto.</span></div><button class="secondary" onclick="openSuggestion()">📷 Sugerir produto</button></section>
+
+  <section id="productsSection" class="products-section">
+    <div class="section-head"><div><h2>🛍️ TODOS OS PRODUTOS</h2><p>Confira nosso catálogo completo.</p></div></div>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+<footer>Macrofood • Catálogo Online<br><br>WhatsApp: <a href="https://wa.me/5581971178793">81 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
+<nav class="mobile-bottom"><a href="index.html">⌂<span>Início</span></a><a href="#cats">☰<span>Categorias</span></a><button onclick="document.getElementById('mobileSearch').focus();window.scrollTo({top:0,behavior:'smooth'})">⌕<span>Buscar</span></button><a href="pedidos.html">▣<span>Pedidos</span></a><a href="login.html">♙<span>Perfil</span></a></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="app.js"></script></body></html>

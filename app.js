@@ -152,41 +152,47 @@ function priceHtml(p){
   }
   return `<div class="price-box"><div class="price">Por: ${money(p.price)}</div></div>`;
 }
-function renderFeatured(){
-  const el=$('featuredGrid');
-  if(!el)return;
-  let featured=products.filter(p=>p.is_featured===true || p.featured===true);
-  if(!featured.length) featured=products.slice(0,4);
-  featured=featured.slice(0,8);
-  el.innerHTML=featured.length?featured.map(p=>`<article class="featured-card">
-    <div class="featured-pic">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦'}<span class="featured-badge">⭐ DESTAQUE</span></div>
-    <div class="featured-info"><div class="sector">${esc(p.sector)}</div><div class="name">${esc(p.name)}</div>${priceHtml(p)}${stars(p)}<button class="primary featured-action" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar ao carrinho'}</button></div>
-  </article>`).join(''):'<div class="notice">Nenhum produto em destaque.</div>';
+function syncSearch(value){
+  const input=$('search'); if(input) input.value=value||'';
+  render();
 }
-
+function productCard(p,featured=false){
+  const img=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦';
+  const price=p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?`<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)}</div>`:`<div class="feature-price">${money(p.price)}</div>`;
+  return `<article class="${featured?'feature-card':'card'}">
+    <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">★ DESTAQUE</span>':''}${img}</div>
+    <div class="${featured?'feature-info':'info'}">
+      ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
+      <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>
+      ${featured&&p.product_code?`<small class="muted">Código: ${esc(p.product_code)}</small>`:''}
+      ${featured?price:priceHtml(p)}
+      ${featured?`<button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
+    </div>
+  </article>`;
+}
+function renderFeatured(){
+  const el=$('featuredGrid'); if(!el)return;
+  const marked=products.filter(p=>p.is_featured===true || p.featured===true);
+  const featured=(marked.length?marked:products).slice(0,6);
+  el.innerHTML=featured.length?featured.map(p=>productCard(p,true)).join(''):'<div class="notice">Nenhum produto disponível.</div>';
+}
+function renderPromos(){
+  const el=$('promoGrid'); if(!el)return;
+  const promos=products.filter(p=>p.promo_price!=null&&Number(p.promo_price)<Number(p.price)).slice(0,4);
+  el.innerHTML=promos.length?promos.map(p=>`<article class="promo-card"><img src="${esc(p.image_url||'')}" alt="${esc(p.name)}"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div><div class="new">Por ${money(p.promo_price)}</div><button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`).join(''):'<div class="notice">Nenhuma promoção ativa no momento.</div>';
+}
 function render(){
   renderCats();
   renderFeatured();
+  renderPromos();
   $('cartCount').textContent=cart.reduce((n,x)=>n+x.qty,0);
+  if($('mobileCartCount'))$('mobileCartCount').textContent=cart.reduce((n,x)=>n+x.qty,0);
   let q=$('search').value.toLowerCase().trim();
   let list=products.filter(p=>{
     const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):p.sector===active);
     return categoryOk&&(!q||p.name.toLowerCase().includes(q)||p.sector.toLowerCase().includes(q));
   });
-  $('grid').innerHTML=list.length?list.map(p=>`<article class="card">
-    <div class="pic">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦'}</div>
-    <div class="info">
-      <div class="sector">${esc(p.sector)}</div>
-      <div class="name">${esc(p.name)}</div>
-      ${p.product_code?`<div class="code">Código: ${esc(p.product_code)}</div>`:''}
-      ${priceHtml(p)}
-      ${stars(p)}
-      <div class="card-actions">
-        <button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>
-        <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button>
-      </div>
-    </div>
-  </article>`).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
+  $('grid').innerHTML=list.length?list.map(p=>productCard(p,false)).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
 }
 function addCart(id){
   const p=products.find(x=>x.id===id);if(!p||p.in_stock===false)return;
