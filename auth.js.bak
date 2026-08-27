@@ -58,7 +58,7 @@ async function init(){
       </div>`;
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       initVerificationPanel(session);
-      $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.rpc('update_my_profile',{p_nickname:value});if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
+      $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.from('profiles').update({nickname:value}).eq('id',session.user.id);if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
       $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='index.html'};
       return;
     }
@@ -150,7 +150,7 @@ async function signup(){
   if(error)return msg('Não foi possível criar a conta: '+error.message);
   if(!data.user)return msg('Não foi possível criar a conta.');
   if(phone){
-    try{await client.rpc('update_my_profile',{p_nickname:nickname,p_phone:phone||null});}catch(e){}
+    try{await client.from('profiles').update({nickname,phone}).eq('id',data.user.id);}catch(e){}
   }
   if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada com sucesso! A confirmação será feita em Minha conta quando você quiser comprar.','green');setTimeout(()=>location.href='index.html',900);}
   else msg('Conta criada. Se o Supabase estiver exigindo confirmação de e-mail, desative “Confirm email” em Authentication > Providers > Email para permitir entrar sem confirmar agora.','green');
@@ -237,7 +237,7 @@ async function confirmPhoneChange(){
 function setVerificationMsg(text,color){const el=$('verificationMsg');if(el){el.textContent=text;el.style.color=color||'#a00000';}}
 
 async function finishProfile(user,nickname,file){
-  try{await client.rpc('update_my_profile',{p_nickname:nickname,p_phone:user.phone||null});if(file)await uploadAvatar(file,user.id);}catch(e){}
+  try{await client.from('profiles').update({nickname,phone:user.phone||null}).eq('id',user.id);if(file)await uploadAvatar(file,user.id);}catch(e){}
 }
 
 async function uploadAvatar(file,userId){
@@ -253,7 +253,7 @@ async function uploadAvatar(file,userId){
   if(up)return msg('Não foi possível enviar a foto: '+up.message);
   const {data}=client.storage.from('avatars').getPublicUrl(path);
   const avatarUrl=data.publicUrl+'?v='+Date.now();
-  const {error}=await client.rpc('update_my_profile',{p_avatar_url:avatarUrl});
+  const {error}=await client.from('profiles').update({avatar_url:avatarUrl}).eq('id',uid);
   if(error)return msg('Foto enviada, mas não foi possível salvar o perfil: '+error.message);
   const img=$('profilePhoto');
   if(img){img.src=avatarUrl;img.style.display='block';if(img.nextElementSibling)img.nextElementSibling.style.display='none';}

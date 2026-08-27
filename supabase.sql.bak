@@ -89,52 +89,8 @@ alter table public.products enable row level security;
 
 drop policy if exists "profiles own read" on public.profiles;
 create policy "profiles own read" on public.profiles for select to authenticated using(id=auth.uid());
--- IMPORTANTE: clientes não podem mais alterar diretamente o próprio perfil.
--- Isso impede que um cliente transforme sua conta em administrador alterando `role`.
 drop policy if exists "profiles own update" on public.profiles;
-drop policy if exists "profiles self update" on public.profiles;
-
-create or replace function public.update_my_profile(
-  p_nickname text default null,
-  p_avatar_url text default null,
-  p_phone text default null
-)
-returns public.profiles
-language plpgsql
-security definer
-set search_path=public
-as $$
-declare
-  result public.profiles;
-begin
-  if auth.uid() is null then
-    raise exception 'Não autenticado';
-  end if;
-
-  if p_nickname is not null and (char_length(trim(p_nickname)) < 2 or char_length(trim(p_nickname)) > 30) then
-    raise exception 'Apelido inválido';
-  end if;
-
-  if p_phone is not null and char_length(regexp_replace(p_phone, '\D', '', 'g')) > 0
-     and char_length(regexp_replace(p_phone, '\D', '', 'g')) not between 10 and 13 then
-    raise exception 'Celular inválido';
-  end if;
-
-  update public.profiles
-     set nickname = case when p_nickname is null then nickname else nullif(trim(p_nickname),'') end,
-         avatar_url = case when p_avatar_url is null then avatar_url else p_avatar_url end,
-         phone = case when p_phone is null then phone else nullif(trim(p_phone),'') end
-   where id=auth.uid()
-   returning * into result;
-
-  if result.id is null then
-    raise exception 'Perfil não encontrado';
-  end if;
-  return result;
-end;
-$$;
-revoke all on function public.update_my_profile(text,text,text) from public;
-grant execute on function public.update_my_profile(text,text,text) to authenticated;
+create policy "profiles own update" on public.profiles for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
 
 drop policy if exists "public active products" on public.products;
 create policy "public active products" on public.products for select to anon,authenticated using(coalesce(active,true)=true or public.is_admin());
@@ -268,103 +224,6 @@ create table if not exists public.orders(
 );
 create index if not exists orders_status_created_idx on public.orders(status,created_at desc);
 create index if not exists orders_user_idx on public.orders(user_id);
-
--- Proteção de integridade dos pedidos: o cliente não pode manipular preço, subtotal
--- ou total no navegador. O banco recalcula tudo usando os preços cadastrados.
-create or replace function public.validate_order_totals()
-returns trigger
-language plpgsql
-security definer
-set search_path=public
-as $$
-declare
-  item jsonb;
-  p public.products%rowtype;
-  pid uuid;
-  qty numeric;
-  normal_price numeric;
-  wholesale_price numeric;
-  wholesale_qty integer;
-  wholesale_mode text;
-  valid_wholesale boolean;
-  w_qty numeric;
-  n_qty numeric;
-  expected_subtotal numeric;
-  expected_total numeric := 0;
-  supplied_subtotal numeric;
-  supplied_total numeric;
-  item_count integer := 0;
-begin
-  if auth.uid() is null or new.user_id is null or new.user_id <> auth.uid() then
-    raise exception 'Pedido inválido: usuário não autenticado';
-  end if;
-
-  if jsonb_typeof(new.items) <> 'array' or jsonb_array_length(new.items) < 1 or jsonb_array_length(new.items) > 100 then
-    raise exception 'Itens do pedido inválidos';
-  end if;
-
-  for item in select value from jsonb_array_elements(new.items) loop
-    item_count := item_count + 1;
-    begin
-      pid := (item->>'product_id')::uuid;
-      qty := (item->>'qty')::numeric;
-    exception when others then
-      raise exception 'Produto ou quantidade inválidos';
-    end;
-
-    if qty <= 0 or qty > 9999 or qty <> trunc(qty) then
-      raise exception 'Quantidade inválida';
-    end if;
-
-    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
-    if not found then
-      raise exception 'Produto não disponível';
-    end if;
-
-    normal_price := case when p.promo_price is not null and p.promo_price > 0 and p.promo_price < p.price then p.promo_price else p.price end;
-    wholesale_price := p.wholesale_price;
-    wholesale_qty := p.wholesale_qty;
-    wholesale_mode := p.wholesale_mode;
-    valid_wholesale := wholesale_price is not null and wholesale_price > 0 and wholesale_qty is not null and wholesale_qty > 0 and wholesale_price < normal_price;
-
-    if valid_wholesale and wholesale_mode='block' then
-      w_qty := floor(qty / wholesale_qty) * wholesale_qty;
-      n_qty := qty - w_qty;
-    elsif valid_wholesale and wholesale_mode='threshold' and qty >= wholesale_qty then
-      w_qty := qty;
-      n_qty := 0;
-    else
-      w_qty := 0;
-      n_qty := qty;
-    end if;
-
-    expected_subtotal := round((n_qty * normal_price) + (w_qty * wholesale_price),2);
-    supplied_subtotal := round(coalesce((item->>'subtotal')::numeric, -1),2);
-    if supplied_subtotal <> expected_subtotal then
-      raise exception 'Preço do pedido inválido para o produto %', p.name;
-    end if;
-
-    expected_total := expected_total + expected_subtotal;
-  end loop;
-
-  supplied_total := round(coalesce(new.total,-1),2);
-  expected_total := round(expected_total,2);
-  if supplied_total <> expected_total then
-    raise exception 'Total do pedido inválido';
-  end if;
-
-  new.total := expected_total;
-  new.updated_at := now();
-  return new;
-end;
-$$;
-revoke all on function public.validate_order_totals() from public;
-grant execute on function public.validate_order_totals() to authenticated;
-
-drop trigger if exists trg_validate_order_totals on public.orders;
-create trigger trg_validate_order_totals
-before insert on public.orders
-for each row execute function public.validate_order_totals();
 
 alter table public.orders enable row level security;
 drop policy if exists "customers insert orders" on public.orders;

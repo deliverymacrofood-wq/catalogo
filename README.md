@@ -41,3 +41,20 @@ Depois de alterar o banco, execute o `supabase.sql` para adicionar o campo `prof
 - O cliente confirma e-mail ou celular posteriormente em Minha conta.
 - O checkout bloqueia a compra se nenhum dos dois estiver confirmado e encaminha o cliente para Minha conta.
 - Para confirmação por SMS, configure um provedor SMS no Supabase.
+
+## Segurança reforçada
+
+Esta versão adiciona duas proteções importantes no Supabase:
+
+1. **Escalada de privilégio bloqueada:** clientes não conseguem alterar diretamente `profiles.role`. A atualização do perfil passa pela função `update_my_profile`, que só permite apelido, foto e telefone.
+2. **Pedido protegido no banco:** o Supabase recalcula o preço, atacado e total dos pedidos antes de gravar. Assim, alterar valores no navegador não permite comprar por preço falsificado.
+
+### Configurações recomendadas no Supabase
+- Nunca coloque a chave `service_role` no GitHub ou em JavaScript do navegador. O site deve usar somente a chave `anon`/publishable.
+- Mantenha **RLS (Row Level Security)** ativado nas tabelas do projeto.
+- Em Authentication, mantenha proteção contra senhas vazadas habilitada quando disponível e use uma senha forte para administradores.
+- Não transforme nenhum cliente em administrador pelo site. A promoção para `role='admin'` deve ser feita somente por um administrador confiável no banco/console.
+- Depois de aplicar o `supabase.sql`, teste uma conta de cliente tentando alterar o perfil: ela deve conseguir alterar apenas apelido/foto/telefone e nunca `role`.
+
+### Aplicação
+Execute o arquivo `supabase.sql` no **Supabase > SQL Editor**. Depois publique os arquivos do ZIP no GitHub.
