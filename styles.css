@@ -435,3 +435,45 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
 @media(max-width:760px){.category-add-form{flex-direction:column;align-items:stretch}.category-add-form button{width:100%}}
 
 .verification-account-card{margin-bottom:18px}.verification-summary{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}.verification-summary b{font-size:15px}.verification-summary small,.verify-option small{color:#777;line-height:1.4}.verification-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.verify-option{border:1px solid #eee;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fff}.verify-option input{margin-top:2px}.verify-option button{margin-top:4px}.verify-box.hidden{display:none}@media(max-width:700px){.verification-choice-grid{grid-template-columns:1fr}.verify-option{padding:12px}.verification-account-card{padding:14px}}
+
+
+/* Correção final: carrinho no celular e acesso somente para clientes logados */
+.cart-modal{z-index:500!important}
+.cart-box{display:flex;flex-direction:column;overflow:hidden!important;box-sizing:border-box}
+.cart-box .cart-items{overflow:auto;min-height:0}
+.cart-box .checkout-form{overflow:auto;min-height:0}
+.cart-box .checkout-button{flex:0 0 auto}
+@media(max-width:600px){
+  body{padding-bottom:74px}
+  .cart-modal{padding:0!important;align-items:flex-end!important}
+  .cart-box{
+    width:100%!important;
+    height:auto!important;
+    max-height:calc(100dvh - 8px)!important;
+    min-height:0!important;
+    border-radius:18px 18px 0 0!important;
+    padding:16px 14px calc(12px + env(safe-area-inset-bottom))!important;
+    padding-bottom:max(12px, env(safe-area-inset-bottom))!important;
+  }
+  .cart-box .cart-items{max-height:38dvh;overflow-y:auto}
+  .cart-box .checkout-form{
+    max-height:52dvh;
+    overflow-y:auto;
+    padding-bottom:8px;
+  }
+  .cart-box .checkout-button{
+    position:sticky;
+    bottom:0;
+    z-index:3;
+    background:#a9003f;
+    box-shadow:0 -8px 18px rgba(0,0,0,.08);
+    margin-top:10px;
+    min-height:48px;
+  }
+  .cart-box .checkout-form .primary,
+  .cart-box .checkout-form .secondary{min-height:46px}
+  .cart-row{grid-template-columns:54px minmax(0,1fr);gap:8px}
+  .cart-row .qty{grid-column:2;justify-content:flex-start}
+  .cart-subtotal{grid-column:2;justify-self:end;grid-row:2;margin-top:-34px}
+  .cart-total{font-size:18px;padding:12px 0}
+}

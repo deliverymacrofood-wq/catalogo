@@ -201,7 +201,13 @@ function render(){
 let pendingCartProduct=null;
 let pendingCartQty=1;
 
-function addCart(id){
+async function addCart(id){
+  const {data:{session}} = await client.auth.getSession();
+  if(!session){
+    alert('Para adicionar produtos ao carrinho, entre na sua conta ou crie uma conta.');
+    location.href='login.html?redirect=index.html';
+    return;
+  }
   const p=products.find(x=>x.id===id);
   if(!p||p.in_stock===false)return;
   pendingCartProduct=p;
