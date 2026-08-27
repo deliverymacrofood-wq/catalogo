@@ -180,7 +180,7 @@ async function sendEmailVerification(){
   const {data:{user}}=await client.auth.getUser();
   const email=user?.email;
   if(!email)return setVerificationMsg('Não encontramos seu e-mail.','red');
-  const {error}=await client.auth.reauthenticate();
+  const {error}=await client.auth.signInWithOtp({email, options:{shouldCreateUser:false}});
   if(error)return setVerificationMsg('Não foi possível enviar o código: '+error.message);
   $('emailVerifyBox')?.classList.remove('hidden');
   setVerificationMsg('Enviamos um código de verificação para seu e-mail. Digite o código abaixo.','green');
@@ -190,7 +190,7 @@ async function confirmEmailCode(){
   const email=user?.email;
   const token=$('accountEmailOtp')?.value.trim();
   if(!email||!token)return setVerificationMsg('Digite o código recebido por e-mail.');
-  const {error}=await client.auth.verifyOtp({email,token,type:'reauthentication'});
+  const {error}=await client.auth.verifyOtp({email,token,type:'email'});
   if(error)return setVerificationMsg('Código inválido ou expirado: '+error.message);
   const {error:markError}=await client.rpc('mark_email_contact_verified');
   if(markError)return setVerificationMsg('O código foi validado, mas não conseguimos salvar a confirmação. Execute o SQL de atualização do ZIP no Supabase.');

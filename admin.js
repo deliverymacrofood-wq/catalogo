@@ -83,7 +83,24 @@ async function productTab(){
 async function load(){const {data,error}=await client.from('products').select('*').order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="notice">'+esc(error.message)+'</div>';return}products=data||[];$('list').innerHTML=products.length?products.map(p=>`<div class="product-admin-row"><img class="thumb" src="${esc(p.image_url||'')}" alt=""><div class="grow"><b>${esc(p.name)} ${p.is_featured?'<span class=\"featured-admin-badge\">⭐ Destaque</span>':''}</b><small>${esc(p.sector)} • ${p.unit==='kg'?'Kg':'Unidade'} • ${money(p.price)} ${p.promo_price!=null?'• Promo '+money(p.promo_price):''} ${p.wholesale_price!=null?'• Atacado '+money(p.wholesale_price)+' / '+p.wholesale_qty+' '+(p.unit==='kg'?'kg':'un.') :''} • ${p.in_stock===false?'Sem estoque':'Em estoque'}</small></div><button class="outline-btn" onclick="edit('${p.id}')">Editar</button><button class="danger" onclick="removeProduct('${p.id}')">Excluir</button></div>`).join(''):'<div class="empty-state">Nenhum produto cadastrado.</div>'}
 async function upload(file){if(!file)return null;const path=`${crypto.randomUUID()}.${file.name.split('.').pop().toLowerCase()}`;const {error}=await client.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});if(error)throw error;return client.storage.from('product-images').getPublicUrl(path).data.publicUrl}
 async function save(e){e.preventDefault();const price=Number($('price').value),promo=$('promo').value?Number($('promo').value):null;const wholesalePrice=$('wholesalePrice').value?Number($('wholesalePrice').value):null;const wholesaleQty=$('wholesaleQty').value?Number($('wholesaleQty').value):null;const wholesaleMode=$('wholesaleMode').value;if(promo!==null&&promo>=price)return alert('O preço promocional deve ser menor que o preço normal.');if(wholesalePrice!==null&&wholesalePrice>=price)return alert('O preço de atacado deve ser menor que o preço normal.');if((wholesalePrice!==null)!==(wholesaleQty!==null))return alert('Preencha a quantidade e o preço de atacado juntos.');if(wholesaleQty!==null&&(!Number.isInteger(wholesaleQty)||wholesaleQty<1))return alert('A quantidade de atacado deve ser um número inteiro maior que zero.');const payload={name:$('name').value.trim(),price,unit:$('unit').value,sector:$('sector').value,in_stock:$('stock').value==='true',promo_price:promo,wholesale_mode:wholesalePrice!==null?wholesaleMode:null,wholesale_qty:wholesaleQty,wholesale_price:wholesalePrice,is_featured:$('featured').checked,active:true,updated_at:new Date().toISOString()};const f=$('image').files[0];try{if(f)payload.image_url=await upload(f);const r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);if(r.error)throw r.error;editing=null;productTab();alert('Produto salvo!')}catch(e){alert('Erro: '+e.message)}}
-function edit(id){const p=products.find(x=>x.id===id);if(!p)return;editing=id;productTab();setTimeout(()=>{$('name').value=p.name;$('price').value=p.price;$('unit').value=p.unit||'unidade';$('sector').value=p.sector;$('stock').value=String(p.in_stock!==false);$('promo').value=p.promo_price??'';$('wholesaleMode').value=p.wholesale_mode||'threshold';$('wholesaleQty').value=p.wholesale_qty??'';$('wholesalePrice').value=p.wholesale_price??'';$('featured').checked=p.is_featured===true;window.scrollTo({top:0,behavior:'smooth'})},0)}
+async function edit(id){
+  const cached=products.find(x=>String(x.id)===String(id));
+  const p=cached || (await client.from('products').select('*').eq('id',id).maybeSingle()).data;
+  if(!p){alert('Produto não encontrado.');return;}
+  editing=p.id;
+  await productTab();
+  $('name').value=p.name||'';
+  $('price').value=p.price??'';
+  $('unit').value=p.unit||'unidade';
+  $('sector').value=p.sector||sectors[0]||'';
+  $('stock').value=String(p.in_stock!==false);
+  $('promo').value=p.promo_price??'';
+  $('wholesaleMode').value=p.wholesale_mode||'threshold';
+  $('wholesaleQty').value=p.wholesale_qty??'';
+  $('wholesalePrice').value=p.wholesale_price??'';
+  $('featured').checked=p.is_featured===true;
+  const form=$('pf'); if(form) form.scrollIntoView({behavior:'smooth',block:'start'});
+}
 async function removeProduct(id){if(!confirm('Excluir este produto?'))return;const {error}=await client.from('products').delete().eq('id',id);if(error)alert(error.message);else load()}
 async function categoriesTab(){
   const {data,error}=await client.from('categories').select('id,name,created_at').order('name');
