@@ -477,8 +477,16 @@ async function submitOrder(){
   if(error)return alert('Não foi possível registrar o pedido: '+error.message);
   if(cartUserId){localStorage.removeItem(cartStorageKey(cartUserId));}
   cart=[];render();hideCheckoutForm();
+  closeCart();
   $('orderSuccessText').textContent=`Seu pedido #${data.order_number} foi recebido. Você pode acompanhar o andamento em “Meus pedidos”. O administrador entrará em contato pelo WhatsApp quando estiver pronto para pagamento.`;
   $('orderSuccessModal').style.display='flex';
+  // Após concluir o pedido, fecha automaticamente a tela de confirmação e
+  // devolve o cliente ao catálogo, sem deixar o carrinho/checkout aberto.
+  clearTimeout(window.__orderSuccessTimer);
+  window.__orderSuccessTimer=setTimeout(()=>{
+    closeOrderSuccess();
+    window.scrollTo({top:0,behavior:'smooth'});
+  },1800);
 }
 
 
