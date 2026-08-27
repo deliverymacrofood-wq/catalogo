@@ -37,3 +37,13 @@ Isso garante que o banco também recalcule/valide o total e impede que um pedido
 6. Teste um produto sem atacado e um produto com atacado.
 
 Se existir algum produto antigo com `price` nulo ou `0`, o SQL de diagnóstico no final do arquivo mostra quais são. Corrija o preço desse produto no painel administrativo.
+
+## Correção v2 — catálogo e total
+
+Esta versão também corrige o erro JavaScript `priceHtml is not defined`, que interrompia o `render()` do catálogo e fazia aparecer "Não foi possível carregar o catálogo" mesmo quando a consulta à tabela `products` funcionava.
+
+### Importante no Supabase
+
+O arquivo `CORRECAO_ERRO_TOTAL_PEDIDO.sql` precisa ser executado no **Supabase > SQL Editor**. O código do site envia um `total` numérico, mas a proteção do banco também deve estar instalada.
+
+Depois de publicar os arquivos no GitHub Pages, faça uma atualização forçada do navegador (Ctrl+F5 no computador; no celular, feche a página e abra novamente).

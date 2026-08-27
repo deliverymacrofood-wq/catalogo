@@ -239,6 +239,25 @@ function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
   render();
 }
+function priceHtml(p){
+  const unit=unitLabel(p);
+  const normal=numericValue(p?.price);
+  const promo=numericValue(p?.promo_price);
+  if(normal===null || normal<=0){
+    return '<div class="feature-price">Preço indisponível</div>';
+  }
+  const hasPromo=promo!==null && promo>0 && promo<normal;
+  const base=hasPromo?promo:normal;
+  let html=hasPromo
+    ? `<div class="oldprice">De: <s>${money(normal)}</s></div><div class="price">Por: ${money(base)} / ${unit}</div>`
+    : `<div class="price">${money(base)} / ${unit}</div>`;
+  const wholesalePrice=numericValue(p?.wholesale_price);
+  const wholesaleQty=Number(p?.wholesale_qty);
+  if(wholesalePrice!==null && wholesalePrice>0 && wholesalePrice<base && Number.isInteger(wholesaleQty) && wholesaleQty>0){
+    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(wholesalePrice)} / ${unit} ${p?.wholesale_mode==='block'?'a cada':'a partir de'} ${wholesaleQty} ${unit}</div>`;
+  }
+  return html;
+}
 function marketingPriceHtml(p){
   const unit=unitLabel(p);
   const hasPromo=p.promo_price!=null&&Number(p.promo_price)<Number(p.price);
