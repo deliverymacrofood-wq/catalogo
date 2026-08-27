@@ -26,9 +26,3 @@ Substitua os arquivos da versão anterior por todos os arquivos deste ZIP. Depoi
 
 ### Relatório de vendas por período
 No Dashboard administrativo, o total de vendas agora aceita **data inicial e data final**. Exemplo: 01/01/2026 até 05/01/2026. O sistema soma somente pedidos com status **Finalizado** e considera a data de finalização (`updated_at`).
-
-## Atualização: ativar/desativar atacado
-No cadastro/edição de produto existe agora a opção **"Este produto terá preço de atacado"**.
-- Desmarcado: o produto usa somente o preço normal e os campos de atacado ficam ocultos.
-- Marcado: aparecem tipo de regra, quantidade X e preço de atacado.
-- Ao editar um produto já configurado com atacado, a opção aparece marcada automaticamente.
