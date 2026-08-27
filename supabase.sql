@@ -593,3 +593,29 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 insert into public.contact_verifications(user_id)
 select id from auth.users
 on conflict(user_id) do nothing;
+
+
+-- Chat exclusivo de cada pedido: disponível enquanto o pedido estiver em andamento.
+create table if not exists public.order_chat_messages(
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  sender_role text not null check(sender_role in ('user','admin')),
+  message text not null check(char_length(trim(message)) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists order_chat_messages_order_created_idx on public.order_chat_messages(order_id,created_at);
+alter table public.order_chat_messages enable row level security;
+drop policy if exists "customers read own order chat" on public.order_chat_messages;
+create policy "customers read own order chat" on public.order_chat_messages for select to authenticated
+using(exists(select 1 from public.orders o where o.id=order_id and o.user_id=auth.uid()));
+drop policy if exists "admins read order chat" on public.order_chat_messages;
+create policy "admins read order chat" on public.order_chat_messages for select to authenticated
+using(public.is_admin());
+drop policy if exists "customers send order chat" on public.order_chat_messages;
+create policy "customers send order chat" on public.order_chat_messages for insert to authenticated
+with check(sender_role='user' and user_id=auth.uid() and exists(select 1 from public.orders o where o.id=order_id and o.user_id=auth.uid() and o.status in ('received','ready_payment','paid')));
+drop policy if exists "admins send order chat" on public.order_chat_messages;
+create policy "admins send order chat" on public.order_chat_messages for insert to authenticated
+with check(sender_role='admin' and public.is_admin() and exists(select 1 from public.orders o where o.id=order_id and o.status in ('received','ready_payment','paid')));
+grant select,insert on public.order_chat_messages to authenticated;

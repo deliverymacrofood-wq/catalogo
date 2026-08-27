@@ -444,6 +444,17 @@ async function showCheckoutForm(){
   if(!cart.length)return alert('Carrinho vazio.');
   $('checkoutForm').classList.remove('hidden');
   $('checkoutButton').classList.add('hidden');
+  // O telefone fica sempre associado ao pedido para que o administrador
+  // consiga entrar em contato com o cliente pelo WhatsApp.
+  try{
+    const {data:profile}=await client.from('profiles').select('nickname,phone').eq('id',session.user.id).maybeSingle();
+    const phone=$('customerWhatsapp');
+    if(phone && !phone.value && profile?.phone) phone.value=profile.phone;
+    const email=$('customerEmail');
+    if(email && !email.value) email.value=session.user.email||'';
+    const name=$('customerName');
+    if(name && !name.value && profile?.nickname) name.value=profile.nickname;
+  }catch(e){console.warn('Não foi possível carregar os dados do contato:',e)}
   toggleCustomerType();
   $('customerHasSalesCadastro').focus();
 }
@@ -476,7 +487,7 @@ function toggleCustomerType(){
   if(docInput) docInput.required=true;
   const cep=$('customerCep'), phone=$('customerWhatsapp');
   if(cep) cep.required=!has && !cnpj;
-  if(phone) phone.required=!has && !cnpj;
+  if(phone) phone.required=true;
   if(!has && !cnpj && nameInput) nameInput.focus();
 }
 
@@ -492,12 +503,13 @@ async function submitOrder(){
   const cep=normalizeDoc($('customerCep')?.value);
   const note=$('customerNote').value.trim();
 
+  if(whatsapp.length<10||whatsapp.length>13)return alert('Informe um número de celular/WhatsApp válido com DDD.');
+
   if(hasCadastro){
     if(name.length<2)return alert('Informe o nome completo.');
     if(cpfCnpj.length!==11)return alert('Informe um CPF válido com 11 números.');
   }else if(docType==='cpf'){
     if(name.length<2)return alert('Para CPF, o nome completo é obrigatório.');
-    if(whatsapp.length<10||whatsapp.length>13)return alert('Para CPF, o número de celular/WhatsApp é obrigatório.');
     if(cep.length!==8)return alert('Para CPF, o CEP é obrigatório com 8 números.');
     if(cpfCnpj.length!==11)return alert('Informe um CPF válido com 11 números.');
   }else{
