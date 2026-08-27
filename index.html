@@ -97,7 +97,7 @@
     <button class="close" type="button" onclick="closeCart()" aria-label="Fechar">×</button>
     <h2 id="cartTitle">🛒 Meu carrinho</h2>
     <div id="cartItems" class="cart-items"></div>
-    <div class="cart-summary"><span>Total</span><strong id="cartTotalValue">R$ 0,00</strong></div>
+    <div id="cartDiscountValue" class="cart-discount-total hidden"></div><div class="cart-summary"><span>Total</span><strong id="cartTotalValue">R$ 0,00</strong></div>
     <div id="checkoutForm" class="checkout-form hidden">
       <h3>Dados para finalizar o pedido</h3>
       <label>Você já tem cadastro no WhatsApp de vendas?
@@ -128,4 +128,4 @@
 <div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">×</button><div id="ratingItems"></div></div></div>
 <div id="suggestionModal" class="modal"><div class="modal-box"><button class="close" onclick="closeSuggestion()">×</button><div id="suggestionContent"><h2>💡 Sugerir produto</h2><p>Envie o nome e uma foto do produto que gostaria de encontrar.</p><label>Nome do produto<input id="suggestionName" type="text" placeholder="Nome do produto"></label><label style="display:block;margin-top:10px">Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label style="display:block;margin-top:10px">Observação<textarea id="suggestionNote" rows="3" placeholder="Opcional" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea></label><button class="primary" style="width:100%;margin-top:12px" onclick="submitSuggestion()">Enviar sugestão</button><p id="suggestionMsg"></p></div></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260826"></script><script src="app.js?v=20260827-cart-user-final2"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260826"></script><script src="app.js?v=20260827-wholesale-cart2"></script></body></html>

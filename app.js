@@ -184,12 +184,32 @@ function stars(p){
   return `<div class="stars" title="Avaliação média">${r.avg?`★ ${r.avg.toFixed(1)}`:'☆ Sem avaliações'} <small>(${r.count})</small></div>`;
 }
 function effectiveBasePrice(p){return p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?Number(p.promo_price):Number(p.price);}
-function wholesaleTotal(p,qty){
-  const base=effectiveBasePrice(p), w=Number(p.wholesale_price), q=Number(p.wholesale_qty);
-  if(!w||!q||w>=base||qty<q)return base*qty;
-  if(p.wholesale_mode==='block'){const blocks=Math.floor(qty/q),rest=qty%q;return blocks*q*w+rest*base;}
-  return qty*w;
+function wholesaleBreakdown(p,qty){
+  qty=Math.max(0,Number(qty)||0);
+  const normalPrice=effectiveBasePrice(p);
+  const wholesalePrice=Number(p.wholesale_price);
+  const wholesaleQty=Number(p.wholesale_qty);
+  const valid=wholesalePrice>0&&wholesaleQty>0&&wholesalePrice<normalPrice;
+  if(!valid){
+    return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:normalPrice*qty,wholesaleTotal:0,total:normalPrice*qty,discount:0};
+  }
+  let wQty=0,nQty=qty;
+  if(p.wholesale_mode==='block'){
+    // Em “a cada X”, cada bloco completo recebe o preço de atacado;
+    // o restante continua no preço normal. Ex.: X=12 e compra=13 -> 12 atacado + 1 normal.
+    wQty=Math.floor(qty/wholesaleQty)*wholesaleQty;
+    nQty=qty-wQty;
+  }else if(qty>=wholesaleQty){
+    // Em “a partir de X”, toda a quantidade recebe o preço de atacado.
+    wQty=qty;
+    nQty=0;
+  }
+  const normalTotal=nQty*normalPrice;
+  const wholesaleTotal=wQty*wholesalePrice;
+  const total=normalTotal+wholesaleTotal;
+  return {normalQty:nQty,wholesaleQty:wQty,normalPrice,wholesalePrice,normalTotal,wholesaleTotal,total,discount:(qty*normalPrice)-total};
 }
+function wholesaleTotal(p,qty){return wholesaleBreakdown(p,qty).total;}
 function unitLabel(p){return p.unit==='kg'?'kg':'un.';}
 function priceHtml(p){
   const unit=unitLabel(p);
@@ -314,13 +334,28 @@ async function openCart(){
   const totalEl=$('cartTotalValue');
   const checkout=$('checkoutButton');
   if(!itemsEl)return;
-  itemsEl.innerHTML=cart.length?cart.map((x,i)=>{const p=products.find(p=>p.id===x.id)||x;const totalLine=wholesaleTotal(p,x.qty);const effective=totalLine/x.qty;const base=effectiveBasePrice(p);const atacado=p.wholesale_price!=null&&Number(p.wholesale_price)<base&&Number(p.wholesale_qty)>0&&x.qty>=Number(p.wholesale_qty);return `<div class="cart-row">
-    <img class="cart-img" src="${esc(x.image_url||p.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
-    <div class="cart-product"><b>${esc(x.name)}</b><small>${money(effective)} / ${unitLabel(p)}${atacado?' • preço de atacado':''}</small></div>
-    <div class="qty"><button type="button" onclick="changeQty(${i},-1)">−</button><b>${x.qty}</b><button type="button" onclick="changeQty(${i},1)">+</button></div>
-    <div class="cart-subtotal">${money(totalLine)}</div>
-  </div>`}).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
+  itemsEl.innerHTML=cart.length?cart.map((x,i)=>{
+    const p=products.find(p=>p.id===x.id)||x;
+    const b=wholesaleBreakdown(p,x.qty);
+    const totalLine=b.total;
+    const effective=x.qty?totalLine/x.qty:0;
+    const hasWholesale=b.wholesaleQty>0;
+    const unit=unitLabel(p);
+    const pricing=hasWholesale
+      ? `<div class="cart-pricing">${b.wholesaleQty?`<span>🏷️ ${b.wholesaleQty} ${unit} no atacado: <b>${money(b.wholesalePrice)} / ${unit}</b></span>`:''}${b.normalQty?`<span>${b.normalQty} ${unit} no preço normal: <b>${money(b.normalPrice)} / ${unit}</b></span>`:''}<strong class="cart-discount">Você economizou ${money(b.discount)}</strong></div>`
+      : `<small>${money(effective)} / ${unit}</small>`;
+    return `<div class="cart-row">
+      <img class="cart-img" src="${esc(x.image_url||p.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
+      <div class="cart-product"><b>${esc(x.name)}</b>${pricing}</div>
+      <div class="qty"><button type="button" onclick="changeQty(${i},-1)">−</button><b>${x.qty}</b><button type="button" onclick="changeQty(${i},1)">+</button></div>
+      <div class="cart-subtotal">${money(totalLine)}</div>
+    </div>`
+  }).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
   const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
+  const normalTotal=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+(effectiveBasePrice(p)*x.qty)},0);
+  const totalDiscount=Math.max(0,normalTotal-total);
+  const discountEl=$('cartDiscountValue');
+  if(discountEl){discountEl.textContent=totalDiscount>0?`Você economizou ${money(totalDiscount)} no atacado`:' ';discountEl.classList.toggle('hidden',totalDiscount<=0);}
   if(totalEl)totalEl.textContent=money(total);
   if(checkout){checkout.classList.toggle('hidden',!cart.length);checkout.disabled=!cart.length;}
   $('cartModal').style.display='flex';
