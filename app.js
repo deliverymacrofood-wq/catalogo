@@ -183,11 +183,22 @@ function stars(p){
   const r=reviewInfo(p);
   return `<div class="stars" title="Avaliação média">${r.avg?`★ ${r.avg.toFixed(1)}`:'☆ Sem avaliações'} <small>(${r.count})</small></div>`;
 }
+function effectiveBasePrice(p){return p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?Number(p.promo_price):Number(p.price);}
+function wholesaleTotal(p,qty){
+  const base=effectiveBasePrice(p), w=Number(p.wholesale_price), q=Number(p.wholesale_qty);
+  if(!w||!q||w>=base||qty<q)return base*qty;
+  if(p.wholesale_mode==='block'){const blocks=Math.floor(qty/q),rest=qty%q;return blocks*q*w+rest*base;}
+  return qty*w;
+}
+function unitLabel(p){return p.unit==='kg'?'kg':'un.';}
 function priceHtml(p){
+  const unit=unitLabel(p);
+  let html='';
   if(p.promo_price!=null && Number(p.promo_price)<Number(p.price)){
-    return `<div class="price-box"><div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price promo">Por: ${money(p.promo_price)}</div><span class="offer">🔥 PROMOÇÃO</span></div>`;
-  }
-  return `<div class="price-box"><div class="price">Por: ${money(p.price)}</div></div>`;
+    html+=`<div class="price-box"><div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price promo">Por: ${money(p.promo_price)} / ${unit}</div><span class="offer">🔥 PROMOÇÃO</span></div>`;
+  }else html=`<div class="price-box"><div class="price">Por: ${money(p.price)} / ${unit}</div></div>`;
+  if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0) html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
+  return html;
 }
 function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
@@ -195,7 +206,8 @@ function syncSearch(value){
 }
 function productCard(p,featured=false){
   const img=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦';
-  const price=p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?`<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)}</div>`:`<div class="feature-price">${money(p.price)}</div>`;
+  const unit=unitLabel(p);
+  const price=p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?`<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`:`<div class="feature-price">${money(p.price)} / ${unit}</div>`;
   return `<article class="${featured?'feature-card':'card'}">
     <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">★ DESTAQUE</span>':''}${img}</div>
     <div class="${featured?'feature-info':'info'}">
@@ -251,7 +263,7 @@ async function addCart(id){
   const price=$('addQtyPrice');
   const img=$('addQtyImage');
   if(title)title.textContent=p.name;
-  if(price)price.textContent=money(Number(p.promo_price??p.price))+' cada';
+  if(price)price.textContent=money(effectiveBasePrice(p))+' / '+unitLabel(p);
   if(img){img.src=p.image_url||'';img.style.display=p.image_url?'block':'none';}
   updatePendingTotal();
   const modal=$('addQtyModal');
@@ -277,7 +289,7 @@ function updatePendingTotal(){
   if(!input||!total||!pendingCartProduct)return;
   const qty=Math.max(1,Math.min(99,parseInt(input.value,10)||1));
   input.value=qty;
-  total.textContent=money(Number(pendingCartProduct.promo_price??pendingCartProduct.price)*qty);
+  total.textContent=money(wholesaleTotal(pendingCartProduct,qty));
 }
 async function confirmAddCart(){
   if(!pendingCartProduct)return;
@@ -288,7 +300,7 @@ async function confirmAddCart(){
   const p=pendingCartProduct;
   const x=cart.find(x=>x.id===p.id);
   if(x)x.qty+=qty;
-  else cart.push({id:p.id,name:p.name,image_url:p.image_url||'',price:Number(p.promo_price??p.price),qty});
+  else cart.push({id:p.id,name:p.name,image_url:p.image_url||'',price:effectiveBasePrice(p),unit:p.unit||'unidade',promo_price:p.promo_price??null,wholesale_mode:p.wholesale_mode||null,wholesale_qty:p.wholesale_qty??null,wholesale_price:p.wholesale_price??null,qty});
   saveUserCart();
   closeAddQty();
   render();
@@ -302,13 +314,13 @@ async function openCart(){
   const totalEl=$('cartTotalValue');
   const checkout=$('checkoutButton');
   if(!itemsEl)return;
-  itemsEl.innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-row">
-    <img class="cart-img" src="${esc(x.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
-    <div class="cart-product"><b>${esc(x.name)}</b><small>${money(x.price)} cada</small></div>
+  itemsEl.innerHTML=cart.length?cart.map((x,i)=>{const p=products.find(p=>p.id===x.id)||x;const totalLine=wholesaleTotal(p,x.qty);const effective=totalLine/x.qty;const base=effectiveBasePrice(p);const atacado=p.wholesale_price!=null&&Number(p.wholesale_price)<base&&Number(p.wholesale_qty)>0&&x.qty>=Number(p.wholesale_qty);return `<div class="cart-row">
+    <img class="cart-img" src="${esc(x.image_url||p.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
+    <div class="cart-product"><b>${esc(x.name)}</b><small>${money(effective)} / ${unitLabel(p)}${atacado?' • preço de atacado':''}</small></div>
     <div class="qty"><button type="button" onclick="changeQty(${i},-1)">−</button><b>${x.qty}</b><button type="button" onclick="changeQty(${i},1)">+</button></div>
-    <div class="cart-subtotal">${money(x.price*x.qty)}</div>
-  </div>`).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+    <div class="cart-subtotal">${money(totalLine)}</div>
+  </div>`}).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
+  const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
   if(totalEl)totalEl.textContent=money(total);
   if(checkout){checkout.classList.toggle('hidden',!cart.length);checkout.disabled=!cart.length;}
   $('cartModal').style.display='flex';
@@ -415,8 +427,8 @@ async function submitOrder(){
     location.href='login.html';
     return;
   }
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
-  const items=cart.map(x=>({product_id:x.id,name:x.name,qty:x.qty,unit_price:Number(x.price),subtotal:Number((x.price*x.qty).toFixed(2)),image_url:x.image_url||''}));
+  const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
+  const items=cart.map(x=>{const p=products.find(p=>p.id===x.id)||x;const subtotal=wholesaleTotal(p,x.qty);return {product_id:x.id,name:x.name,qty:x.qty,unit:x.unit||p.unit||'unidade',unit_price:Number((subtotal/x.qty).toFixed(2)),subtotal:Number(subtotal.toFixed(2)),image_url:x.image_url||p.image_url||''};});
   const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
   const {data,error}=await client.from('orders').insert(payload).select('order_number').single();
   if(error)return alert('Não foi possível registrar o pedido: '+error.message);

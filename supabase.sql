@@ -37,6 +37,14 @@ alter table public.products add column if not exists image_url text;
 alter table public.products add column if not exists active boolean not null default true;
 alter table public.products add column if not exists created_at timestamptz not null default now();
 alter table public.products add column if not exists updated_at timestamptz not null default now();
+alter table public.products add column if not exists unit text not null default 'unidade';
+alter table public.products add column if not exists wholesale_mode text;
+alter table public.products add column if not exists wholesale_qty integer;
+alter table public.products add column if not exists wholesale_price numeric(12,2);
+alter table public.products drop constraint if exists products_unit_check;
+alter table public.products add constraint products_unit_check check (unit in ('unidade','kg'));
+alter table public.products drop constraint if exists products_wholesale_mode_check;
+alter table public.products add constraint products_wholesale_mode_check check (wholesale_mode is null or wholesale_mode in ('threshold','block'));
 alter table public.products drop constraint if exists products_sector_check;
 
 create index if not exists products_active_sector_idx on public.products(active, sector);

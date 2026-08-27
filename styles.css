@@ -492,3 +492,108 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
   .cart-box .checkout-form{flex:1 1 auto;max-height:none!important;overflow-y:auto;padding-bottom:6px;}
   .cart-box .checkout-form .primary,.cart-box .checkout-form .secondary{min-height:46px;}
 }
+
+/* ===== AJUSTE MOBILE 27/08/2026 ===== */
+@media (max-width: 600px) {
+  /* O carrinho fica acima do menu inferior e ocupa uma área confortável da tela. */
+  .cart-modal {
+    z-index: 12000 !important;
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+  .cart-box {
+    position: relative !important;
+    z-index: 12001 !important;
+    width: 100% !important;
+    height: 86dvh !important;
+    max-height: 86dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 12px 12px !important;
+    padding: 16px 14px 14px !important;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  .cart-box .cart-items {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 2px !important;
+  }
+  .cart-box .cart-summary {
+    flex: 0 0 auto !important;
+    margin-top: 8px !important;
+    padding: 12px 0 4px !important;
+    background: #fff !important;
+  }
+  .cart-box .checkout-button {
+    position: relative !important;
+    z-index: 12002 !important;
+    flex: 0 0 auto !important;
+    display: block !important;
+    width: 100% !important;
+    min-height: 50px !important;
+    margin: 8px 0 0 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 3px 12px rgba(0,0,0,.12) !important;
+  }
+  .cart-box .checkout-button.hidden { display: none !important; }
+
+  /* Cabeçalho de destaque alinhado no celular. */
+  .featured-section .section-head {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+  .featured-section .section-head > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .featured-section .section-head h2 {
+    margin: 0 !important;
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .featured-section .section-head p {
+    margin: 4px 0 0 !important;
+    line-height: 1.25 !important;
+  }
+  .featured-section .see-all {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 10px !important;
+    padding: 4px 0 !important;
+  }
+  .feature-card {
+    align-self: stretch !important;
+  }
+  .feature-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .feature-name {
+    min-height: 34px !important;
+    margin: 4px 0 !important;
+    line-height: 1.25 !important;
+  }
+}
+/* Vendas por dia e preço de atacado */
+.sales-date-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:14px}
+.sales-date-row label{display:flex;flex-direction:column;gap:6px;font-weight:600;color:#333}
+.sales-date-row input{min-height:42px;padding:8px 10px;border:1px solid #d8dce3;border-radius:9px;background:#fff}
+.sales-result{margin-top:16px;border:1px solid #eee;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:5px;background:#fff}
+.sales-result span{color:#666;font-size:14px}.sales-result strong{font-size:30px;color:#a9003f}.sales-result small{color:#777}
+.wholesale-box{border:1px solid #f0d7b0;border-radius:12px;padding:14px;background:#fffaf1}.wholesale-box h4{margin:0 0 4px}.wholesale-box p{margin:0 0 10px;color:#777;font-size:13px}.wholesale-box .form{margin:0}
+.wholesale-note{margin-top:6px;font-size:12px;color:#9a5b00;font-weight:600}
+@media(max-width:600px){.sales-date-row{align-items:stretch}.sales-date-row label,.sales-date-row button{width:100%}.sales-result strong{font-size:25px}}
