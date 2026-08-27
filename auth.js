@@ -58,7 +58,7 @@ async function init(){
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       initVerificationPanel(session);
       $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.from('profiles').update({nickname:value}).eq('id',session.user.id);if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
-      $('logout').onclick=async()=>{await client.auth.signOut();location.href='index.html'};
+      $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='index.html'};
       return;
     }
     showLogin();

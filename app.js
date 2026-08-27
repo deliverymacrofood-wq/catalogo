@@ -1,10 +1,41 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
 let sectors=['Todos','Promoções',...defaultSectors];
-let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=JSON.parse(localStorage.getItem('macrofood_cart')||'[]');
+let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[];
+let cartUserId=null;
 const money=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const $=id=>document.getElementById(id);
+
+
+function cartStorageKey(userId){return `macrofood_cart_${userId}`;}
+function saveUserCart(){
+  if(!cartUserId){cart=[];return;}
+  localStorage.setItem(cartStorageKey(cartUserId),JSON.stringify(cart));
+}
+async function loadUserCart(session){
+  const userId=session?.user?.id||null;
+  cartUserId=userId;
+  // O carrinho antigo global não é mais usado para evitar misturar produtos entre contas.
+  localStorage.removeItem('macrofood_cart');
+  cart=[];
+  if(!userId){render();return;}
+  try{
+    const saved=JSON.parse(localStorage.getItem(cartStorageKey(userId))||'[]');
+    cart=Array.isArray(saved)?saved.filter(x=>x&&x.id&&Number(x.qty)>0):[];
+  }catch(_){cart=[];}
+  render();
+}
+async function requireLoggedCart(){
+  const {data:{session}}=await client.auth.getSession();
+  if(!session){
+    alert('Para usar o carrinho, entre na sua conta ou crie uma conta.');
+    location.href='login.html?redirect=index.html';
+    return null;
+  }
+  if(cartUserId!==session.user.id) await loadUserCart(session);
+  return session;
+}
 
 
 async function loadAccountHeader(){
@@ -61,6 +92,8 @@ async function load(){
   const grid=$('grid');
   if(grid) grid.innerHTML='<div class="notice">Carregando produtos...</div>';
   try {
+  const {data:{session}}=await client.auth.getSession();
+  await loadUserCart(session);
   // O catálogo deve continuar funcionando mesmo se uma tabela opcional
   // (avaliações/banners) ainda não tiver sido criada no Supabase.
   const productsReq=client.from('products').select('*').order('name');
@@ -246,34 +279,47 @@ function updatePendingTotal(){
   input.value=qty;
   total.textContent=money(Number(pendingCartProduct.promo_price??pendingCartProduct.price)*qty);
 }
-function confirmAddCart(){
+async function confirmAddCart(){
   if(!pendingCartProduct)return;
+  const session=await requireLoggedCart();
+  if(!session)return;
   const input=$('addQtyInput');
   const qty=Math.max(1,Math.min(99,parseInt(input?.value,10)||1));
   const p=pendingCartProduct;
   const x=cart.find(x=>x.id===p.id);
   if(x)x.qty+=qty;
   else cart.push({id:p.id,name:p.name,image_url:p.image_url||'',price:Number(p.promo_price??p.price),qty});
-  localStorage.setItem('macrofood_cart',JSON.stringify(cart));
+  saveUserCart();
   closeAddQty();
   render();
   const toast=$('cartToast');
   if(toast){toast.textContent=qty===1?'Produto adicionado ao carrinho!':`${qty} unidades adicionadas ao carrinho!`;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800);}
 }
-function openCart(){
-  $('cartItems').innerHTML=cart.length?`${cart.map((x,i)=>`<div class="cart-row">
+async function openCart(){
+  const session=await requireLoggedCart();
+  if(!session)return;
+  const itemsEl=$('cartItems');
+  const totalEl=$('cartTotalValue');
+  const checkout=$('checkoutButton');
+  if(!itemsEl)return;
+  itemsEl.innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-row">
     <img class="cart-img" src="${esc(x.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
     <div class="cart-product"><b>${esc(x.name)}</b><small>${money(x.price)} cada</small></div>
-    <div class="qty"><button onclick="changeQty(${i},-1)">−</button><b>${x.qty}</b><button onclick="changeQty(${i},1)">+</button></div>
+    <div class="qty"><button type="button" onclick="changeQty(${i},-1)">−</button><b>${x.qty}</b><button type="button" onclick="changeQty(${i},1)">+</button></div>
     <div class="cart-subtotal">${money(x.price*x.qty)}</div>
-  </div>`).join('')}<div class="cart-total"><span>Total</span><strong>${money(cart.reduce((s,x)=>s+x.price*x.qty,0))}</strong></div>`:'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
+  </div>`).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  if(totalEl)totalEl.textContent=money(total);
+  if(checkout){checkout.classList.toggle('hidden',!cart.length);checkout.disabled=!cart.length;}
   $('cartModal').style.display='flex';
 }
 function closeCart(){$('cartModal').style.display='none'}
 function changeQty(i,d){
+  if(!cartUserId||!cart[i])return;
   cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);
-  localStorage.setItem('macrofood_cart',JSON.stringify(cart));openCart();render();
+  saveUserCart();openCart();render();
 }
+
 async function openRating(id){
   const p=products.find(x=>x.id===id);if(!p)return;
   const {data:{session}}=await client.auth.getSession();
@@ -297,7 +343,9 @@ async function saveRating(id){
   if(!rvErr)reviews=rv||[];
   closeRating();render();alert('Avaliação salva com sucesso!');
 }
-function showCheckoutForm(){
+async function showCheckoutForm(){
+  const session=await requireLoggedCart();
+  if(!session)return;
   if(!cart.length)return alert('Carrinho vazio.');
   $('checkoutForm').classList.remove('hidden');
   $('checkoutButton').classList.add('hidden');
@@ -372,12 +420,24 @@ async function submitOrder(){
   const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
   const {data,error}=await client.from('orders').insert(payload).select('order_number').single();
   if(error)return alert('Não foi possível registrar o pedido: '+error.message);
-  localStorage.removeItem('macrofood_cart');
+  if(cartUserId){localStorage.removeItem(cartStorageKey(cartUserId));}
   cart=[];render();hideCheckoutForm();
   $('orderSuccessText').textContent=`Seu pedido #${data.order_number} foi recebido. Você pode acompanhar o andamento em “Meus pedidos”. O administrador entrará em contato pelo WhatsApp quando estiver pronto para pagamento.`;
   $('orderSuccessModal').style.display='flex';
 }
 
+
+// Mantém o carrinho isolado por conta e sincroniza login/logout.
+client.auth.onAuthStateChange(async (_event, session)=>{
+  if(session?.user?.id){
+    if(cartUserId!==session.user.id) await loadUserCart(session);
+  }else{
+    cartUserId=null;
+    cart=[];
+    localStorage.removeItem('macrofood_cart');
+    render();
+  }
+});
 
 // Inicializa o catálogo público depois que o HTML e o Supabase SDK estiverem carregados.
 if (document.readyState === 'loading') {

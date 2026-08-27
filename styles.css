@@ -477,3 +477,18 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
   .cart-subtotal{grid-column:2;justify-self:end;grid-row:2;margin-top:-34px}
   .cart-total{font-size:18px;padding:12px 0}
 }
+
+
+/* Carrinho mobile: o rodape nunca cobre o total nem o botao de finalizar. */
+.cart-summary{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eee;padding:12px 0 2px;font-size:19px;flex:0 0 auto;background:#fff;}
+.cart-summary strong{color:#a9003f;font-size:20px;}
+@media(max-width:600px){
+  .cart-modal{padding:8px!important;align-items:flex-end!important;}
+  .cart-box{width:100%!important;max-height:calc(100dvh - 82px)!important;height:auto!important;border-radius:18px!important;padding:14px 14px 12px!important;box-sizing:border-box!important;}
+  .cart-box .cart-items{flex:1 1 auto;max-height:none!important;min-height:70px;overflow-y:auto;padding-right:2px;}
+  .cart-box .cart-summary{flex:0 0 auto;margin-top:4px;padding-bottom:4px;}
+  .cart-box .checkout-button{position:static!important;display:block;width:100%;min-height:48px;margin:8px 0 0!important;flex:0 0 auto!important;box-shadow:none!important;}
+  .cart-box .checkout-button.hidden{display:none!important;}
+  .cart-box .checkout-form{flex:1 1 auto;max-height:none!important;overflow-y:auto;padding-bottom:6px;}
+  .cart-box .checkout-form .primary,.cart-box .checkout-form .secondary{min-height:46px;}
+}
