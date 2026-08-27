@@ -449,7 +449,7 @@ async function showCheckoutForm(){
   try{
     const {data:profile}=await client.from('profiles').select('nickname,phone').eq('id',session.user.id).maybeSingle();
     const phone=$('customerWhatsapp');
-    if(phone && !phone.value && profile?.phone) phone.value=profile.phone;
+    if(phone && !phone.value){phone.value=profile?.phone?formatBrazilPhone(profile.phone):'+55 ';}
     const email=$('customerEmail');
     if(email && !email.value) email.value=session.user.email||'';
     const name=$('customerName');
@@ -463,7 +463,9 @@ function hideCheckoutForm(){
   $('checkoutButton').classList.remove('hidden');
 }
 function closeOrderSuccess(){ $('orderSuccessModal').style.display='none'; closeCart(); }
-function normalizePhone(v){return String(v||'').replace(/\D/g,'')}
+function normalizePhone(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('55'))return n;if(n.length===10||n.length===11)return '55'+n;return n}
+function formatBrazilPhone(v){const n=normalizePhone(v);if(!n)return '';const local=n.startsWith('55')?n.slice(2):n;if(local.length===11)return '+55 ('+local.slice(0,2)+') '+local.slice(2,7)+'-'+local.slice(7);if(local.length===10)return '+55 ('+local.slice(0,2)+') '+local.slice(2,6)+'-'+local.slice(6);return '+55 '+local;}
+function ensureBrazilPrefixInput(el){if(!el)return;el.addEventListener('focus',()=>{if(!el.value.trim())el.value='+55 ';});el.addEventListener('blur',()=>{const n=normalizePhone(el.value);if(n.length===12||n.length===13)el.value=formatBrazilPhone(n);else if(!el.value.trim())el.value='+55 ';});}
 function normalizeDoc(v){return String(v||'').replace(/\D/g,'')}
 function toggleCustomerType(){
   const has=$('customerHasSalesCadastro')?.value==='yes';
@@ -487,7 +489,7 @@ function toggleCustomerType(){
   if(docInput) docInput.required=true;
   const cep=$('customerCep'), phone=$('customerWhatsapp');
   if(cep) cep.required=!has && !cnpj;
-  if(phone) phone.required=true;
+  if(phone){phone.required=true;ensureBrazilPrefixInput(phone);}
   if(!has && !cnpj && nameInput) nameInput.focus();
 }
 
@@ -503,7 +505,7 @@ async function submitOrder(){
   const cep=normalizeDoc($('customerCep')?.value);
   const note=$('customerNote').value.trim();
 
-  if(whatsapp.length<10||whatsapp.length>13)return alert('Informe um número de celular/WhatsApp válido com DDD.');
+  if(whatsapp.length!==12&&whatsapp.length!==13)return alert('Informe um número de celular/WhatsApp válido com DDD. Exemplo: +55 (81) 99999-9999.');
 
   if(hasCadastro){
     if(name.length<2)return alert('Informe o nome completo.');

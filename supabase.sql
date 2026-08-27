@@ -619,3 +619,70 @@ drop policy if exists "admins send order chat" on public.order_chat_messages;
 create policy "admins send order chat" on public.order_chat_messages for insert to authenticated
 with check(sender_role='admin' and public.is_admin() and exists(select 1 from public.orders o where o.id=order_id and o.status in ('received','ready_payment','paid')));
 grant select,insert on public.order_chat_messages to authenticated;
+
+-- Permite ao administrador alterar produtos/quantidades de pedidos ainda em separação.
+-- O banco recalcula o total com o preço atual e as regras de atacado do produto.
+create or replace function public.admin_update_order_items(target_order_id uuid, new_items jsonb)
+returns public.orders
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  ord public.orders;
+  item jsonb;
+  p public.products%rowtype;
+  pid uuid;
+  qty integer;
+  base_price numeric;
+  wholesale_price numeric;
+  wholesale_qty integer;
+  w_qty integer;
+  n_qty integer;
+  subtotal numeric;
+  total numeric := 0;
+  rebuilt jsonb := '[]'::jsonb;
+  item_count integer := 0;
+begin
+  if auth.uid() is null or not public.is_admin() then
+    raise exception 'Acesso negado: somente administradores podem alterar pedidos';
+  end if;
+  if jsonb_typeof(new_items) <> 'array' then
+    raise exception 'Itens do pedido inválidos';
+  end if;
+  select * into ord from public.orders where id=target_order_id for update;
+  if not found then raise exception 'Pedido não encontrado'; end if;
+  if ord.status not in ('received','ready_payment','paid') then
+    raise exception 'Este pedido já não está em separação e não pode ser alterado';
+  end if;
+  if jsonb_array_length(new_items)=0 then raise exception 'O pedido precisa ter pelo menos um produto'; end if;
+  if jsonb_array_length(new_items)>100 then raise exception 'Quantidade máxima de itens excedida'; end if;
+
+  for item in select * from jsonb_array_elements(new_items) loop
+    begin pid := (item->>'product_id')::uuid; exception when others then raise exception 'Produto inválido no pedido'; end;
+    qty := floor(coalesce((item->>'qty')::numeric,0));
+    if qty < 1 or qty > 9999 then raise exception 'Quantidade inválida'; end if;
+    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
+    if not found then raise exception 'Produto não disponível'; end if;
+    if p.price is null or p.price <= 0 then raise exception 'Produto % está sem preço válido cadastrado',p.name; end if;
+    base_price := case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
+    wholesale_price := p.wholesale_price; wholesale_qty := p.wholesale_qty;
+    if wholesale_price is not null and wholesale_price>0 and wholesale_qty is not null and wholesale_qty>0 and wholesale_price<base_price and p.wholesale_mode='block' then
+      w_qty := floor(qty::numeric/wholesale_qty); w_qty := w_qty*wholesale_qty; n_qty := qty-w_qty;
+    elsif wholesale_price is not null and wholesale_price>0 and wholesale_qty is not null and wholesale_qty>0 and wholesale_price<base_price and p.wholesale_mode='threshold' and qty>=wholesale_qty then
+      w_qty := qty; n_qty := 0;
+    else w_qty := 0; n_qty := qty; end if;
+    subtotal := round((n_qty*base_price)+(w_qty*coalesce(wholesale_price,0)),2);
+    if subtotal<=0 then raise exception 'Não foi possível calcular o preço do produto %',p.name; end if;
+    total := total + subtotal;
+    rebuilt := rebuilt || jsonb_build_array(jsonb_build_object('product_id',p.id,'name',p.name,'qty',qty,'unit',coalesce(p.unit,'unidade'),'unit_price',round(subtotal/qty,2),'subtotal',subtotal,'image_url',coalesce(p.image_url,'')));
+    item_count := item_count+1;
+  end loop;
+  total := round(total,2);
+  if total<=0 then raise exception 'Não foi possível calcular o total do pedido'; end if;
+  update public.orders set items=rebuilt,total=total,updated_at=now() where id=target_order_id returning * into ord;
+  return ord;
+end;
+$$;
+revoke all on function public.admin_update_order_items(uuid,jsonb) from public;
+grant execute on function public.admin_update_order_items(uuid,jsonb) to authenticated;

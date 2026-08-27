@@ -35,7 +35,7 @@ async function init(){
           <div id="verificationStatus"></div>
           <div class="verification-choice-grid">
             <div class="verify-option"><b>✉️ Confirmar e-mail</b><small>Receba um código de 6 dígitos no seu e-mail cadastrado.</small><button type="button" class="secondary" id="sendEmailVerification">Enviar código por e-mail</button></div>
-            <div class="verify-option"><b>📱 Confirmar celular</b><small>Informe seu celular e receba um código por SMS.</small><input id="accountPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Celular com DDD"><button type="button" class="secondary" id="sendPhoneVerification">Enviar código SMS</button></div>
+            <div class="verify-option"><b>📱 Confirmar celular</b><small>Informe seu celular e receba um código por SMS.</small><input id="accountPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 (81) 99999-9999"><button type="button" class="secondary" id="sendPhoneVerification">Enviar código SMS</button></div>
           </div>
           <div id="emailVerifyBox" class="verify-box hidden"><input id="accountEmailOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código recebido por e-mail"><button type="button" class="primary" id="confirmEmailCode">Confirmar e-mail</button></div>
           <div id="phoneVerifyBox" class="verify-box hidden"><input id="accountPhoneOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Código SMS"><button type="button" class="primary" id="confirmPhoneChange">Confirmar celular</button></div>
@@ -110,7 +110,7 @@ function showSignup(){
     <label>Apelido<input id="nickname" type="text" autocomplete="nickname" placeholder="Como quer aparecer no site" maxlength="30" required></label>
     <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
     <label>E-mail<input id="email" type="email" autocomplete="email" placeholder="Seu e-mail" required></label>
-    <label>Celular (opcional)<input id="signupPhone" type="tel" autocomplete="tel" placeholder="Celular com DDD"></label>
+    <label>Celular (opcional)<input id="signupPhone" type="tel" autocomplete="tel" value="+55 " placeholder="+55 (81) 99999-9999"></label>
     <small class="photo-help">Você poderá confirmar e-mail ou celular depois, em <b>Minha conta</b>. A confirmação é opcional e não impede suas compras.</small>
     <input id="pass" type="password" autocomplete="new-password" placeholder="Senha (mínimo 6 caracteres)" required>
     <button class="primary auth-main-btn" id="signup">Criar minha conta</button>
@@ -135,7 +135,9 @@ async function login(){
   }
   location.href='index.html';
 }
-function normalizePhoneAuth(v){let n=String(v||'').replace(/\D/g,'');if(n.length===11)n='55'+n;return n;}
+function normalizePhoneAuth(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('55'))return '+'+n;if(n.length===10||n.length===11)return '+55'+n;return n?('+'+n):'';}
+function formatBrazilPhoneAuth(v){const n=normalizePhoneAuth(v).replace(/^\+/,'');const local=n.startsWith('55')?n.slice(2):n;if(local.length===11)return '+55 ('+local.slice(0,2)+') '+local.slice(2,7)+'-'+local.slice(7);if(local.length===10)return '+55 ('+local.slice(0,2)+') '+local.slice(2,6)+'-'+local.slice(6);return v||'';}
+function ensureBrazilAuthPrefix(el){if(!el)return;el.addEventListener('focus',()=>{if(!el.value.trim())el.value='+55 ';});el.addEventListener('blur',()=>{const n=normalizePhoneAuth(el.value);if(n.replace(/\D/g,'').length===12||n.replace(/\D/g,'').length===13)el.value=formatBrazilPhoneAuth(n);else if(!el.value.trim())el.value='+55 ';});}
 async function signup(){
   const nickname=$('nickname').value.trim(),email=$('email').value.trim().toLowerCase(),password=$('pass').value;
   const phone=normalizePhoneAuth($('signupPhone')?.value||'');
@@ -143,7 +145,7 @@ async function signup(){
   if(nickname.length>30)return msg('O apelido pode ter no máximo 30 caracteres.');
   if(!/^\S+@\S+\.\S+$/.test(email))return msg('Informe um e-mail válido.');
   if(password.length<6)return msg('A senha precisa ter pelo menos 6 caracteres.');
-  if(phone && phone.length<12)return msg('Informe um celular válido com DDD.');
+  if(phone && (phone.replace(/\D/g,'').length<12 || phone.replace(/\D/g,'').length>13))return msg('Informe um celular válido com DDD. Exemplo: +55 (81) 99999-9999.');
   const file=$('avatar')?.files?.[0];
   if(file && file.size>2*1024*1024)return msg('A foto precisa ter no máximo 2 MB.');
   const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname},emailRedirectTo:new URL('login.html',window.location.href).href}});
@@ -168,11 +170,11 @@ async function initVerificationPanel(session){
   const emailOk=!!v.email_verified;
   const phoneOk=!!v.phone_verified;
   status.innerHTML=`<div class="verification-summary"><b>${emailOk||phoneOk?'✅ Contato confirmado':'ℹ️ Confirmação opcional'}</b><small>${emailOk?'E-mail confirmado.':phoneOk?'Celular confirmado.':'Você pode confirmar seu e-mail ou celular aqui, se quiser.'}</small></div>`;
-  if($('accountPhone'))$('accountPhone').value=u.phone?String(u.phone).replace(/^\+?55/,''):(await client.from('profiles').select('phone').eq('id',u.id).maybeSingle()).data?.phone||'';
+  if($('accountPhone')){const raw=u.phone||(await client.from('profiles').select('phone').eq('id',u.id).maybeSingle()).data?.phone||'';$('accountPhone').value=formatBrazilPhoneAuth(raw);}
   if(emailOk){$('sendEmailVerification').disabled=true;$('sendEmailVerification').textContent='E-mail confirmado ✓';}
   if(phoneOk){$('sendPhoneVerification').disabled=true;$('sendPhoneVerification').textContent='Celular confirmado ✓';}
   $('sendEmailVerification').onclick=sendEmailVerification;
-  $('sendPhoneVerification').onclick=sendPhoneVerification;
+  ensureBrazilAuthPrefix($('accountPhone'));ensureBrazilAuthPrefix($('signupPhone'));$('sendPhoneVerification').onclick=sendPhoneVerification;
   $('confirmEmailCode').onclick=confirmEmailCode;
   $('confirmPhoneChange').onclick=confirmPhoneChange;
 }
