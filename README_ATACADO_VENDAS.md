@@ -23,3 +23,6 @@ O catálogo passa a mostrar a unidade junto do preço e o carrinho calcula o pre
 
 ## 4. GitHub Pages
 Substitua os arquivos da versão anterior por todos os arquivos deste ZIP. Depois faça um recarregamento forçado do navegador para evitar cache antigo.
+
+### Relatório de vendas por período
+No Dashboard administrativo, o total de vendas agora aceita **data inicial e data final**. Exemplo: 01/01/2026 até 05/01/2026. O sistema soma somente pedidos com status **Finalizado** e considera a data de finalização (`updated_at`).

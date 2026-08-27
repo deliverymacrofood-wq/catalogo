@@ -52,20 +52,25 @@ async function dashboardTab(){
   const {data:recent}=await client.from('orders').select('*').order('created_at',{ascending:false}).limit(5);
   $('tab').innerHTML=`${pageTitle('Dashboard','Visão geral da sua loja.')}
   <div class="metric-grid"><div class="metric orange"><span>👥</span><div><small>Total de Clientes</small><strong>${clientCount||0}</strong><em>Contas cadastradas</em></div></div><div class="metric green"><span>●</span><div><small>Produtos ativos</small><strong>${productCount||0}</strong><em>Disponíveis no catálogo</em></div></div><div class="metric blue"><span>🛍</span><div><small>Total de pedidos</small><strong>${orderCount||0}</strong><em>Pedidos recebidos</em></div></div><div class="metric purple"><span>⏱</span><div><small>Pedidos novos</small><strong>${newCount||0}</strong><em>Aguardando conferência</em></div></div></div>
-  <div class="panel-card sales-panel"><div class="card-head"><div><h3>💰 Total de vendas</h3><p>Soma somente dos pedidos <b>finalizados</b> no dia selecionado.</p></div></div><div class="sales-date-row"><label>Selecionar dia<input id="salesDate" type="date" value="${new Date().toISOString().slice(0,10)}"></label><button class="primary" type="button" onclick="loadSalesForDate()">Consultar vendas</button></div><div id="salesResult" class="sales-result"><span>Vendas finalizadas</span><strong>R$ 0,00</strong><small>Selecione um dia para consultar.</small></div></div>
+  <div class="panel-card sales-panel"><div class="card-head"><div><h3>💰 Total de vendas</h3><p>Soma somente dos pedidos <b>finalizados</b> dentro do período selecionado.</p></div></div><div class="sales-date-row"><label>Data inicial<input id="salesDateFrom" type="date" value="${new Date().toISOString().slice(0,10)}"></label><span class="sales-date-separator">até</span><label>Data final<input id="salesDateTo" type="date" value="${new Date().toISOString().slice(0,10)}"></label><button class="primary" type="button" onclick="loadSalesForDate()">Consultar vendas</button></div><div id="salesResult" class="sales-result"><span>Vendas finalizadas</span><strong>R$ 0,00</strong><small>Selecione o período para consultar.</small></div></div>
   <div class="panel-card"><div class="card-head"><div><h3>Pedidos recentes</h3><p>Últimos pedidos recebidos pelo site.</p></div><button class="outline-btn" onclick="showTab('orders')">Ver todos</button></div>${recent?.length?recent.map(orderRow).join(''):'<div class="empty-state">Nenhum pedido ainda.</div>'}</div>`;
   loadSalesForDate();
 }
 async function loadSalesForDate(){
-  const input=$('salesDate'), result=$('salesResult'); if(!input||!result)return;
-  const date=input.value; if(!date)return;
+  const from=$('salesDateFrom'), to=$('salesDateTo'), result=$('salesResult'); if(!from||!to||!result)return;
+  const startDate=from.value, endDate=to.value; if(!startDate||!endDate)return;
+  if(endDate<startDate){result.innerHTML='<span>Período inválido</span><strong>Escolha datas válidas</strong><small>A data final deve ser igual ou posterior à data inicial.</small>';return;}
   result.innerHTML='<span>Vendas finalizadas</span><strong>Consultando...</strong><small>Aguarde...</small>';
-  const start=new Date(date+'T00:00:00');
-  const end=new Date(date+'T23:59:59.999');
-  const {data,error}=await client.from('orders').select('total').eq('status','completed').gte('created_at',start.toISOString()).lte('created_at',end.toISOString());
+  const start=new Date(startDate+'T00:00:00');
+  const end=new Date(endDate+'T23:59:59.999');
+  // A venda entra no relatório pela data em que o pedido foi finalizado (updated_at), não pela data em que foi criado.
+  const {data,error}=await client.from('orders').select('total').eq('status','completed').gte('updated_at',start.toISOString()).lte('updated_at',end.toISOString());
   if(error){result.innerHTML=`<span>Vendas finalizadas</span><strong>Erro</strong><small>${esc(error.message)}</small>`;return;}
   const total=(data||[]).reduce((sum,o)=>sum+Number(o.total||0),0);
-  result.innerHTML=`<span>Vendas finalizadas em ${new Date(date+'T12:00:00').toLocaleDateString('pt-BR')}</span><strong>${money(total)}</strong><small>${data?.length||0} pedido(s) finalizado(s)</small>`;
+  const fromLabel=new Date(startDate+'T12:00:00').toLocaleDateString('pt-BR');
+  const toLabel=new Date(endDate+'T12:00:00').toLocaleDateString('pt-BR');
+  const label=startDate===endDate?`Vendas finalizadas em ${fromLabel}`:`Vendas finalizadas de ${fromLabel} a ${toLabel}`;
+  result.innerHTML=`<span>${label}</span><strong>${money(total)}</strong><small>${data?.length||0} pedido(s) finalizado(s) no período</small>`;
 }
 function orderRow(o){return `<div class="order-mini"><div class="order-icon">🛍</div><div class="grow"><b>Pedido #${o.order_number}</b><small>${esc(o.customer_name)} • ${esc(o.customer_phone)}</small></div><span class="status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span><strong>${money(o.total)}</strong></div>`}
 async function refreshOrderBadge(){const {count}=await client.from('orders').select('id',{count:'exact',head:true}).eq('status','received');const b=$('orderBadge');if(!b)return;b.textContent=count||0;b.classList.toggle('hidden',!count)}

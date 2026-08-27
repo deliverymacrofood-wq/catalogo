@@ -111,7 +111,7 @@ function showSignup(){
     <label class="photo-label">📷 Foto do perfil<input id="avatar" type="file" accept="image/*"></label><small class="photo-help">Opcional. JPG, PNG ou WEBP, até 2 MB.</small>
     <label>E-mail<input id="email" type="email" autocomplete="email" placeholder="Seu e-mail" required></label>
     <label>Celular (opcional)<input id="signupPhone" type="tel" autocomplete="tel" placeholder="Celular com DDD"></label>
-    <small class="photo-help">Você poderá confirmar e-mail ou celular depois, em <b>Minha conta</b>. A confirmação será exigida antes de uma compra.</small>
+    <small class="photo-help">Você poderá confirmar e-mail ou celular depois, em <b>Minha conta</b>. A confirmação é opcional e não impede suas compras.</small>
     <input id="pass" type="password" autocomplete="new-password" placeholder="Senha (mínimo 6 caracteres)" required>
     <button class="primary auth-main-btn" id="signup">Criar minha conta</button>
     <button class="secondary auth-register-btn" id="goLogin">Já tenho conta — Entrar</button>
@@ -167,7 +167,7 @@ async function initVerificationPanel(session){
   }catch(e){}
   const emailOk=!!v.email_verified;
   const phoneOk=!!v.phone_verified;
-  status.innerHTML=`<div class="verification-summary"><b>${emailOk||phoneOk?'✅ Contato confirmado':'⚠️ Confirmação necessária para comprar'}</b><small>${emailOk?'E-mail confirmado.':phoneOk?'Celular confirmado.':'Confirme seu e-mail ou celular aqui antes de finalizar uma compra.'}</small></div>`;
+  status.innerHTML=`<div class="verification-summary"><b>${emailOk||phoneOk?'✅ Contato confirmado':'ℹ️ Confirmação opcional'}</b><small>${emailOk?'E-mail confirmado.':phoneOk?'Celular confirmado.':'Você pode confirmar seu e-mail ou celular aqui, se quiser.'}</small></div>`;
   if($('accountPhone'))$('accountPhone').value=u.phone?String(u.phone).replace(/^\+?55/,''):(await client.from('profiles').select('phone').eq('id',u.id).maybeSingle()).data?.phone||'';
   if(emailOk){$('sendEmailVerification').disabled=true;$('sendEmailVerification').textContent='E-mail confirmado ✓';}
   if(phoneOk){$('sendPhoneVerification').disabled=true;$('sendPhoneVerification').textContent='Celular confirmado ✓';}
@@ -176,14 +176,31 @@ async function initVerificationPanel(session){
   $('confirmEmailCode').onclick=confirmEmailCode;
   $('confirmPhoneChange').onclick=confirmPhoneChange;
 }
+let emailOtpCooldownUntil=0;
 async function sendEmailVerification(){
-  const {data:{user}}=await client.auth.getUser();
-  const email=user?.email;
-  if(!email)return setVerificationMsg('Não encontramos seu e-mail.','red');
-  const {error}=await client.auth.signInWithOtp({email, options:{shouldCreateUser:false}});
-  if(error)return setVerificationMsg('Não foi possível enviar o código: '+error.message);
+  const now=Date.now();
+  if(now<emailOtpCooldownUntil){
+    const sec=Math.ceil((emailOtpCooldownUntil-now)/1000);
+    return setVerificationMsg(`Aguarde ${sec}s antes de pedir outro código.`);
+  }
+  const {data:{user},error:userError}=await client.auth.getUser();
+  if(userError)return setVerificationMsg('Não foi possível identificar sua sessão: '+userError.message);
+  const email=user?.email?.trim();
+  if(!email)return setVerificationMsg('Não encontramos o e-mail da sua conta.');
+  const {error}=await client.auth.signInWithOtp({
+    email,
+    options:{shouldCreateUser:false, emailRedirectTo:window.location.href.split('#')[0]}
+  });
+  if(error){
+    const raw=String(error.message||error);
+    if(/magic link|smtp|email|mail/i.test(raw)){
+      return setVerificationMsg('O Supabase não conseguiu enviar o e-mail. No Supabase, configure Auth > Email Templates > Magic link/OTP para usar {{ .Token }} e verifique Auth > Logs > Auth para saber se o envio foi bloqueado pelo provedor de e-mail.');
+    }
+    return setVerificationMsg('Não foi possível enviar o código: '+raw);
+  }
+  emailOtpCooldownUntil=Date.now()+60000;
   $('emailVerifyBox')?.classList.remove('hidden');
-  setVerificationMsg('Enviamos um código de verificação para seu e-mail. Digite o código abaixo.','green');
+  setVerificationMsg('Código enviado. Verifique sua caixa de entrada e spam e digite o código de 6 dígitos.','green');
 }
 async function confirmEmailCode(){
   const {data:{user}}=await client.auth.getUser();

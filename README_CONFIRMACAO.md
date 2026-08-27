@@ -30,20 +30,27 @@ Isso permite que o cliente crie a conta e entre normalmente. A confirmação par
 
 ## 3. Configurar o código de confirmação por e-mail
 
-Ainda no Supabase:
+**Importante:** o botão do site usa `signInWithOtp()` para enviar um OTP para o e-mail da conta. O Supabase decide entre link e código conforme o template **Magic link/OTP**. Para receber um código digitável, o template precisa usar `{{ .Token }}`. A documentação oficial do Supabase confirma esse comportamento.
 
-**Authentication → Email Templates → Reauthentication**
+No Supabase:
 
-O corpo do e-mail precisa conter `{{ .Token }}`. Exemplo:
+1. Abra **Authentication → Email Templates**.
+2. Abra **Magic link** (em versões novas pode aparecer como **Magic link / OTP**).
+3. Substitua o conteúdo por algo como:
 
 ```html
 <h2>Confirmação da MacroFood</h2>
-<p>Seu código para confirmar o e-mail é:</p>
-<h1>{{ .Token }}</h1>
+<p>Seu código de confirmação é:</p>
+<h1 style="letter-spacing:6px">{{ .Token }}</h1>
 <p>Digite esse código na área Minha conta do site.</p>
 ```
 
-O fluxo usa `auth.reauthenticate()` para enviar o código e `verifyOtp` com o tipo `reauthentication` para validar o código.
+4. Salve.
+5. Em **Authentication → Providers → Email**, deixe o provedor de e-mail ativado.
+6. Se estiver usando o provedor de e-mail padrão do Supabase, lembre que ele tem limites baixos e é indicado principalmente para testes. Para produção, configure um SMTP próprio.
+7. Se ainda aparecer **Error sending magic link**, abra **Authentication → Logs → Auth** imediatamente depois de clicar no botão. O erro registrado ali mostra se é limite, SMTP, template ou outro bloqueio.
+
+O código do site não usa mais `reauthenticate()` para essa confirmação, pois o objetivo aqui é confirmar o contato do cliente com um OTP e depois gravar a confirmação em `contact_verifications`.
 
 ## 4. Configurar celular/SMS
 

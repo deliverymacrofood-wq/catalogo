@@ -592,6 +592,7 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
 .sales-date-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:14px}
 .sales-date-row label{display:flex;flex-direction:column;gap:6px;font-weight:600;color:#333}
 .sales-date-row input{min-height:42px;padding:8px 10px;border:1px solid #d8dce3;border-radius:9px;background:#fff}
+.sales-date-separator{display:flex;align-items:center;min-height:42px;font-weight:700;color:#777}
 .sales-result{margin-top:16px;border:1px solid #eee;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:5px;background:#fff}
 .sales-result span{color:#666;font-size:14px}.sales-result strong{font-size:30px;color:#a9003f}.sales-result small{color:#777}
 .wholesale-box{border:1px solid #f0d7b0;border-radius:12px;padding:14px;background:#fffaf1}.wholesale-box h4{margin:0 0 4px}.wholesale-box p{margin:0 0 10px;color:#777;font-size:13px}.wholesale-box .form{margin:0}

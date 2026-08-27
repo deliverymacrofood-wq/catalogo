@@ -420,14 +420,7 @@ async function submitOrder(){
   }
   const {data:{session}}=await client.auth.getSession();
   if(!session)return alert('Você precisa estar logado para fazer um pedido.');
-  const {data:verification}=await client.from('contact_verifications').select('email_verified,phone_verified').eq('user_id',session.user.id).maybeSingle();
-  const emailConfirmed=!!verification?.email_verified;
-  const phoneConfirmed=!!verification?.phone_verified;
-  if(!emailConfirmed && !phoneConfirmed){
-    alert('Antes de finalizar a compra, confirme seu e-mail ou celular em “Minha conta”.');
-    location.href='login.html';
-    return;
-  }
+  // A confirmação de e-mail/celular é opcional. O cliente logado pode comprar normalmente.
   const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
   const items=cart.map(x=>{const p=products.find(p=>p.id===x.id)||x;const subtotal=wholesaleTotal(p,x.qty);return {product_id:x.id,name:x.name,qty:x.qty,unit:x.unit||p.unit||'unidade',unit_price:Number((subtotal/x.qty).toFixed(2)),subtotal:Number(subtotal.toFixed(2)),image_url:x.image_url||p.image_url||''};});
   const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
