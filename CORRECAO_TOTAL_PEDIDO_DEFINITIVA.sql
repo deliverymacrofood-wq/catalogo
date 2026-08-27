@@ -1,11 +1,7 @@
--- MacroFood: correção definitiva do erro
--- "null value in column total of relation orders violates not-null constraint"
---
--- Execute ESTE arquivo no Supabase > SQL Editor uma única vez.
--- O código do site também foi corrigido para nunca enviar NaN/null como total.
-
-alter table public.orders
-  alter column total set default 0;
+-- CORREÇÃO DEFINITIVA DO ERRO: "Não foi possível calcular o total do pedido"
+-- Execute este arquivo no Supabase > SQL Editor.
+-- Causa: quando o produto NÃO tinha atacado, wholesale_price era NULL.
+-- No PostgreSQL, 0 * NULL continua sendo NULL, fazendo o subtotal/total virar NULL.
 
 create or replace function public.validate_order_totals()
 returns trigger
@@ -34,9 +30,7 @@ begin
     raise exception 'Pedido inválido: usuário não autenticado';
   end if;
 
-  if jsonb_typeof(new.items) <> 'array'
-     or jsonb_array_length(new.items) < 1
-     or jsonb_array_length(new.items) > 100 then
+  if jsonb_typeof(new.items) <> 'array' or jsonb_array_length(new.items) < 1 or jsonb_array_length(new.items) > 100 then
     raise exception 'Itens do pedido inválidos';
   end if;
 
@@ -48,41 +42,30 @@ begin
       raise exception 'Produto ou quantidade inválidos';
     end;
 
-    if qty is null or qty <= 0 or qty > 9999 or qty <> trunc(qty) then
+    if qty <= 0 or qty > 9999 or qty <> trunc(qty) then
       raise exception 'Quantidade inválida';
     end if;
 
-    select * into p
-      from public.products
-     where id=pid and coalesce(active,true)=true
-     limit 1;
-
+    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
     if not found then
       raise exception 'Produto não disponível';
     end if;
 
     if p.price is null or p.price <= 0 then
-      raise exception 'Produto "%" está sem preço válido cadastrado', p.name;
+      raise exception 'Produto % está sem preço válido cadastrado', p.name;
     end if;
 
     normal_price := case
-      when p.promo_price is not null
-       and p.promo_price > 0
-       and p.promo_price < p.price
-      then p.promo_price
+      when p.promo_price is not null and p.promo_price > 0 and p.promo_price < p.price
+        then p.promo_price
       else p.price
     end;
-
-    if normal_price is null or normal_price <= 0 then
-      raise exception 'Produto "%" está sem preço válido cadastrado', p.name;
-    end if;
 
     wholesale_price := p.wholesale_price;
     wholesale_qty := p.wholesale_qty;
     wholesale_mode := p.wholesale_mode;
 
-    valid_wholesale :=
-      wholesale_price is not null
+    valid_wholesale := wholesale_price is not null
       and wholesale_price > 0
       and wholesale_qty is not null
       and wholesale_qty > 0
@@ -99,7 +82,11 @@ begin
       n_qty := qty;
     end if;
 
-    expected_subtotal := round((n_qty * normal_price) + (w_qty * coalesce(wholesale_price, 0)),2);
+    -- IMPORTANTE: coalesce evita que produto sem atacado gere NULL.
+    expected_subtotal := round(
+      (n_qty * normal_price) + (w_qty * coalesce(wholesale_price, 0)),
+      2
+    );
 
     if expected_subtotal is null or expected_subtotal <= 0 then
       raise exception 'Não foi possível calcular o preço do produto "%"', p.name;
@@ -110,12 +97,12 @@ begin
       raise exception 'Preço do pedido inválido para o produto %', p.name;
     end if;
 
-    expected_total := expected_total + expected_subtotal;
+    expected_total := coalesce(expected_total,0) + expected_subtotal;
   end loop;
 
-  expected_total := round(expected_total,2);
+  expected_total := round(coalesce(expected_total,0),2);
 
-  if expected_total is null or expected_total <= 0 then
+  if expected_total <= 0 then
     raise exception 'Não foi possível calcular o total do pedido';
   end if;
 
@@ -138,5 +125,5 @@ create trigger trg_validate_order_totals
 before insert on public.orders
 for each row execute function public.validate_order_totals();
 
--- Diagnóstico opcional: produtos sem preço não poderão ser vendidos até serem corrigidos.
--- SELECT id, name, price FROM public.products WHERE price IS NULL OR price <= 0;
+-- Garante também que pedidos novos nunca recebam NULL no total.
+alter table public.orders alter column total set default 0;

@@ -346,7 +346,7 @@ begin
       n_qty := qty;
     end if;
 
-    expected_subtotal := round((n_qty * normal_price) + (w_qty * wholesale_price),2);
+    expected_subtotal := round((n_qty * normal_price) + (w_qty * coalesce(wholesale_price, 0)),2);
     supplied_subtotal := round(coalesce((item->>'subtotal')::numeric, -1),2);
     if supplied_subtotal <> expected_subtotal then
       raise exception 'Preço do pedido inválido para o produto %', p.name;
