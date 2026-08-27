@@ -239,6 +239,21 @@ function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
   render();
 }
+function priceHtml(p){
+  const unit=unitLabel(p);
+  const base=effectiveBasePrice(p);
+  if(base===null || !Number.isFinite(base) || base<=0){
+    return '<div class="price error-price">Preço não informado</div>';
+  }
+  const hasPromo=p.promo_price!=null && Number(p.promo_price)>0 && Number(p.promo_price)<Number(p.price);
+  let html=hasPromo
+    ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
+    : `<div class="price">${money(p.price)} / ${unit}</div>`;
+  if(p.wholesale_price!=null && Number(p.wholesale_price)>0 && Number(p.wholesale_price)<base && Number.isInteger(Number(p.wholesale_qty)) && Number(p.wholesale_qty)>0){
+    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
+  }
+  return html;
+}
 function marketingPriceHtml(p){
   const unit=unitLabel(p);
   const hasPromo=p.promo_price!=null&&Number(p.promo_price)<Number(p.price);
@@ -288,7 +303,7 @@ function render(){
   let q=$('search').value.toLowerCase().trim();
   let list=products.filter(p=>{
     const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):p.sector===active);
-    return categoryOk&&(!q||p.name.toLowerCase().includes(q)||p.sector.toLowerCase().includes(q));
+    return categoryOk&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q));
   });
   $('grid').innerHTML=list.length?list.map(p=>productCard(p,false)).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
 }
