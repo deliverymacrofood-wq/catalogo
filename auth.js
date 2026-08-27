@@ -67,6 +67,26 @@ async function init(){
   }
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+function showLogin(){
+  $('authApp').innerHTML=`<div class="panel login auth-card">
+    <div class="auth-brand-mini"><span>👤</span><div><h2>Entrar na minha conta</h2><p>Acesse sua conta MacroFood para acompanhar pedidos e gerenciar seu perfil.</p></div></div>
+    <label>E-mail ou celular
+      <input id="email" type="text" autocomplete="username" placeholder="Seu e-mail ou celular">
+    </label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="Sua senha">
+    <button class="primary auth-main-btn" id="loginBtn">Entrar</button>
+    <button class="secondary auth-register-btn" id="forgotBtn" type="button">Esqueci minha senha</button>
+    <button class="secondary auth-register-btn" id="goSignup" type="button">Ainda não tenho conta — Criar conta</button>
+    <p id="msg"></p>
+  </div>`;
+  $('loginBtn').onclick=login;
+  $('forgotBtn').onclick=forgot;
+  $('goSignup').onclick=showSignup;
+  $('email').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginBtn').click()});
+  $('pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginBtn').click()});
+}
+
 function showResetPassword(){
   $('authApp').innerHTML=`<div class="panel login"><h2>Nova senha</h2><p>Digite sua nova senha para concluir a recuperação da conta.</p><input id="newPass" type="password" autocomplete="new-password" placeholder="Nova senha (mínimo 6 caracteres)"><input id="newPass2" type="password" autocomplete="new-password" placeholder="Repita a nova senha"><button class="primary" id="savePass">Salvar nova senha</button><p id="msg"></p></div>`;
   $('savePass').onclick=async()=>{
