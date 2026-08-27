@@ -88,7 +88,50 @@ async function productTab(){
 }
 async function load(){const {data,error}=await client.from('products').select('*').order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="notice">'+esc(error.message)+'</div>';return}products=data||[];$('list').innerHTML=products.length?products.map(p=>`<div class="product-admin-row"><img class="thumb" src="${esc(p.image_url||'')}" alt=""><div class="grow"><b>${esc(p.name)} ${p.is_featured?'<span class=\"featured-admin-badge\">⭐ Destaque</span>':''}</b><small>${esc(p.sector)} • ${p.unit==='kg'?'Kg':'Unidade'} • ${money(p.price)} ${p.promo_price!=null?'• Promo '+money(p.promo_price):''} ${p.wholesale_price!=null?'• Atacado '+money(p.wholesale_price)+' / '+p.wholesale_qty+' '+(p.unit==='kg'?'kg':'un.') :''} • ${p.in_stock===false?'Sem estoque':'Em estoque'}</small></div><button class="outline-btn" onclick="edit('${p.id}')">Editar</button><button class="danger" onclick="removeProduct('${p.id}')">Excluir</button></div>`).join(''):'<div class="empty-state">Nenhum produto cadastrado.</div>'}
 async function upload(file){if(!file)return null;const path=`${crypto.randomUUID()}.${file.name.split('.').pop().toLowerCase()}`;const {error}=await client.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});if(error)throw error;return client.storage.from('product-images').getPublicUrl(path).data.publicUrl}
-async function save(e){e.preventDefault();const price=Number($('price').value),promo=$('promo').value?Number($('promo').value):null;const wholesalePrice=$('wholesalePrice').value?Number($('wholesalePrice').value):null;const wholesaleQty=$('wholesaleQty').value?Number($('wholesaleQty').value):null;const wholesaleMode=$('wholesaleMode').value;if(promo!==null&&promo>=price)return alert('O preço promocional deve ser menor que o preço normal.');if(wholesalePrice!==null&&wholesalePrice>=price)return alert('O preço de atacado deve ser menor que o preço normal.');if((wholesalePrice!==null)!==(wholesaleQty!==null))return alert('Preencha a quantidade e o preço de atacado juntos.');if(wholesaleQty!==null&&(!Number.isInteger(wholesaleQty)||wholesaleQty<1))return alert('A quantidade de atacado deve ser um número inteiro maior que zero.');const payload={name:$('name').value.trim(),price,unit:$('unit').value,sector:$('sector').value,in_stock:$('stock').value==='true',promo_price:promo,wholesale_mode:wholesalePrice!==null?wholesaleMode:null,wholesale_qty:wholesaleQty,wholesale_price:wholesalePrice,is_featured:$('featured').checked,active:true,updated_at:new Date().toISOString()};const f=$('image').files[0];try{if(f)payload.image_url=await upload(f);const r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);if(r.error)throw r.error;editing=null;productTab();alert('Produto salvo!')}catch(e){alert('Erro: '+e.message)}}
+async function save(e){
+  e.preventDefault();
+  const rawPrice=$('price').value.trim();
+  const rawPromo=$('promo').value.trim();
+  const rawWholesalePrice=$('wholesalePrice').value.trim();
+  const rawWholesaleQty=$('wholesaleQty').value.trim();
+  const price=Number(rawPrice);
+  const promo=rawPromo?Number(rawPromo):null;
+  const wholesalePrice=rawWholesalePrice?Number(rawWholesalePrice):null;
+  const wholesaleQty=rawWholesaleQty?Number(rawWholesaleQty):null;
+  const wholesaleMode=$('wholesaleMode').value;
+
+  if(!Number.isFinite(price)||price<=0)return alert('Informe um preço normal válido maior que zero.');
+  if(promo!==null&&(!Number.isFinite(promo)||promo<=0))return alert('Informe um preço promocional válido.');
+  if(promo!==null&&promo>=price)return alert('O preço promocional deve ser menor que o preço normal.');
+  if(wholesalePrice!==null&&(!Number.isFinite(wholesalePrice)||wholesalePrice<=0))return alert('Informe um preço de atacado válido.');
+  if(wholesalePrice!==null&&wholesalePrice>=price)return alert('O preço de atacado deve ser menor que o preço normal.');
+  if((wholesalePrice!==null)!==(wholesaleQty!==null))return alert('Preencha a quantidade e o preço de atacado juntos.');
+  if(wholesaleQty!==null&&(!Number.isInteger(wholesaleQty)||wholesaleQty<1))return alert('A quantidade de atacado deve ser um número inteiro maior que zero.');
+
+  const payload={
+    name:$('name').value.trim(),
+    price,
+    unit:$('unit').value,
+    sector:$('sector').value,
+    in_stock:$('stock').value==='true',
+    promo_price:promo,
+    wholesale_mode:wholesalePrice!==null?wholesaleMode:null,
+    wholesale_qty:wholesaleQty,
+    wholesale_price:wholesalePrice,
+    is_featured:$('featured').checked,
+    active:true,
+    updated_at:new Date().toISOString()
+  };
+  const f=$('image').files[0];
+  try{
+    if(f)payload.image_url=await upload(f);
+    const r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);
+    if(r.error)throw r.error;
+    editing=null;
+    productTab();
+    alert('Produto salvo!');
+  }catch(e){alert('Erro: '+e.message)}
+}
 async function edit(id){
   const cached=products.find(x=>String(x.id)===String(id));
   const p=cached || (await client.from('products').select('*').eq('id',id).maybeSingle()).data;

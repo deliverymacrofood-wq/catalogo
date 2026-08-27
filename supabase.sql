@@ -321,7 +321,15 @@ begin
       raise exception 'Produto não disponível';
     end if;
 
+    if p.price is null or p.price <= 0 then
+      raise exception 'Produto % está sem preço válido cadastrado', p.name;
+    end if;
+
     normal_price := case when p.promo_price is not null and p.promo_price > 0 and p.promo_price < p.price then p.promo_price else p.price end;
+    if normal_price is null or normal_price <= 0 then
+      raise exception 'Produto % está sem preço válido cadastrado', p.name;
+    end if;
+
     wholesale_price := p.wholesale_price;
     wholesale_qty := p.wholesale_qty;
     wholesale_mode := p.wholesale_mode;
@@ -347,8 +355,12 @@ begin
     expected_total := expected_total + expected_subtotal;
   end loop;
 
-  supplied_total := round(coalesce(new.total,-1),2);
   expected_total := round(expected_total,2);
+  if expected_total is null or expected_total <= 0 then
+    raise exception 'Não foi possível calcular o total do pedido';
+  end if;
+
+  supplied_total := round(coalesce(new.total,-1),2);
   if supplied_total <> expected_total then
     raise exception 'Total do pedido inválido';
   end if;

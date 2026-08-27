@@ -3,7 +3,20 @@ const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaur
 let sectors=['Todos','Promoções',...defaultSectors];
 let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[];
 let cartUserId=null;
-const money=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function numericValue(value){
+  if(value===null || value===undefined || value==='') return null;
+  if(typeof value==='number') return Number.isFinite(value)?value:null;
+  let s=String(value).trim().replace(/R\$|\s/g,'');
+  // Aceita tanto 1234.56 quanto 1.234,56 / 1234,56.
+  if(s.includes(',') && s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s=s.replace(',','.');
+  const n=Number(s);
+  return Number.isFinite(n)?n:null;
+}
+const money=v=>{
+  const n=numericValue(v);
+  return Number.isFinite(n)?n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'R$ 0,00';
+};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const $=id=>document.getElementById(id);
 
@@ -183,43 +196,45 @@ function stars(p){
   const r=reviewInfo(p);
   return `<div class="stars" title="Avaliação média">${r.avg?`★ ${r.avg.toFixed(1)}`:'☆ Sem avaliações'} <small>(${r.count})</small></div>`;
 }
-function effectiveBasePrice(p){return p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?Number(p.promo_price):Number(p.price);}
+function effectiveBasePrice(p){
+  const normal=numericValue(p?.price);
+  const promo=numericValue(p?.promo_price);
+  if(normal===null) return null;
+  return promo!==null && promo>0 && promo<normal ? promo : normal;
+}
 function wholesaleBreakdown(p,qty){
   qty=Math.max(0,Number(qty)||0);
   const normalPrice=effectiveBasePrice(p);
-  const wholesalePrice=Number(p.wholesale_price);
-  const wholesaleQty=Number(p.wholesale_qty);
-  const valid=wholesalePrice>0&&wholesaleQty>0&&wholesalePrice<normalPrice;
+  if(normalPrice===null){
+    return {normalQty:qty,wholesaleQty:0,normalPrice:null,wholesalePrice:null,normalTotal:null,wholesaleTotal:0,total:null,discount:null,valid:false,reason:'O produto está sem preço válido cadastrado.'};
+  }
+  const wholesalePrice=numericValue(p?.wholesale_price);
+  const wholesaleQty=Number(p?.wholesale_qty);
+  const valid=wholesalePrice!==null&&wholesalePrice>0&&Number.isInteger(wholesaleQty)&&wholesaleQty>0&&wholesalePrice<normalPrice;
   if(!valid){
-    return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:normalPrice*qty,wholesaleTotal:0,total:normalPrice*qty,discount:0};
+    const total=normalPrice*qty;
+    return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:total,wholesaleTotal:0,total,discount:0,valid:true};
   }
   let wQty=0,nQty=qty;
   if(p.wholesale_mode==='block'){
-    // Em “a cada X”, cada bloco completo recebe o preço de atacado;
-    // o restante continua no preço normal. Ex.: X=12 e compra=13 -> 12 atacado + 1 normal.
+    // “A cada X”: blocos completos no atacado e o restante no preço normal.
     wQty=Math.floor(qty/wholesaleQty)*wholesaleQty;
     nQty=qty-wQty;
   }else if(qty>=wholesaleQty){
-    // Em “a partir de X”, toda a quantidade recebe o preço de atacado.
+    // “A partir de X”: toda a quantidade no preço de atacado.
     wQty=qty;
     nQty=0;
   }
   const normalTotal=nQty*normalPrice;
   const wholesaleTotal=wQty*wholesalePrice;
   const total=normalTotal+wholesaleTotal;
-  return {normalQty:nQty,wholesaleQty:wQty,normalPrice,wholesalePrice,normalTotal,wholesaleTotal,total,discount:(qty*normalPrice)-total};
+  return {normalQty:nQty,wholesaleQty:wQty,normalPrice,wholesalePrice,normalTotal,wholesaleTotal,total,discount:(qty*normalPrice)-total,valid:true};
 }
-function wholesaleTotal(p,qty){return wholesaleBreakdown(p,qty).total;}
-function unitLabel(p){return p.unit==='kg'?'kg':'un.';}
-function priceHtml(p){
-  const unit=unitLabel(p);
-  let html='';
-  if(p.promo_price!=null && Number(p.promo_price)<Number(p.price)){
-    html+=`<div class="price-box"><div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price promo">Por: ${money(p.promo_price)} / ${unit}</div><span class="offer">🔥 PROMOÇÃO</span></div>`;
-  }else html=`<div class="price-box"><div class="price">Por: ${money(p.price)} / ${unit}</div></div>`;
-  if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0) html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
-  return html;
+function wholesaleTotal(p,qty){
+  const b=wholesaleBreakdown(p,qty);
+  return b.valid && Number.isFinite(b.total) ? b.total : null;
 }
+function unitLabel(p){return p?.unit==='kg'?'kg':'un.';}
 function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
   render();
@@ -287,8 +302,12 @@ async function addCart(id){
     location.href='login.html?redirect=index.html';
     return;
   }
-  const p=products.find(x=>x.id===id);
+  const p=products.find(x=>String(x.id)===String(id));
   if(!p||p.in_stock===false)return;
+  if(effectiveBasePrice(p)===null){
+    alert(`O produto "${p.name}" está sem preço válido cadastrado. Corrija o preço no painel do administrador.`);
+    return;
+  }
   pendingCartProduct=p;
   pendingCartQty=1;
   const qty=$('addQtyInput');
@@ -448,6 +467,7 @@ function toggleCustomerType(){
 
 async function submitOrder(){
   if(!cart.length)return alert('Carrinho vazio.');
+
   const hasCadastro=$('customerHasSalesCadastro').value==='yes';
   const docType=hasCadastro?'cpf':$('customerDocType').value;
   const name=(hasCadastro?$('salesCustomerName')?.value:$('customerName')?.value||'').trim();
@@ -456,6 +476,7 @@ async function submitOrder(){
   const cpfCnpj=normalizeDoc((hasCadastro?$('salesCustomerCpf')?.value:$('customerCpfCnpj')?.value)||'');
   const cep=normalizeDoc($('customerCep')?.value);
   const note=$('customerNote').value.trim();
+
   if(hasCadastro){
     if(name.length<2)return alert('Informe o nome completo.');
     if(cpfCnpj.length!==11)return alert('Informe um CPF válido com 11 números.');
@@ -467,21 +488,67 @@ async function submitOrder(){
   }else{
     if(cpfCnpj.length!==14)return alert('Para CNPJ, informe um CNPJ válido com 14 números.');
   }
+
   const {data:{session}}=await client.auth.getSession();
   if(!session)return alert('Você precisa estar logado para fazer um pedido.');
-  // A confirmação de e-mail/celular é opcional. O cliente logado pode comprar normalmente.
-  const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
-  const items=cart.map(x=>{const p=products.find(p=>p.id===x.id)||x;const subtotal=wholesaleTotal(p,x.qty);return {product_id:x.id,name:x.name,qty:x.qty,unit:x.unit||p.unit||'unidade',unit_price:Number((subtotal/x.qty).toFixed(2)),subtotal:Number(subtotal.toFixed(2)),image_url:x.image_url||p.image_url||''};});
-  const payload={user_id:session.user.id,customer_name:name||null,customer_phone:whatsapp||null,customer_email:email||session.user.email||null,note:note||null,items,total,status:'received',sales_customer:hasCadastro,document_type:docType,document_number:cpfCnpj||null,zipcode:cep||null};
+
+  // Recalcula tudo usando os preços atuais do banco. Nunca envia NaN/undefined/null como total.
+  let total=0;
+  const items=[];
+  for(const x of cart){
+    const p=products.find(p=>String(p.id)===String(x.id))||x;
+    const qty=Number(x.qty);
+    if(!Number.isInteger(qty)||qty<1||qty>9999){
+      return alert(`Quantidade inválida para "${x.name}".`);
+    }
+    const b=wholesaleBreakdown(p,qty);
+    if(!b.valid || !Number.isFinite(b.total)){
+      return alert(`Não foi possível calcular o preço de "${x.name}". Esse produto está sem preço válido no cadastro. Corrija o preço no painel do administrador e tente novamente.`);
+    }
+    const subtotal=Number(b.total.toFixed(2));
+    if(!Number.isFinite(subtotal)){
+      return alert(`Não foi possível calcular o subtotal de "${x.name}".`);
+    }
+    total+=subtotal;
+    const unitPrice=Number((subtotal/qty).toFixed(2));
+    items.push({
+      product_id:x.id,
+      name:x.name,
+      qty,
+      unit:x.unit||p.unit||'unidade',
+      unit_price:unitPrice,
+      subtotal,
+      image_url:x.image_url||p.image_url||''
+    });
+  }
+  total=Number(total.toFixed(2));
+  if(!Number.isFinite(total)||total<=0){
+    return alert('Não foi possível calcular o total do pedido. Verifique os preços dos produtos.');
+  }
+
+  const payload={
+    user_id:session.user.id,
+    customer_name:name||null,
+    customer_phone:whatsapp||null,
+    customer_email:email||session.user.email||null,
+    note:note||null,
+    items,
+    total,
+    status:'received',
+    sales_customer:hasCadastro,
+    document_type:docType,
+    document_number:cpfCnpj||null,
+    zipcode:cep||null
+  };
+
   const {data,error}=await client.from('orders').insert(payload).select('order_number').single();
   if(error)return alert('Não foi possível registrar o pedido: '+error.message);
+
   if(cartUserId){localStorage.removeItem(cartStorageKey(cartUserId));}
   cart=[];render();hideCheckoutForm();
   closeCart();
   $('orderSuccessText').textContent=`Seu pedido #${data.order_number} foi recebido. Você pode acompanhar o andamento em “Meus pedidos”. O administrador entrará em contato pelo WhatsApp quando estiver pronto para pagamento.`;
   $('orderSuccessModal').style.display='flex';
-  // Após concluir o pedido, fecha automaticamente a tela de confirmação e
-  // devolve o cliente ao catálogo, sem deixar o carrinho/checkout aberto.
   clearTimeout(window.__orderSuccessTimer);
   window.__orderSuccessTimer=setTimeout(()=>{
     closeOrderSuccess();
