@@ -239,6 +239,27 @@ function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
   render();
 }
+function priceHtml(p){
+  const unit=unitLabel(p);
+  const normal=numericValue(p?.price);
+  const promo=numericValue(p?.promo_price);
+  if(normal===null){
+    return `<div class="feature-price">Preço não informado</div>`;
+  }
+  const hasPromo=promo!==null && promo>0 && promo<normal;
+  let html=hasPromo
+    ? `<div class="oldprice">De: <s>${money(normal)}</s></div><div class="price">Por: ${money(promo)} / ${unit}</div>`
+    : `<div class="price">${money(normal)} / ${unit}</div>`;
+
+  const wholesale=numericValue(p?.wholesale_price);
+  const qty=Number(p?.wholesale_qty);
+  const base=hasPromo?promo:normal;
+  const hasWholesale=wholesale!==null && wholesale>0 && wholesale<base && Number.isInteger(qty) && qty>0;
+  if(hasWholesale){
+    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(wholesale)} / ${unit} ${p?.wholesale_mode==='block'?'a cada':'a partir de'} ${qty} ${unit}</div>`;
+  }
+  return html;
+}
 function marketingPriceHtml(p){
   const unit=unitLabel(p);
   const hasPromo=p.promo_price!=null&&Number(p.promo_price)<Number(p.price);
@@ -492,57 +513,33 @@ async function submitOrder(){
   const {data:{session}}=await client.auth.getSession();
   if(!session)return alert('Você precisa estar logado para fazer um pedido.');
 
-  // Busca novamente os produtos do banco antes de finalizar. Isso evita que
-  // um carrinho antigo/stale use preço indefinido ou dados de atacado antigos.
-  // O total é calculado somente com números válidos e o mesmo cálculo é usado
-  // para o subtotal de cada item.
+  // Recalcula tudo usando os preços atuais do banco. Nunca envia NaN/undefined/null como total.
   let total=0;
   const items=[];
-  const ids=[...new Set(cart.map(x=>String(x.id)).filter(Boolean))];
-  let freshProducts=[];
-  if(ids.length){
-    const {data:fresh,error:freshError}=await client.from('products').select('*').in('id',ids);
-    if(freshError){
-      return alert('Não foi possível atualizar os preços dos produtos. Tente novamente.');
-    }
-    freshProducts=fresh||[];
-  }
   for(const x of cart){
-    const p=freshProducts.find(p=>String(p.id)===String(x.id)) || products.find(p=>String(p.id)===String(x.id)) || x;
+    const p=products.find(p=>String(p.id)===String(x.id))||x;
     const qty=Number(x.qty);
     if(!Number.isInteger(qty)||qty<1||qty>9999){
       return alert(`Quantidade inválida para "${x.name}".`);
     }
-
-    // Primeiro tenta o cálculo completo (promoção + atacado).
-    let b=wholesaleBreakdown(p,qty);
-    // Compatibilidade com produtos antigos: se algum registro legado estiver
-    // sem campos de preço de atacado, usa o preço normal/promo válido.
+    const b=wholesaleBreakdown(p,qty);
     if(!b.valid || !Number.isFinite(b.total)){
-      const base=effectiveBasePrice(p);
-      if(base!==null && Number.isFinite(base) && base>0){
-        b={normalQty:qty,wholesaleQty:0,normalPrice:base,wholesalePrice:null,
-          normalTotal:base*qty,wholesaleTotal:0,total:base*qty,discount:0,valid:true};
-      }
+      return alert(`Não foi possível calcular o preço de "${x.name}". Esse produto está sem preço válido no cadastro. Corrija o preço no painel do administrador e tente novamente.`);
     }
-    if(!b.valid || !Number.isFinite(b.total) || b.total<=0){
-      return alert(`Não foi possível calcular o preço de "${x.name}". Verifique o preço deste produto no painel do administrador.`);
-    }
-
-    const subtotal=Math.round((Number(b.total)+Number.EPSILON)*100)/100;
-    if(!Number.isFinite(subtotal) || subtotal<=0){
+    const subtotal=Number(b.total.toFixed(2));
+    if(!Number.isFinite(subtotal)){
       return alert(`Não foi possível calcular o subtotal de "${x.name}".`);
     }
-    total=Math.round((total+subtotal+Number.EPSILON)*100)/100;
-    const unitPrice=Math.round((subtotal/qty+Number.EPSILON)*100)/100;
+    total+=subtotal;
+    const unitPrice=Number((subtotal/qty).toFixed(2));
     items.push({
       product_id:x.id,
-      name:p.name||x.name,
+      name:x.name,
       qty,
-      unit:p.unit||x.unit||'unidade',
+      unit:x.unit||p.unit||'unidade',
       unit_price:unitPrice,
       subtotal,
-      image_url:p.image_url||x.image_url||''
+      image_url:x.image_url||p.image_url||''
     });
   }
   total=Number(total.toFixed(2));
