@@ -83,7 +83,23 @@ async function ensureCategories(){
 async function productTab(){
   await ensureCategories();
   $('tab').innerHTML=`${pageTitle('Produtos','Gerencie os produtos exibidos no catálogo.')}
-  <div class="panel-card"><div class="card-head"><div><h3>${editing?'Editar produto':'Cadastrar produto'}</h3><p>Preencha os dados do produto.</p></div></div><form class="form" id="pf"><label>Nome<input id="name" required></label><label>Preço normal<input id="price" type="number" step="0.01" min="0" required></label><label>Venda por<select id="unit"><option value="unidade">Unidade</option><option value="kg">Kg</option></select></label><label>Setor<select id="sector">${sectors.map(s=>`<option>${s}</option>`).join('')}</select></label><label>Imagem<input id="image" type="file" accept="image/*"></label><label>Estoque<select id="stock"><option value="true">Com estoque</option><option value="false">Sem estoque</option></select></label><label>Preço promocional<input id="promo" type="number" step="0.01" min="0" placeholder="Opcional"></label><div class="wholesale-box full"><h4>🏷️ Preço de atacado</h4><p>Defina quando o preço de atacado será aplicado.</p><div class="form"><label>Tipo<select id="wholesaleMode"><option value="threshold">A partir de X quantidade</option><option value="block">A cada X quantidade</option></select></label><label>Quantidade X<input id="wholesaleQty" type="number" min="1" step="1" placeholder="Ex.: 10"></label><label>Preço de atacado<input id="wholesalePrice" type="number" step="0.01" min="0" placeholder="Ex.: 9,90"></label></div></div><label class="featured-toggle"><input id="featured" type="checkbox"><span>⭐ Colocar este produto em destaque no catálogo</span></label><div class="form-actions full"><button class="primary">${editing?'Salvar alterações':'Cadastrar produto'}</button>${editing?'<button type="button" class="secondary" onclick="editing=null;productTab()">Cancelar</button>':''}</div></form></div><div class="panel-card"><div class="card-head"><div><h3>Produtos cadastrados</h3></div></div><div id="list"></div></div>`;
+  <div class="panel-card"><div class="card-head"><div><h3>${editing?'Editar produto':'Cadastrar produto'}</h3><p>Preencha os dados do produto.</p></div></div><form class="form" id="pf"><label>Nome<input id="name" required></label><label>Preço normal<input id="price" type="number" step="0.01" min="0" required></label><label>Venda por<select id="unit"><option value="unidade">Unidade</option><option value="kg">Kg</option></select></label><label>Setor<select id="sector">${sectors.map(s=>`<option>${s}</option>`).join('')}</select></label><label>Imagem<input id="image" type="file" accept="image/*"></label><label>Estoque<select id="stock"><option value="true">Com estoque</option><option value="false">Sem estoque</option></select></label><label>Preço promocional<input id="promo" type="number" step="0.01" min="0" placeholder="Opcional"></label><div class="wholesale-box full"><h4>🏷️ Preço de atacado</h4><label class="wholesale-enable"><input id="hasWholesale" type="checkbox"><span>Este produto terá preço de atacado</span></label><p>Ative somente se quiser oferecer preço especial por quantidade.</p><div id="wholesaleFields" class="form wholesale-fields" hidden><label>Tipo<select id="wholesaleMode"><option value="threshold">A partir de X quantidade</option><option value="block">A cada X quantidade</option></select></label><label>Quantidade X<input id="wholesaleQty" type="number" min="1" step="1" placeholder="Ex.: 10"></label><label>Preço de atacado<input id="wholesalePrice" type="number" step="0.01" min="0" placeholder="Ex.: 9,90"></label></div></div><label class="featured-toggle"><input id="featured" type="checkbox"><span>⭐ Colocar este produto em destaque no catálogo</span></label><div class="form-actions full"><button class="primary">${editing?'Salvar alterações':'Cadastrar produto'}</button>${editing?'<button type="button" class="secondary" onclick="editing=null;productTab()">Cancelar</button>':''}</div></form></div><div class="panel-card"><div class="card-head"><div><h3>Produtos cadastrados</h3></div></div><div id="list"></div></div>`;
+  const hasWholesale=$('hasWholesale');
+  const wholesaleFields=$('wholesaleFields');
+  const toggleWholesale=()=>{
+    const enabled=hasWholesale.checked;
+    wholesaleFields.hidden=!enabled;
+    $('wholesaleMode').disabled=!enabled;
+    $('wholesaleQty').disabled=!enabled;
+    $('wholesalePrice').disabled=!enabled;
+    if(!enabled){
+      $('wholesaleQty').value='';
+      $('wholesalePrice').value='';
+      $('wholesaleMode').value='threshold';
+    }
+  };
+  hasWholesale.onchange=toggleWholesale;
+  toggleWholesale();
   $('pf').onsubmit=save;load();
 }
 async function load(){const {data,error}=await client.from('products').select('*').order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="notice">'+esc(error.message)+'</div>';return}products=data||[];$('list').innerHTML=products.length?products.map(p=>`<div class="product-admin-row"><img class="thumb" src="${esc(p.image_url||'')}" alt=""><div class="grow"><b>${esc(p.name)} ${p.is_featured?'<span class=\"featured-admin-badge\">⭐ Destaque</span>':''}</b><small>${esc(p.sector)} • ${p.unit==='kg'?'Kg':'Unidade'} • ${money(p.price)} ${p.promo_price!=null?'• Promo '+money(p.promo_price):''} ${p.wholesale_price!=null?'• Atacado '+money(p.wholesale_price)+' / '+p.wholesale_qty+' '+(p.unit==='kg'?'kg':'un.') :''} • ${p.in_stock===false?'Sem estoque':'Em estoque'}</small></div><button class="outline-btn" onclick="edit('${p.id}')">Editar</button><button class="danger" onclick="removeProduct('${p.id}')">Excluir</button></div>`).join(''):'<div class="empty-state">Nenhum produto cadastrado.</div>'}
@@ -96,9 +112,10 @@ async function save(e){
   const rawWholesaleQty=$('wholesaleQty').value.trim();
   const price=Number(rawPrice);
   const promo=rawPromo?Number(rawPromo):null;
-  const wholesalePrice=rawWholesalePrice?Number(rawWholesalePrice):null;
-  const wholesaleQty=rawWholesaleQty?Number(rawWholesaleQty):null;
-  const wholesaleMode=$('wholesaleMode').value;
+  const hasWholesale=$('hasWholesale').checked;
+  const wholesalePrice=hasWholesale&&rawWholesalePrice?Number(rawWholesalePrice):null;
+  const wholesaleQty=hasWholesale&&rawWholesaleQty?Number(rawWholesaleQty):null;
+  const wholesaleMode=hasWholesale?$('wholesaleMode').value:null;
 
   if(!Number.isFinite(price)||price<=0)return alert('Informe um preço normal válido maior que zero.');
   if(promo!==null&&(!Number.isFinite(promo)||promo<=0))return alert('Informe um preço promocional válido.');
@@ -144,9 +161,11 @@ async function edit(id){
   $('sector').value=p.sector||sectors[0]||'';
   $('stock').value=String(p.in_stock!==false);
   $('promo').value=p.promo_price??'';
+  $('hasWholesale').checked=Boolean(p.wholesale_price!=null && p.wholesale_qty!=null);
   $('wholesaleMode').value=p.wholesale_mode||'threshold';
   $('wholesaleQty').value=p.wholesale_qty??'';
   $('wholesalePrice').value=p.wholesale_price??'';
+  $('hasWholesale').dispatchEvent(new Event('change'));
   $('featured').checked=p.is_featured===true;
   const form=$('pf'); if(form) form.scrollIntoView({behavior:'smooth',block:'start'});
 }

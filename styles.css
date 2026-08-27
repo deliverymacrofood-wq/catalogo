@@ -600,3 +600,9 @@ header,.site-header{background:linear-gradient(135deg,#f05a00,#ff7900 55%,#ff970
 .wholesale-box{border:1px solid #f0d7b0;border-radius:12px;padding:14px;background:#fffaf1}.wholesale-box h4{margin:0 0 4px}.wholesale-box p{margin:0 0 10px;color:#777;font-size:13px}.wholesale-box .form{margin:0}
 .wholesale-note{margin-top:6px;font-size:12px;color:#9a5b00;font-weight:600}
 @media(max-width:600px){.sales-date-row{align-items:stretch}.sales-date-row label,.sales-date-row button{width:100%}.sales-result strong{font-size:25px}}
+
+/* Controle de preço de atacado no cadastro de produtos */
+.wholesale-enable{display:flex;align-items:center;gap:10px;margin:8px 0 4px;font-weight:700;cursor:pointer}
+.wholesale-enable input{width:18px;height:18px;accent-color:#a90046}
+.wholesale-fields{margin-top:10px}
+.wholesale-fields[hidden]{display:none!important}
