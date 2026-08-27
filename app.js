@@ -420,8 +420,9 @@ async function submitOrder(){
   }
   const {data:{session}}=await client.auth.getSession();
   if(!session)return alert('Você precisa estar logado para fazer um pedido.');
-  const emailConfirmed=!!session.user.email_confirmed_at;
-  const phoneConfirmed=!!session.user.phone_confirmed_at;
+  const {data:verification}=await client.from('contact_verifications').select('email_verified,phone_verified').eq('user_id',session.user.id).maybeSingle();
+  const emailConfirmed=!!verification?.email_verified;
+  const phoneConfirmed=!!verification?.phone_verified;
   if(!emailConfirmed && !phoneConfirmed){
     alert('Antes de finalizar a compra, confirme seu e-mail ou celular em “Minha conta”.');
     location.href='login.html';

@@ -350,3 +350,93 @@ create policy "customers update own support conversation" on public.support_conv
 drop policy if exists "admins manage support conversations" on public.support_conversations;
 create policy "admins manage support conversations" on public.support_conversations for all to authenticated using(public.is_admin()) with check(public.is_admin());
 grant select,insert,update on public.support_conversations to authenticated;
+
+
+-- Confirmação de contato feita depois do cadastro.
+-- Não depende de "Confirm email" no cadastro: o cliente continua podendo criar a conta
+-- e confirmar e-mail/celular somente em Minha conta antes de comprar.
+create table if not exists public.contact_verifications(
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email_verified boolean not null default false,
+  phone_verified boolean not null default false,
+  email_verified_at timestamptz,
+  phone_verified_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.contact_verifications enable row level security;
+drop policy if exists "users read own contact verification" on public.contact_verifications;
+create policy "users read own contact verification" on public.contact_verifications
+  for select to authenticated using(user_id=auth.uid());
+
+-- Não existe INSERT/UPDATE/DELETE direto para o cliente. Somente estas funções
+-- SECURITY DEFINER podem gravar o resultado depois da verificação do Auth.
+create or replace function public.mark_email_contact_verified()
+returns void
+language plpgsql
+security definer
+set search_path=public,auth
+as $$
+declare
+  claims jsonb;
+  methods jsonb;
+  item jsonb;
+  recent_otp boolean := false;
+begin
+  if auth.uid() is null then raise exception 'Não autenticado'; end if;
+  claims := auth.jwt();
+  methods := coalesce(claims->'amr','[]'::jsonb);
+  for item in select * from jsonb_array_elements(methods) loop
+    if item->>'method' = 'otp'
+       and coalesce((item->>'timestamp')::bigint,0) >= extract(epoch from now() - interval '10 minutes') then
+      recent_otp := true;
+    end if;
+  end loop;
+  if not recent_otp then
+    raise exception 'É necessário validar o código enviado pelo e-mail antes de confirmar.';
+  end if;
+  insert into public.contact_verifications(user_id,email_verified,email_verified_at,updated_at)
+  values(auth.uid(),true,now(),now())
+  on conflict(user_id) do update set email_verified=true,email_verified_at=now(),updated_at=now();
+end;
+$$;
+
+create or replace function public.mark_phone_contact_verified()
+returns void
+language plpgsql
+security definer
+set search_path=public,auth
+as $$
+begin
+  if auth.uid() is null then raise exception 'Não autenticado'; end if;
+  if not exists(select 1 from auth.users where id=auth.uid() and phone_confirmed_at is not null) then
+    raise exception 'O celular ainda não foi confirmado pelo Supabase.';
+  end if;
+  insert into public.contact_verifications(user_id,phone_verified,phone_verified_at,updated_at)
+  values(auth.uid(),true,now(),now())
+  on conflict(user_id) do update set phone_verified=true,phone_verified_at=now(),updated_at=now();
+end;
+$$;
+
+grant execute on function public.mark_email_contact_verified() to authenticated;
+grant execute on function public.mark_phone_contact_verified() to authenticated;
+grant select on public.contact_verifications to authenticated;
+
+-- Cria o registro automaticamente para contas novas.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  insert into public.profiles(id,email,nickname,phone)
+    values(new.id,new.email,nullif(trim(new.raw_user_meta_data->>'nickname'),''),new.phone)
+    on conflict(id) do update set email=excluded.email, nickname=coalesce(public.profiles.nickname, excluded.nickname), phone=coalesce(excluded.phone, public.profiles.phone);
+  insert into public.contact_verifications(user_id)
+    values(new.id) on conflict(user_id) do nothing;
+  return new;
+end; $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+
+insert into public.contact_verifications(user_id)
+select id from auth.users
+on conflict(user_id) do nothing;

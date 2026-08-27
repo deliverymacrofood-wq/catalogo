@@ -34,9 +34,10 @@ async function init(){
         <section class="account-edit-card verification-account-card">
           <div id="verificationStatus"></div>
           <div class="verification-choice-grid">
-            <div class="verify-option"><b>✉️ Confirmar e-mail</b><small>Receba um link no seu e-mail cadastrado.</small><button type="button" class="secondary" id="sendEmailVerification">Enviar confirmação</button></div>
+            <div class="verify-option"><b>✉️ Confirmar e-mail</b><small>Receba um código de 6 dígitos no seu e-mail cadastrado.</small><button type="button" class="secondary" id="sendEmailVerification">Enviar código por e-mail</button></div>
             <div class="verify-option"><b>📱 Confirmar celular</b><small>Informe seu celular e receba um código por SMS.</small><input id="accountPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Celular com DDD"><button type="button" class="secondary" id="sendPhoneVerification">Enviar código SMS</button></div>
           </div>
+          <div id="emailVerifyBox" class="verify-box hidden"><input id="accountEmailOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código recebido por e-mail"><button type="button" class="primary" id="confirmEmailCode">Confirmar e-mail</button></div>
           <div id="phoneVerifyBox" class="verify-box hidden"><input id="accountPhoneOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Código SMS"><button type="button" class="primary" id="confirmPhoneChange">Confirmar celular</button></div>
           <p id="verificationMsg" class="muted" style="margin:8px 0 0;font-size:12px"></p>
         </section>
@@ -159,25 +160,47 @@ async function initVerificationPanel(session){
   const status=$('verificationStatus');
   if(!status)return;
   const u=session.user;
-  const emailOk=!!u.email_confirmed_at;
-  const phoneOk=!!u.phone_confirmed_at;
-  status.innerHTML=`<div class="verification-summary"><b>${emailOk||phoneOk?'✅ Conta confirmada':'⚠️ Conta ainda não confirmada'}</b><small>${emailOk?'E-mail confirmado.':phoneOk?'Celular confirmado.':'Confirme seu e-mail ou celular aqui antes de fazer uma compra.'}</small></div>`;
-  if($('accountPhone'))$('accountPhone').value=u.phone?String(u.phone).replace(/^55/,''):'';
+  let v={email_verified:false,phone_verified:false};
+  try{
+    const {data}=await client.from('contact_verifications').select('email_verified,phone_verified,email_verified_at,phone_verified_at').eq('user_id',u.id).maybeSingle();
+    if(data)v=data;
+  }catch(e){}
+  const emailOk=!!v.email_verified;
+  const phoneOk=!!v.phone_verified;
+  status.innerHTML=`<div class="verification-summary"><b>${emailOk||phoneOk?'✅ Contato confirmado':'⚠️ Confirmação necessária para comprar'}</b><small>${emailOk?'E-mail confirmado.':phoneOk?'Celular confirmado.':'Confirme seu e-mail ou celular aqui antes de finalizar uma compra.'}</small></div>`;
+  if($('accountPhone'))$('accountPhone').value=u.phone?String(u.phone).replace(/^\+?55/,''):(await client.from('profiles').select('phone').eq('id',u.id).maybeSingle()).data?.phone||'';
+  if(emailOk){$('sendEmailVerification').disabled=true;$('sendEmailVerification').textContent='E-mail confirmado ✓';}
+  if(phoneOk){$('sendPhoneVerification').disabled=true;$('sendPhoneVerification').textContent='Celular confirmado ✓';}
   $('sendEmailVerification').onclick=sendEmailVerification;
   $('sendPhoneVerification').onclick=sendPhoneVerification;
+  $('confirmEmailCode').onclick=confirmEmailCode;
   $('confirmPhoneChange').onclick=confirmPhoneChange;
 }
 async function sendEmailVerification(){
-  const email=(await client.auth.getUser()).data.user?.email;
-  if(!email)return;
-  const {error}=await client.auth.resend({type:'signup',email});
-  if(error)return setVerificationMsg('Não foi possível enviar o e-mail: '+error.message);
-  setVerificationMsg('E-mail de confirmação enviado. Verifique sua caixa de entrada e spam.','green');
+  const {data:{user}}=await client.auth.getUser();
+  const email=user?.email;
+  if(!email)return setVerificationMsg('Não encontramos seu e-mail.','red');
+  const {error}=await client.auth.reauthenticate();
+  if(error)return setVerificationMsg('Não foi possível enviar o código: '+error.message);
+  $('emailVerifyBox')?.classList.remove('hidden');
+  setVerificationMsg('Enviamos um código de verificação para seu e-mail. Digite o código abaixo.','green');
+}
+async function confirmEmailCode(){
+  const {data:{user}}=await client.auth.getUser();
+  const email=user?.email;
+  const token=$('accountEmailOtp')?.value.trim();
+  if(!email||!token)return setVerificationMsg('Digite o código recebido por e-mail.');
+  const {error}=await client.auth.verifyOtp({email,token,type:'reauthentication'});
+  if(error)return setVerificationMsg('Código inválido ou expirado: '+error.message);
+  const {error:markError}=await client.rpc('mark_email_contact_verified');
+  if(markError)return setVerificationMsg('O código foi validado, mas não conseguimos salvar a confirmação. Execute o SQL de atualização do ZIP no Supabase.');
+  setVerificationMsg('E-mail confirmado com sucesso!','green');
+  setTimeout(()=>location.reload(),700);
 }
 async function sendPhoneVerification(){
   const phone=normalizePhoneAuth($('accountPhone')?.value||'');
   if(phone.length<12)return setVerificationMsg('Informe um celular válido com DDD.');
-  const {data,error}=await client.auth.updateUser({phone});
+  const {error}=await client.auth.updateUser({phone});
   if(error)return setVerificationMsg('Não foi possível enviar o SMS: '+error.message);
   window.pendingVerificationPhone=phone;
   $('phoneVerifyBox')?.classList.remove('hidden');
@@ -189,8 +212,10 @@ async function confirmPhoneChange(){
   if(!phone||!token)return setVerificationMsg('Digite o código recebido por SMS.');
   const {error}=await client.auth.verifyOtp({phone,token,type:'phone_change'});
   if(error)return setVerificationMsg('Código inválido ou expirado: '+error.message);
+  const {error:markError}=await client.rpc('mark_phone_contact_verified');
+  if(markError)return setVerificationMsg('O celular foi validado, mas não conseguimos salvar a confirmação. Execute o SQL de atualização do ZIP no Supabase.');
   setVerificationMsg('Celular confirmado com sucesso!','green');
-  setTimeout(()=>location.reload(),500);
+  setTimeout(()=>location.reload(),700);
 }
 function setVerificationMsg(text,color){const el=$('verificationMsg');if(el){el.textContent=text;el.style.color=color||'#a00000';}}
 
