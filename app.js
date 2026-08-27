@@ -224,17 +224,26 @@ function syncSearch(value){
   const input=$('search'); if(input) input.value=value||'';
   render();
 }
+function marketingPriceHtml(p){
+  const unit=unitLabel(p);
+  const hasPromo=p.promo_price!=null&&Number(p.promo_price)<Number(p.price);
+  let html=hasPromo
+    ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
+    : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
+  if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0){
+    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
+  }
+  return html;
+}
 function productCard(p,featured=false){
   const img=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦';
-  const unit=unitLabel(p);
-  const price=p.promo_price!=null&&Number(p.promo_price)<Number(p.price)?`<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`:`<div class="feature-price">${money(p.price)} / ${unit}</div>`;
   return `<article class="${featured?'feature-card':'card'}">
     <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">★ DESTAQUE</span>':''}${img}</div>
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
       <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>
       ${featured&&p.product_code?`<small class="muted">Código: ${esc(p.product_code)}</small>`:''}
-      ${featured?price:priceHtml(p)}
+      ${featured?marketingPriceHtml(p):priceHtml(p)}
       ${featured?`<div class="feature-rating">${stars(p)} <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div><button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
     </div>
   </article>`;
@@ -248,7 +257,12 @@ function renderFeatured(){
 function renderPromos(){
   const el=$('promoGrid'); if(!el)return;
   const promos=products.filter(p=>p.promo_price!=null&&Number(p.promo_price)<Number(p.price)).slice(0,4);
-  el.innerHTML=promos.length?promos.map(p=>`<article class="promo-card"><img src="${esc(p.image_url||'')}" alt="${esc(p.name)}"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div><div class="new">Por ${money(p.promo_price)}</div><button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`).join(''):'<div class="notice">Nenhuma promoção ativa no momento.</div>';
+  el.innerHTML=promos.length?promos.map(p=>{
+    const unit=unitLabel(p);
+    const wholesale=(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0)
+      ? `<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>` : '';
+    return `<article class="promo-card"><img src="${esc(p.image_url||'')}" alt="${esc(p.name)}"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div><div class="new">Por ${money(p.promo_price)} / ${unit}</div>${wholesale}<button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`;
+  }).join(''):'<div class="notice">Nenhuma promoção ativa no momento.</div>';
 }
 function render(){
   renderCats();
