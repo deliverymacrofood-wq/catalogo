@@ -30,6 +30,7 @@ function panel(){
         <button onclick="showTab('suggestions')" data-nav="suggestions">💡 <span>Sugestões</span><b id="suggestionBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('support')" data-nav="support">💬 <span>Suporte</span><b id="supportBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('settings')" data-nav="settings">⚙ <span>Configurações</span></button>
+        <button type="button" onclick="window.location.href='index.html'" data-nav="catalog">🏠 <span>Voltar ao catálogo</span></button>
       </nav>
       <div class="side-bottom"><div class="admin-note">🛡<br><b>Área Administrativa</b><small>Somente administradores possuem acesso a esta área.</small></div><button class="logout-side" id="logout">↪ <span>Sair</span></button></div>
     </aside>
