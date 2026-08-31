@@ -992,110 +992,214 @@ html[data-theme="dark"] .catalog-page .mobile-bottom a:first-child{color:var(--m
   .catalog-page .cart-box{width:100%!important;max-width:none!important;height:min(92dvh,780px)!important;border-radius:18px 18px 0 0!important;padding:18px 14px!important}
 }
 
-/* ===== TEMA ESCURO GLOBAL - CORREÇÃO DEFINITIVA ===== */
-html[data-theme="dark"] body:not(.catalog-page) {
-  background: var(--mf-cream) !important;
-  color: var(--mf-text) !important;
+
+/* =========================================================
+   MACROFOOD — CORREÇÃO FINAL TEMA ESCURO + PÁGINAS DO CLIENTE
+   ========================================================= */
+html[data-theme="dark"] body:not(.catalog-page),
+html[data-theme="dark"] body:not(.catalog-page) main{
+  background:#080a0c!important;
+  color:#f4f6f8!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) header{
+  background:#111416!important;
+  color:#f4f6f8!important;
+  border-bottom:1px solid #252a2f!important;
+  box-shadow:0 5px 20px rgba(0,0,0,.45)!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) header .top{
+  background:#111416!important;
+  color:#f4f6f8!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .brand h1,
+html[data-theme="dark"] body:not(.catalog-page) .brand p,
+html[data-theme="dark"] body:not(.catalog-page) .brand,
+html[data-theme="dark"] body:not(.catalog-page) .top .admin{
+  color:#f4f6f8!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .brand p{color:#9da5ad!important}
+html[data-theme="dark"] body:not(.catalog-page) .theme-toggle,
+html[data-theme="dark"] body:not(.catalog-page) .top .admin{
+  background:#1b1f23!important;
+  border-color:#343a40!important;
+  color:#f4f6f8!important;
 }
 
+/* Meus pedidos / Suporte / Conta: cartões realmente escuros, sem texto branco sobre branco. */
 html[data-theme="dark"] .orders-page,
-html[data-theme="dark"] .orders-page-head,
+html[data-theme="dark"] .support-page,
+html[data-theme="dark"] #authApp{color:#f4f6f8!important}
 html[data-theme="dark"] .orders-page-head h2,
-html[data-theme="dark"] .orders-page-head p {
-  color: var(--mf-text) !important;
+html[data-theme="dark"] .orders-page-head p,
+html[data-theme="dark"] .my-order-card,
+html[data-theme="dark"] .my-order-card strong,
+html[data-theme="dark"] .my-order-card span,
+html[data-theme="dark"] .my-order-card b,
+html[data-theme="dark"] .my-order-item span,
+html[data-theme="dark"] .my-order-total,
+html[data-theme="dark"] .my-order-total b,
+html[data-theme="dark"] .my-order-info p,
+html[data-theme="dark"] .order-hint,
+html[data-theme="dark"] .empty-state,
+html[data-theme="dark"] .empty-state h3,
+html[data-theme="dark"] .empty-state p{
+  color:#f1f4f6!important;
 }
 html[data-theme="dark"] .orders-page-head p,
-html[data-theme="dark"] .orders-login p,
-html[data-theme="dark"] .empty-state p {
-  color: var(--mf-muted) !important;
-}
+html[data-theme="dark"] .my-order-head small,
+html[data-theme="dark"] .my-order-info p,
+html[data-theme="dark"] .order-hint,
+html[data-theme="dark"] .empty-state p{color:#aeb6be!important}
 html[data-theme="dark"] .my-order-card,
 html[data-theme="dark"] .orders-login,
 html[data-theme="dark"] .empty-state,
-html[data-theme="dark"] .panel {
-  background: var(--mf-surface) !important;
-  color: var(--mf-text) !important;
-  border-color: var(--mf-border) !important;
-  box-shadow: var(--mf-shadow) !important;
+html[data-theme="dark"] .panel{
+  background:#15191d!important;
+  border:1px solid #2c3339!important;
+  color:#f1f4f6!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.32)!important;
 }
 html[data-theme="dark"] .my-order-head,
-html[data-theme="dark"] .my-order-item,
-html[data-theme="dark"] .my-order-actions {
-  border-color: var(--mf-border) !important;
+html[data-theme="dark"] .my-order-actions{
+  background:#111416!important;
+  border-color:#2c3339!important;
 }
-html[data-theme="dark"] .my-order-head strong,
-html[data-theme="dark"] .my-order-total,
-html[data-theme="dark"] .my-order-total b,
-html[data-theme="dark"] .my-order-item span,
-html[data-theme="dark"] .my-order-item b {
-  color: var(--mf-text) !important;
-}
-html[data-theme="dark"] .my-order-head small,
-html[data-theme="dark"] .order-hint {
-  color: var(--mf-muted) !important;
-}
-html[data-theme="dark"] .my-order-info,
-html[data-theme="dark"] .my-order-actions {
-  background: var(--mf-surface-2) !important;
-}
-html[data-theme="dark"] .my-order-info p,
-html[data-theme="dark"] .my-order-info p b {
-  color: var(--mf-text) !important;
-}
-html[data-theme="dark"] .my-order-info p b { color: var(--mf-orange) !important; }
-html[data-theme="dark"] .my-order-item img {
-  background: #151719 !important;
-}
-html[data-theme="dark"] .my-order-card .secondary,
-html[data-theme="dark"] .orders-page .secondary {
-  background: var(--mf-surface-2) !important;
-  color: var(--mf-text) !important;
-  border-color: var(--mf-border) !important;
-}
-html[data-theme="dark"] .my-order-card .order-chat-btn {
-  background: #2b2119 !important;
-  color: #ff9a45 !important;
-  border-color: #5a402a !important;
-}
-html[data-theme="dark"] .my-order-card .danger {
-  background: #321c1c !important;
-  color: #ff9a9a !important;
-  border-color: #663737 !important;
-}
-html[data-theme="dark"] .status-new { background:#3b2619 !important; color:#ffad66 !important; }
-html[data-theme="dark"] .status-ready { background:#3b3218 !important; color:#ffd477 !important; }
-html[data-theme="dark"] .status-paid { background:#183522 !important; color:#8de0a8 !important; }
-html[data-theme="dark"] .status-done { background:#202c3b !important; color:#a9c9ed !important; }
-html[data-theme="dark"] .status-cancelled { background:#3a2020 !important; color:#ffaaaa !important; }
+html[data-theme="dark"] .my-order-item{border-color:#2c3339!important}
+html[data-theme="dark"] .my-order-item img{background:#0d1012!important}
+html[data-theme="dark"] .my-order-info{background:#1d2227!important;color:#f1f4f6!important}
+html[data-theme="dark"] .my-order-info b{color:#fff!important}
+html[data-theme="dark"] .secondary{background:#22282d!important;color:#f4f6f8!important;border-color:#3a4249!important}
+html[data-theme="dark"] .danger{background:#3a1719!important;color:#ffb8bd!important;border-color:#703238!important}
+html[data-theme="dark"] .status-new{background:#3b2414!important;color:#ffb875!important}
+html[data-theme="dark"] .status-ready{background:#3b2c12!important;color:#ffc56d!important}
+html[data-theme="dark"] .status-paid{background:#123522!important;color:#78dfa0!important}
+html[data-theme="dark"] .status-done{background:#1c2a3b!important;color:#9ec5f7!important}
+html[data-theme="dark"] .status-cancelled{background:#3a1719!important;color:#ff9da5!important}
 
-/* Cabeçalhos das páginas internas também acompanham o tema. */
-html[data-theme="dark"] body > header,
-html[data-theme="dark"] body > header .top {
-  background: var(--mf-surface) !important;
-  color: var(--mf-text) !important;
+/* Conta do cliente */
+html[data-theme="dark"] #authApp .panel,
+html[data-theme="dark"] #authApp .metric,
+html[data-theme="dark"] #authApp .panel-card,
+html[data-theme="dark"] #authApp section,
+html[data-theme="dark"] #authApp .account-card,
+html[data-theme="dark"] #authApp .profile-card{
+  background:#15191d!important;color:#f4f6f8!important;border-color:#2c3339!important;
 }
-html[data-theme="dark"] body > header .brand h1,
-html[data-theme="dark"] body > header .brand p {
-  color: var(--mf-text) !important;
+html[data-theme="dark"] #authApp h1,
+html[data-theme="dark"] #authApp h2,
+html[data-theme="dark"] #authApp h3,
+html[data-theme="dark"] #authApp h4,
+html[data-theme="dark"] #authApp strong,
+html[data-theme="dark"] #authApp label,
+html[data-theme="dark"] #authApp p,
+html[data-theme="dark"] #authApp small,
+html[data-theme="dark"] #authApp span{color:inherit}
+html[data-theme="dark"] #authApp p,
+html[data-theme="dark"] #authApp small{color:#aeb6be!important}
+html[data-theme="dark"] #authApp input,
+html[data-theme="dark"] #authApp select,
+html[data-theme="dark"] #authApp textarea{background:#0f1215!important;color:#f4f6f8!important;border-color:#353d44!important}
+
+/* Menu lateral do cliente no celular */
+html[data-theme="dark"] .catalog-page .mobile-menu{
+  background:#0b0d0f!important;
+  color:#f4f6f8!important;
+  border-right:1px solid #30363c!important;
+  box-shadow:18px 0 45px rgba(0,0,0,.55)!important;
 }
-html[data-theme="dark"] body > header .brand p { color: var(--mf-muted) !important; }
-html[data-theme="dark"] body > header .admin,
-html[data-theme="dark"] body > header .theme-toggle {
-  background: var(--mf-surface-2) !important;
-  color: var(--mf-text) !important;
-  border-color: var(--mf-border) !important;
+html[data-theme="dark"] .catalog-page .mobile-menu-head,
+html[data-theme="dark"] .catalog-page .mobile-menu a,
+html[data-theme="dark"] .catalog-page .mobile-menu>button:not(.theme-toggle){
+  color:#f4f6f8!important;
+  background:#0b0d0f!important;
+  border-color:#262c31!important;
+}
+html[data-theme="dark"] .catalog-page .mobile-menu a:hover,
+html[data-theme="dark"] .catalog-page .mobile-menu>button:not(.theme-toggle):hover{
+  background:#1a1f23!important;color:#ff8a1a!important;
+}
+html[data-theme="dark"] .catalog-page .mobile-menu .theme-toggle{
+  background:#1b2024!important;color:#f4f6f8!important;border-color:#3a4249!important;
 }
 
-/* Acessibilidade: nenhum texto secundário deve ficar com contraste baixo. */
-html[data-theme="dark"] .muted,
-html[data-theme="dark"] small,
-html[data-theme="dark"] label,
-html[data-theme="dark"] .customer-registration-note {
-  color: var(--mf-muted) !important;
+/* Catálogo escuro: preto de verdade e contraste limpo. */
+html[data-theme="dark"] .catalog-page,
+html[data-theme="dark"] .catalog-page .hero-home,
+html[data-theme="dark"] .catalog-page .service-strip,
+html[data-theme="dark"] .catalog-page .catalog-main{
+  background:#080a0c!important;
+  color:#f4f6f8!important;
 }
+html[data-theme="dark"] .catalog-page .site-header,
+html[data-theme="dark"] .catalog-page .topbar,
+html[data-theme="dark"] .catalog-page .desktop-nav{
+  background:#111416!important;
+}
+html[data-theme="dark"] .catalog-page .catalog-main>section,
+html[data-theme="dark"] .catalog-page .categories-section,
+html[data-theme="dark"] .catalog-page .featured-section,
+html[data-theme="dark"] .catalog-page .promo-section,
+html[data-theme="dark"] .catalog-page .new-section,
+html[data-theme="dark"] .catalog-page .products-section{
+  background:#111416!important;
+  border-color:#272d33!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.28)!important;
+}
+html[data-theme="dark"] .catalog-page .feature-card,
+html[data-theme="dark"] .catalog-page .card,
+html[data-theme="dark"] .catalog-page .promo-card{
+  background:#171b1f!important;color:#f4f6f8!important;border-color:#30373d!important;
+}
+html[data-theme="dark"] .catalog-page .feature-pic,
+html[data-theme="dark"] .catalog-page .pic,
+html[data-theme="dark"] .catalog-page .promo-card>img{
+  background:#0d1012!important;
+}
+html[data-theme="dark"] .catalog-page .section-head h2,
+html[data-theme="dark"] .catalog-page .feature-name,
+html[data-theme="dark"] .catalog-page .name,
+html[data-theme="dark"] .catalog-page .promo-name,
+html[data-theme="dark"] .catalog-page .categories-section h2,
+html[data-theme="dark"] .catalog-page .categories-section .cat,
+html[data-theme="dark"] .catalog-page .service-strip b{
+  color:#f4f6f8!important;
+}
+html[data-theme="dark"] .catalog-page .section-head p,
+html[data-theme="dark"] .catalog-page .categories-section p,
+html[data-theme="dark"] .catalog-page .service-strip small,
+html[data-theme="dark"] .catalog-page .oldprice,
+html[data-theme="dark"] .catalog-page .old{color:#aeb6be!important}
+html[data-theme="dark"] .catalog-page .categories-section .cat:hover{background:#1c2227!important;color:#ff8a1a!important}
+html[data-theme="dark"] .catalog-page .categories-section .cat.active{background:var(--mf-orange)!important;color:#fff!important}
+html[data-theme="dark"] .catalog-page .categories-section:after{background:#191e22!important;color:#aeb6be!important}
 
-@media (max-width:700px){
-  html[data-theme="dark"] .my-order-card { border-radius:16px !important; }
-  html[data-theme="dark"] .my-order-body { padding:14px !important; }
-  html[data-theme="dark"] .my-order-actions { padding:12px 14px !important; }
+/* Evita qualquer branco herdado dentro do checkout escuro. */
+html[data-theme="dark"] .catalog-page .cart-box,
+html[data-theme="dark"] .catalog-page .cart-box *{box-sizing:border-box}
+html[data-theme="dark"] .catalog-page .cart-box{background:#111416!important;color:#f4f6f8!important;border-color:#30373d!important}
+html[data-theme="dark"] .catalog-page .cart-product b,
+html[data-theme="dark"] .catalog-page .cart-product small,
+html[data-theme="dark"] .catalog-page .cart-subtotal,
+html[data-theme="dark"] .catalog-page .cart-total,
+html[data-theme="dark"] .catalog-page .cart-total *{color:#f4f6f8!important}
+html[data-theme="dark"] .catalog-page .cart-summary{border-color:#30373d!important}
+html[data-theme="dark"] .catalog-page .checkout-form{background:#15191d!important;border-color:#30373d!important}
+html[data-theme="dark"] .catalog-page .checkout-form h3,
+html[data-theme="dark"] .catalog-page .checkout-form p,
+html[data-theme="dark"] .catalog-page .checkout-form label{color:#f4f6f8!important}
+html[data-theme="dark"] .catalog-page .checkout-form p{color:#aeb6be!important}
+html[data-theme="dark"] .catalog-page .checkout-form input,
+html[data-theme="dark"] .catalog-page .checkout-form select,
+html[data-theme="dark"] .catalog-page .checkout-form textarea{background:#0d1012!important;color:#fff!important;border-color:#394148!important}
+html[data-theme="dark"] .catalog-page .checkout-form input::placeholder,
+html[data-theme="dark"] .catalog-page .checkout-form textarea::placeholder{color:#7f8992!important}
+
+/* Mobile: menu e categorias continuam visíveis, clicáveis e sem sobreposição. */
+@media(max-width:700px){
+  html[data-theme="dark"] .catalog-page .categories-section{background:#111416!important}
+  html[data-theme="dark"] .catalog-page .categories-section .cat{background:#1a1f23!important;color:#f4f6f8!important;border-color:#30373d!important}
+  html[data-theme="dark"] .catalog-page .categories-section .cat.active{background:var(--mf-orange)!important;color:#fff!important;border-color:var(--mf-orange)!important}
+  .catalog-page .categories-section .cat{cursor:pointer!important;pointer-events:auto!important;position:relative!important;z-index:3!important}
+  .catalog-page .mobile-menu{z-index:12000!important}
+  .catalog-page .mobile-bottom{z-index:11000!important}
 }

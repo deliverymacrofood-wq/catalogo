@@ -103,8 +103,14 @@ function showBanner(i){
 }
 function moveBanner(step){showBanner((window.currentBanner||0)+step)}
 
+function selectCategory(category){
+  active=String(category||'Todos');
+  render();
+  const target=$('productsSection');
+  if(target && active!=='Todos') setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}),40);
+}
 function renderCats(){
-  $('cats').innerHTML=sectors.map(s=>`<button class="cat ${s===active?'active':''}" onclick="active='${s}';render()">${s==='Promoções'?'🔥 ':''}${s}</button>`).join('');
+  $('cats').innerHTML=sectors.map(s=>`<button type="button" class="cat ${s===active?'active':''}" data-sector="${esc(s)}" onclick="selectCategory(this.dataset.sector)">${s==='Promoções'?'🔥 ':''}${esc(s)}</button>`).join('');
 }
 async function fetchAllRows(builder, pageSize=500){
   const out=[];
