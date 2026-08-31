@@ -1585,3 +1585,20 @@ html[data-theme="dark"] .support-admin-layout .admin-chat-head{
   background:#151a1f!important;
   border-color:#303840!important;
 }
+
+/* =========================================================
+   CORREÇÃO FINAL — AVISOS VAZIOS NO TEMA ESCURO
+   Os avisos "Nenhuma promoção..." e "Nenhuma novidade..."
+   usam .notice. No tema escuro, o texto precisa contrastar
+   claramente com o fundo do cartão.
+   ========================================================= */
+html[data-theme="dark"] .catalog-page .notice,
+.catalog-page[data-theme="dark"] .notice{
+  background:#2a211b!important;
+  color:#f4f6f8!important;
+  border:1px solid #4a3628!important;
+}
+html[data-theme="dark"] .catalog-page .notice *,
+.catalog-page[data-theme="dark"] .notice *{
+  color:#f4f6f8!important;
+}
