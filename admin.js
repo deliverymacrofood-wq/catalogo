@@ -161,8 +161,7 @@ async function save(e){
       if(r.error)throw r.error;
       editing=null;
       productTab();
-      alert('Produto salvo!
-\nA observação não foi salva porque o banco ainda não possui a coluna "note". Execute a migração MIGRACAO_PRODUTOS_NOTE.sql no Supabase para ativar esse campo.');
+      alert('Produto salvo!\n\nA observação não foi salva porque o banco ainda não possui a coluna "note". Execute a migração MIGRACAO_PRODUTOS_NOTE.sql no Supabase para ativar esse campo.');
       return;
     }
     if(r.error)throw r.error;
