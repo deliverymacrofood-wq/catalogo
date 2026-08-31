@@ -33,6 +33,7 @@ alter table public.products add column if not exists product_code varchar(6);
 alter table public.products add column if not exists in_stock boolean not null default true;
 alter table public.products add column if not exists promo_price numeric(12,2);
 alter table public.products add column if not exists is_featured boolean not null default false;
+alter table public.products add column if not exists note text;
 alter table public.products add column if not exists image_url text;
 alter table public.products add column if not exists active boolean not null default true;
 alter table public.products add column if not exists created_at timestamptz not null default now();
@@ -346,9 +347,11 @@ create table if not exists public.support_messages (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   sender_role text not null check (sender_role in ('user','admin')),
+  sender_id uuid references public.profiles(id) on delete set null,
   message text not null check (char_length(trim(message)) between 1 and 1000),
   created_at timestamptz not null default now()
 );
+alter table public.support_messages add column if not exists sender_id uuid references public.profiles(id) on delete set null;
 create index if not exists support_messages_user_created_idx on public.support_messages(user_id, created_at);
 alter table public.support_messages enable row level security;
 drop policy if exists "customers read own support messages" on public.support_messages;
@@ -365,6 +368,7 @@ grant select,insert,delete on public.support_messages to authenticated;
 create table if not exists public.support_conversations (
   user_id uuid primary key references auth.users(id) on delete cascade,
   status text not null default 'open' check (status in ('open','resolved')),
+  admin_id uuid references public.profiles(id) on delete set null,
   resolved_at timestamptz,
   updated_at timestamptz not null default now()
 );
@@ -377,7 +381,25 @@ drop policy if exists "customers update own support conversation" on public.supp
 create policy "customers update own support conversation" on public.support_conversations for update to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
 drop policy if exists "admins manage support conversations" on public.support_conversations;
 create policy "admins manage support conversations" on public.support_conversations for all to authenticated using(public.is_admin()) with check(public.is_admin());
+alter table public.support_conversations add column if not exists admin_id uuid references public.profiles(id) on delete set null;
 grant select,insert,update on public.support_conversations to authenticated;
+
+-- O cliente pode descobrir apenas o nome do administrador que atende sua conversa.
+create or replace function public.get_support_admin_name(p_user_id uuid)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select nullif(trim(p.nickname),'') from public.support_conversations c join public.profiles p on p.id=c.admin_id where c.user_id=p_user_id and p.role='admin' limit 1),
+    (select nullif(trim(p.nickname),'') from public.profiles p where p.role='admin' order by p.created_at asc limit 1),
+    (select p.email from public.profiles p where p.role='admin' order by p.created_at asc limit 1),
+    'Administrador'
+  );
+$$;
+revoke all on function public.get_support_admin_name(uuid) from public;
+grant execute on function public.get_support_admin_name(uuid) to authenticated;
 
 
 -- Confirmação de contato feita depois do cadastro.
