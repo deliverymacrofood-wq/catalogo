@@ -19,7 +19,7 @@ async function init(){
 }
 function panel(){
   $('app').innerHTML=`<div class="admin-shell">
-    <aside class="sidebar"><div class="side-brand"><img src="../logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div><button class="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeMobileSidebar()">×</button></div>
+    <aside class="sidebar"><div class="side-brand"><img src="logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div><button class="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeMobileSidebar()">×</button></div>
       <nav class="side-nav">
         <button onclick="showTab('dashboard')" data-nav="dashboard">⌂ <span>Dashboard</span></button>
         <button onclick="showTab('prod')" data-nav="prod">◈ <span>Produtos</span></button>
@@ -31,14 +31,14 @@ function panel(){
         <button onclick="showTab('suggestions')" data-nav="suggestions">💡 <span>Sugestões</span><b id="suggestionBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('support')" data-nav="support">💬 <span>Suporte</span><b id="supportBadge" class="nav-badge hidden">0</b></button>
         <button onclick="showTab('settings')" data-nav="settings">⚙ <span>Configurações</span></button>
-        <button type="button" onclick="window.location.href='../'" data-nav="catalog">🏠 <span>Voltar ao catálogo</span></button>
+        <button type="button" onclick="window.location.href='../catalogo/'" data-nav="catalog">🏠 <span>Voltar ao catálogo</span></button>
       </nav>
       <div class="side-bottom"><div class="admin-note">🛡<br><b>Área Administrativa</b><small>Somente administradores possuem acesso a esta área.</small></div><button class="logout-side" id="logout">↪ <span>Sair</span></button></div>
     </aside>
     <div class="sidebar-backdrop" onclick="closeMobileSidebar()" aria-hidden="true"></div>
     <section class="admin-main"><header class="admin-top"><button class="menu-btn" type="button" aria-label="Abrir menu" onclick="toggleMobileSidebar()">☰</button><div class="top-spacer"></div><div class="admin-profile"><div class="avatar">●</div><div><b>${esc(currentAdminName)}</b><small>${esc(currentAdminEmail)}</small></div><span>⌄</span></div></header><main class="admin-content"><div id="tab"></div></main></section>
   </div>`;
-  $('logout').onclick=async()=>{await client.auth.signOut();location.href='../'};
+  $('logout').onclick=async()=>{await client.auth.signOut();location.href='../catalogo/'};
   showTab('dashboard');
   refreshOrderBadge();
   setInterval(refreshOrderBadge,30000);setInterval(refreshSupportBadge,30000);

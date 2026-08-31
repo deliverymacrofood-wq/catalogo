@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#a9003f">
+  <meta name="description" content="MacroFood - Catálogo de produtos">
+  <title>MacroFood — Catálogo</title>
+  <link rel="stylesheet" href="styles.css?v=20260831-v15">
+</head>
+<body class="catalog-page">
+<header class="site-header">
+  <div class="topbar">
+    <a class="brand-wrap" href="../catalogo/"><img class="logo" src="../logo-macrofood.jpg" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
+    <div class="desktop-search"><div class="search"><input id="search" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('search')?.value || '',true)">🔎</button></div></div>
+    <div class="header-contact">💬 <span>ATENDIMENTO<br><b>(81) 97117-8793</b></span></div>
+    <button class="theme-toggle desktop-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button><a class="account-top admin" href="../login/">👤 <span class="account-nickname">Minha conta</span></a>
+    <button class="cart-top" onclick="openCart()">🛒 <span class="cart-label">Carrinho</span><b id="cartCount">0</b></button>
+  </div>
+  <nav class="desktop-nav">
+    <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
+    <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
+    <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
+    <a href="../pedidos.html">📦 Meus pedidos</a>
+    <a href="../suporte.html">💬 Suporte</a>
+    <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
+  </nav>
+  <div class="mobile-head"><button onclick="toggleMobileMenu()" aria-label="Abrir menu">⋮</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
+  <div class="mobile-search"><div class="search"><input id="mobileSearch" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('mobileSearch')?.value || '',true)">🔎</button></div></div>
+  <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-head"><b>Menu MacroFood</b><button type="button" onclick="closeMobileMenu()">×</button></div>
+    <a href="../catalogo/" onclick="closeMobileMenu()">🏠 Início</a>
+    <button onclick="closeMobileMenu();document.getElementById('cats').scrollIntoView({behavior:'smooth'})">📂 Todas as categorias</button>
+    <button onclick="active='Promoções';render();closeMobileMenu();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
+    <button onclick="closeMobileMenu();document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
+    <a href="../pedidos.html" onclick="closeMobileMenu()">📦 Meus pedidos</a>
+    <a href="../suporte.html" onclick="closeMobileMenu()">💬 Suporte ao cliente</a>
+    <button onclick="closeMobileMenu();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🛍️ Todos os produtos</button>
+    <a href="../login/" onclick="closeMobileMenu()">👤 Minha conta</a><button class="theme-toggle mobile-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button>
+  </div>
+</header>
+
+<section class="hero-home">
+  <div id="bannerArea" class="banner-area hidden"></div>
+</section>
+
+<div id="ordersMaintenance" class="orders-maintenance hidden">🛠️ <b>Função de pedidos está em manutenção, voltaremos em breve.</b></div>
+<section class="service-strip catalog-wrap" aria-label="Benefícios da MacroFood">
+  <div><span>🚚</span><b>Entrega rápida</b><small>Receba com praticidade</small></div>
+  <div><span>💳</span><b>A partir de 300 reais em compras, parcelamos em até 3x sem juros</b><small>Pagamento combinado</small></div>
+  <div><span>⚡</span><b>Compre online via Pix</b><small>Aprovação imediata</small></div>
+  <div><span>🛡️</span><b>100% seguro</b><small>Seus dados protegidos</small></div>
+  <div><span>🏪</span><b>Retire na loja</b><small>Escolha como receber</small></div>
+</section>
+<main class="catalog-main">
+  <section class="categories-section">
+    <div class="section-head"><div><h2>▢ CATEGORIAS</h2><p>Encontre rapidamente o que procura.</p></div></div>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section class="featured-section" id="featuredSection">
+    <div class="section-head"><div><h2>🔥 PRODUTOS MAIS VENDIDOS</h2><p>Os produtos que nossos clientes mais compram!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver produtos ›</button></div>
+    <div id="featuredGrid" class="featured-grid"></div>
+  </section>
+
+  <section class="promo-section" id="promoSection">
+    <div class="section-head"><div><h2>🔥 PROMOÇÕES</h2><p>Aproveite as ofertas especiais!</p></div><button class="see-all" onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todas as promoções ›</button></div>
+    <div id="promoGrid" class="promo-grid"></div>
+  </section>
+
+  <section class="marketing-tiles catalog-wrap">
+    <button onclick="active='Promoções';render();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})"><span>OFERTAS DO DIA</span><b>Descontos imperdíveis</b><small>APROVEITE AGORA ›</small></button>
+    <button onclick="document.getElementById('newSection').scrollIntoView({behavior:'smooth'})"><span>NOVIDADES</span><b>Produtos que acabaram de chegar</b><small>CONFIRA ›</small></button>
+    <button onclick="document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})"><span>COMPRE NO ATACADO</span><b>Preços melhores por quantidade</b><small>SAIBA MAIS ›</small></button>
+  </section>
+
+  <section class="new-section" id="newSection">
+    <div class="section-head"><div><h2>✨ NOVIDADES</h2><p>Produtos recém-cadastrados na MacroFood.</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todos ›</button></div>
+    <div id="newGrid" class="featured-grid new-grid"></div>
+  </section>
+
+  <section class="suggestion-strip"><div><b>💡 Não encontrou um produto?</b><span>Sugira para a MacroFood e envie uma foto do produto.</span></div><button class="secondary" onclick="openSuggestion()">📷 Sugerir produto</button></section>
+
+  <section id="productsSection" class="products-section">
+    <div class="section-head"><div><h2 id="productsTitle">Todos os produtos</h2><p id="productsSubtitle">Confira nosso catálogo completo.</p></div></div>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+<footer><b>Macrofood Service</b><br>Catálogo Online<br><br>📍 Rodovia BR-101, nº 550, bairro Curado, Recife - PE, CEP 50790-640<br>📱 WhatsApp: <a href="https://wa.me/5581971178793">+55 (81) 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
+<nav class="mobile-bottom"><a href="../catalogo/">⌂<span>Início</span></a><a href="#cats">☰<span>Categorias</span></a><button onclick="document.getElementById('mobileSearch').focus();window.scrollTo({top:0,behavior:'smooth'})">⌕<span>Buscar</span></button><a href="../pedidos.html">▣<span>Pedidos</span></a><a href="../login/">♙<span>Perfil</span></a></nav>
+
+<div id="addQtyModal" class="modal add-qty-modal" role="dialog" aria-modal="true" aria-labelledby="addQtyTitle">
+  <div class="modal-box add-qty-box">
+    <button class="close" type="button" onclick="closeAddQty()" aria-label="Fechar">×</button>
+    <div class="add-qty-product">
+      <img id="addQtyImage" class="add-qty-image" alt="Produto">
+      <div class="add-qty-info">
+        <h3 id="addQtyTitle">Produto</h3>
+        <p id="addQtyPrice" class="add-qty-price"></p>
+      </div>
+    </div>
+    <div class="add-qty-label">Quantidade</div>
+    <div class="add-qty-controls">
+      <button type="button" onclick="changePendingQty(-1)" aria-label="Diminuir quantidade">−</button>
+      <input id="addQtyInput" type="number" min="1" max="99" value="1" inputmode="numeric" oninput="updatePendingTotal()">
+      <button type="button" onclick="changePendingQty(1)" aria-label="Aumentar quantidade">+</button>
+    </div>
+    <div class="add-qty-total"><span>Total deste produto</span><strong id="addQtyTotal">R$ 0,00</strong></div>
+    <button type="button" class="primary add-qty-confirm" onclick="confirmAddCart()">🛒 Adicionar ao carrinho</button>
+    <button type="button" class="secondary add-qty-cancel" onclick="closeAddQty()">Cancelar</button>
+  </div>
+</div>
+<button id="floatingCart" class="floating-cart hidden" type="button" onclick="openCart()">🛒 <span>Ver carrinho</span><b id="floatingCartCount">0</b></button>
+<div id="cartToast" class="cart-toast" role="status" aria-live="polite"></div>
+<div id="cartModal" class="modal cart-modal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="modal-box cart-box">
+    <button class="close" type="button" onclick="closeCart()" aria-label="Fechar">×</button>
+    <h2 id="cartTitle">🛒 Meu carrinho</h2>
+    <div id="cartItems" class="cart-items"></div>
+    <div id="cartDiscountValue" class="cart-discount-total hidden"></div><div class="cart-summary"><span>Total</span><strong id="cartTotalValue">R$ 0,00</strong></div>
+    <div id="checkoutForm" class="checkout-form hidden">
+      <h3>Dados para finalizar o pedido</h3>
+      <label>Você já tem cadastro no WhatsApp de vendas?
+        <select id="customerHasSalesCadastro" onchange="toggleCustomerType()"><option value="no">Não</option><option value="yes">Sim</option></select>
+      </label>
+      <div id="newCustomerFields">
+        <label>Tipo de documento<select id="customerDocType" onchange="toggleCustomerType()"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></label>
+        <label id="customerNameLabel">Nome completo<input id="customerName" placeholder="Nome completo"></label>
+        <label>CPF/CNPJ<input id="customerCpfCnpj" placeholder="000.000.000-00"></label>
+        <label id="customerCepLabel">CEP<input id="customerCep" inputmode="numeric" placeholder="00000-000"></label>
+        <label class="full">E-mail<input id="customerEmail" type="email" placeholder="seu@email.com"></label>
+      </div>
+      <div id="salesCustomerFields">
+        <label>Nome<input id="salesCustomerName" placeholder="Nome cadastrado"></label>
+        <label>CPF<input id="salesCustomerCpf" inputmode="numeric" placeholder="000.000.000-00"></label>
+      </div>
+      <label id="customerWhatsappLabel" class="full">Celular / WhatsApp<input id="customerWhatsapp" inputmode="tel" placeholder="+55 (81) 99999-9999" required></label><label class="full">Forma de recebimento<select id="deliveryMethod" onchange="updateDeliveryMethodHelp()"><option value="delivery">🚚 Entrega</option><option value="store">🏪 Retirada em loja</option><option value="uber">🚗 Retirada por aplicativo (Uber)</option></select><small id="deliveryMethodHelp" class="delivery-method-help"></small></label>
+      <label>Observação<textarea id="customerNote" rows="3" placeholder="Alguma observação?" style="width:100%;margin-top:5px;border:1px solid #ccc;border-radius:8px;padding:10px"></textarea></label>
+      <button type="button" class="primary" id="submitOrderButton" onclick="submitOrder()">Confirmar pedido</button>
+      <button type="button" class="secondary" onclick="hideCheckoutForm()">Voltar ao carrinho</button>
+    </div>
+    <button id="checkoutButton" type="button" class="primary checkout-button" onclick="showCheckoutForm()">Continuar para finalizar pedido</button>
+  </div>
+</div>
+<div id="orderSuccessModal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-box success-box"><h2>✅ Pedido recebido!</h2><p id="orderSuccessText"></p><button class="primary" onclick="closeOrderSuccess()">Fechar</button></div>
+</div>
+<div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">×</button><div id="ratingItems"></div></div></div>
+<div id="suggestionModal" class="modal"><div class="modal-box"><button class="close" onclick="closeSuggestion()">×</button><div id="suggestionContent"><h2>💡 Sugerir produto</h2><p>Envie o nome e uma foto do produto que gostaria de encontrar.</p><label>Nome do produto<input id="suggestionName" type="text" placeholder="Nome do produto"></label><label style="display:block;margin-top:10px">Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label style="display:block;margin-top:10px">Observação<textarea id="suggestionNote" rows="3" placeholder="Opcional" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea></label><button class="primary" style="width:100%;margin-top:12px" onclick="submitSuggestion()">Enviar sugestão</button><p id="suggestionMsg"></p></div></div></div>
+
+<script>(function(){if(location.pathname.endsWith('/index.html')){history.replaceState({},document.title,location.pathname.slice(0,-10) || '/'+location.search+location.hash);}})();</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../config.js?v=20260831"></script><script src="../theme.js?v=20260831"></script><script src="../app.js?v=20260831-v15"></script></body></html>

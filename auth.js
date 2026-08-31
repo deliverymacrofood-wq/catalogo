@@ -52,19 +52,19 @@ async function init(){
           <button id="logout" class="account-action"><span class="action-icon">↪</span><span><b>Sair da conta</b><small>Encerra sua sessão neste dispositivo.</small></span><strong>›</strong></button>
           <a class="account-action" href="../pedidos.html"><span class="action-icon">📦</span><span><b>Meus pedidos</b><small>Veja o andamento dos seus pedidos.</small></span><strong>›</strong></a>
           <a class="account-action" href="../suporte.html"><span class="action-icon">💬</span><span><b>Suporte ao cliente</b><small>Fale com o administrador pelo chat.</small></span><strong>›</strong></a>
-          <a class="account-action" href="../"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
+          <a class="account-action" href="../catalogo/"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
         </section>
         <p class="account-footer">♥ Obrigado por escolher a MacroFood!<small>Qualidade e praticidade para o seu dia a dia.</small></p>
       </div>`;
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       initVerificationPanel(session);
       $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.rpc('update_my_profile',{p_nickname:value});if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
-      $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='../'};
+      $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='../login/'};
       return;
     }
     showLogin();
   }catch(e){
-    $('authApp').innerHTML=`<div class="panel login"><h2>Erro ao carregar</h2><p>${esc(e.message)}</p><a class="secondary" href="../">Voltar ao catálogo</a></div>`;
+    $('authApp').innerHTML=`<div class="panel login"><h2>Erro ao carregar</h2><p>${esc(e.message)}</p><a class="secondary" href="../catalogo/">Voltar ao catálogo</a></div>`;
   }
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -97,7 +97,7 @@ function showResetPassword(){
     const {error}=await client.auth.updateUser({password:a});
     if(error)return msg('Não foi possível alterar a senha: '+error.message);
     msg('Senha alterada com sucesso! Você já pode entrar com a nova senha.','green');
-    setTimeout(()=>{history.replaceState({},document.title,'./');location.href='../'},900);
+    setTimeout(()=>{history.replaceState({},document.title,'../login/');location.href='../login/'},900);
   };
 }
 let signupMethod='email';
@@ -133,7 +133,7 @@ async function login(){
     if(/phone not confirmed/i.test(error.message)) return msg('Seu celular ainda não foi confirmado.');
     return msg('Não foi possível entrar: '+error.message);
   }
-  location.href='../';
+  location.href='../login/';
 }
 function normalizePhoneAuth(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('55'))return '+'+n;if(n.length===10||n.length===11)return '+55'+n;return n?('+'+n):'';}
 function formatBrazilPhoneAuth(v){const n=normalizePhoneAuth(v).replace(/^\+/,'');const local=n.startsWith('55')?n.slice(2):n;if(local.length===11)return '+55 ('+local.slice(0,2)+') '+local.slice(2,7)+'-'+local.slice(7);if(local.length===10)return '+55 ('+local.slice(0,2)+') '+local.slice(2,6)+'-'+local.slice(6);return v||'';}
@@ -148,13 +148,13 @@ async function signup(){
   if(phone && (phone.replace(/\D/g,'').length<12 || phone.replace(/\D/g,'').length>13))return msg('Informe um celular válido com DDD. Exemplo: +55 (81) 99999-9999.');
   const file=$('avatar')?.files?.[0];
   if(file && file.size>2*1024*1024)return msg('A foto precisa ter no máximo 2 MB.');
-  const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname},emailRedirectTo:new URL('./',window.location.href).href}});
+  const {data,error}=await client.auth.signUp({email,password,options:{data:{nickname},emailRedirectTo:new URL('../login/',window.location.href).href}});
   if(error)return msg('Não foi possível criar a conta: '+error.message);
   if(!data.user)return msg('Não foi possível criar a conta.');
   if(phone){
     try{await client.rpc('update_my_profile',{p_nickname:nickname,p_phone:phone||null});}catch(e){}
   }
-  if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada com sucesso! A confirmação será feita em Minha conta quando você quiser comprar.','green');setTimeout(()=>location.href='../',900);}
+  if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada com sucesso! A confirmação será feita em Minha conta quando você quiser comprar.','green');setTimeout(()=>location.href='../login/',900);}
   else msg('Conta criada. Se o Supabase estiver exigindo confirmação de e-mail, desative “Confirm email” em Authentication > Providers > Email para permitir entrar sem confirmar agora.','green');
 }
 
@@ -264,7 +264,7 @@ async function uploadAvatar(file,userId){
 async function forgot(){
   const email=$('email').value.trim().toLowerCase();
   if(!email||!/^\S+@\S+\.\S+$/.test(email))return msg('Digite seu e-mail para receber o link de redefinição.');
-  const redirectTo=new URL('./',window.location.href).href;
+  const redirectTo=new URL('../login/',window.location.href).href;
   const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo});
   if(error)return msg('Não foi possível enviar o e-mail: '+error.message);
   msg('Se esse e-mail estiver cadastrado, enviaremos um link para redefinir a senha.','green');
