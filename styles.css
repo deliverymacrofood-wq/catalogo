@@ -1203,3 +1203,133 @@ html[data-theme="dark"] .catalog-page .checkout-form textarea::placeholder{color
   .catalog-page .mobile-menu{z-index:12000!important}
   .catalog-page .mobile-bottom{z-index:11000!important}
 }
+
+/* =========================================================
+   MACROFOOD — CORREÇÃO FINAL DE CONTRASTE / PESQUISA / CATEGORIAS
+   ========================================================= */
+:root{color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark}
+
+/* Páginas do cliente: preto limpo e contraste forte */
+html[data-theme="dark"] body:not(.catalog-page){
+  background:#050607!important;
+  color:#f5f7f9!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) main,
+html[data-theme="dark"] body:not(.catalog-page) #ordersApp,
+html[data-theme="dark"] body:not(.catalog-page) #supportApp,
+html[data-theme="dark"] body:not(.catalog-page) #authApp{
+  background:#050607!important;
+  color:#f5f7f9!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .orders-page-head h2,
+html[data-theme="dark"] body:not(.catalog-page) .support-head h2,
+html[data-theme="dark"] body:not(.catalog-page) h1,
+html[data-theme="dark"] body:not(.catalog-page) h2,
+html[data-theme="dark"] body:not(.catalog-page) h3,
+html[data-theme="dark"] body:not(.catalog-page) strong,
+html[data-theme="dark"] body:not(.catalog-page) b,
+html[data-theme="dark"] body:not(.catalog-page) label{
+  color:#ffffff!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) p,
+html[data-theme="dark"] body:not(.catalog-page) small,
+html[data-theme="dark"] body:not(.catalog-page) .muted,
+html[data-theme="dark"] body:not(.catalog-page) .orders-page-head p,
+html[data-theme="dark"] body:not(.catalog-page) .my-order-head small,
+html[data-theme="dark"] body:not(.catalog-page) .order-hint,
+html[data-theme="dark"] body:not(.catalog-page) .customer-registration-note{
+  color:#aeb8c2!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .my-order-card,
+html[data-theme="dark"] body:not(.catalog-page) .orders-login,
+html[data-theme="dark"] body:not(.catalog-page) .empty-state,
+html[data-theme="dark"] body:not(.catalog-page) .panel,
+html[data-theme="dark"] body:not(.catalog-page) .account-edit-card,
+html[data-theme="dark"] body:not(.catalog-page) .support-shell,
+html[data-theme="dark"] body:not(.catalog-page) .support-conversations,
+html[data-theme="dark"] body:not(.catalog-page) .admin-chat-card{
+  background:#15191d!important;
+  color:#f5f7f9!important;
+  border-color:#303840!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .my-order-head,
+html[data-theme="dark"] body:not(.catalog-page) .my-order-actions,
+html[data-theme="dark"] body:not(.catalog-page) .support-compose,
+html[data-theme="dark"] body:not(.catalog-page) .admin-chat-compose{
+  background:#0f1215!important;
+  border-color:#2d353d!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .my-order-item,
+html[data-theme="dark"] body:not(.catalog-page) .support-conv,
+html[data-theme="dark"] body:not(.catalog-page) th,
+html[data-theme="dark"] body:not(.catalog-page) td{
+  border-color:#2d353d!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) .my-order-info{background:#1d2328!important;color:#f5f7f9!important}
+html[data-theme="dark"] body:not(.catalog-page) .support-messages,
+html[data-theme="dark"] body:not(.catalog-page) .admin-chat-messages{background:#0c0f12!important}
+html[data-theme="dark"] body:not(.catalog-page) .support-msg.admin{background:#20262c!important;color:#f5f7f9!important}
+html[data-theme="dark"] body:not(.catalog-page) .support-msg.user{background:#4b2b12!important;color:#fff!important}
+html[data-theme="dark"] body:not(.catalog-page) input,
+html[data-theme="dark"] body:not(.catalog-page) select,
+html[data-theme="dark"] body:not(.catalog-page) textarea{
+  background:#0d1013!important;color:#f8fafc!important;border-color:#3a434c!important;
+}
+html[data-theme="dark"] body:not(.catalog-page) input::placeholder,
+html[data-theme="dark"] body:not(.catalog-page) textarea::placeholder{color:#7f8a95!important}
+
+/* Catálogo: fundo preto verdadeiro no modo escuro */
+html[data-theme="dark"] .catalog-page,
+html[data-theme="dark"] .catalog-page .hero-home,
+html[data-theme="dark"] .catalog-page .catalog-main,
+html[data-theme="dark"] .catalog-page .service-strip{background:#050607!important;color:#f5f7f9!important}
+html[data-theme="dark"] .catalog-page .catalog-main>section,
+html[data-theme="dark"] .catalog-page .categories-section,
+html[data-theme="dark"] .catalog-page .featured-section,
+html[data-theme="dark"] .catalog-page .promo-section,
+html[data-theme="dark"] .catalog-page .new-section,
+html[data-theme="dark"] .catalog-page .products-section{background:#101417!important;border-color:#292f35!important}
+html[data-theme="dark"] .catalog-page .feature-card,
+html[data-theme="dark"] .catalog-page .promo-card,
+html[data-theme="dark"] .catalog-page .card{background:#171b1f!important;color:#f5f7f9!important;border-color:#30373e!important}
+html[data-theme="dark"] .catalog-page .feature-name,
+html[data-theme="dark"] .catalog-page .name,
+html[data-theme="dark"] .catalog-page .promo-name,
+html[data-theme="dark"] .catalog-page .section-head h2,
+html[data-theme="dark"] .catalog-page #productsTitle{color:#fff!important}
+html[data-theme="dark"] .catalog-page .section-head p,
+html[data-theme="dark"] .catalog-page #productsSubtitle{color:#aeb8c2!important}
+
+/* Pesquisa desktop + mobile */
+.catalog-page .search{display:flex;align-items:stretch}
+.catalog-page .search input{min-width:0;color:#20242a;background:#fff}
+.catalog-page .search .search-btn{width:48px;border:0;background:var(--mf-orange);color:#fff;cursor:pointer;font-size:18px;display:grid;place-items:center}
+html[data-theme="dark"] .catalog-page .desktop-search .search,
+html[data-theme="dark"] .catalog-page .mobile-search .search{background:#171b1f!important;border:1px solid #3a4249!important}
+html[data-theme="dark"] .catalog-page .desktop-search .search input,
+html[data-theme="dark"] .catalog-page .mobile-search .search input{background:#171b1f!important;color:#fff!important}
+html[data-theme="dark"] .catalog-page .desktop-search .search input::placeholder,
+html[data-theme="dark"] .catalog-page .mobile-search .search input::placeholder{color:#8d98a2!important}
+.catalog-page .mobile-search .search-btn{border-radius:0 9px 9px 0}
+
+/* Categorias realmente clicáveis */
+.catalog-page .categories-section .cats{position:relative;z-index:5}
+.catalog-page .categories-section .cat{cursor:pointer!important;pointer-events:auto!important;position:relative;z-index:6}
+.catalog-page .categories-section .cat.active{background:var(--mf-orange)!important;color:#fff!important;border-color:var(--mf-orange)!important}
+
+@media(max-width:700px){
+  .catalog-page .mobile-head{background:#f46b0a!important}
+  html[data-theme="dark"] .catalog-page .mobile-head,
+  html[data-theme="dark"] .catalog-page .mobile-search{background:#050607!important}
+  .catalog-page .mobile-search{padding:10px 12px 12px!important}
+  .catalog-page .mobile-search .search{height:48px!important;border-radius:11px!important;overflow:hidden}
+  .catalog-page .mobile-search .search input{padding:11px 13px!important;font-size:15px!important}
+  .catalog-page .mobile-search .search-btn{width:48px!important}
+  html[data-theme="dark"] .catalog-page .categories-section{background:#101417!important}
+  html[data-theme="dark"] .catalog-page .categories-section .cat{background:#1b2025!important;color:#f4f6f8!important;border-color:#333b43!important}
+  html[data-theme="dark"] .catalog-page .categories-section .cat.active{background:#f46b0a!important;color:#fff!important}
+  html[data-theme="dark"] .catalog-page .marketing-tiles button{background:#171b1f!important;color:#fff!important;border-color:#30373e!important}
+  html[data-theme="dark"] .catalog-page .marketing-tiles small{color:#aeb8c2!important}
+  html[data-theme="dark"] .catalog-page .suggestion-strip{background:#15191d!important;color:#fff!important}
+}
