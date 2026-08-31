@@ -271,113 +271,6 @@ create index if not exists orders_user_idx on public.orders(user_id);
 
 -- Proteção de integridade dos pedidos: o cliente não pode manipular preço, subtotal
 -- ou total no navegador. O banco recalcula tudo usando os preços cadastrados.
-create or replace function public.validate_order_totals()
-returns trigger
-language plpgsql
-security definer
-set search_path=public
-as $$
-declare
-  item jsonb;
-  p public.products%rowtype;
-  pid uuid;
-  qty numeric;
-  normal_price numeric;
-  wholesale_price numeric;
-  wholesale_qty integer;
-  wholesale_mode text;
-  valid_wholesale boolean;
-  w_qty numeric;
-  n_qty numeric;
-  expected_subtotal numeric;
-  expected_total numeric := 0;
-  supplied_subtotal numeric;
-  supplied_total numeric;
-  item_count integer := 0;
-begin
-  if auth.uid() is null or new.user_id is null or new.user_id <> auth.uid() then
-    raise exception 'Pedido inválido: usuário não autenticado';
-  end if;
-
-  if jsonb_typeof(new.items) <> 'array' or jsonb_array_length(new.items) < 1 or jsonb_array_length(new.items) > 100 then
-    raise exception 'Itens do pedido inválidos';
-  end if;
-
-  for item in select value from jsonb_array_elements(new.items) loop
-    item_count := item_count + 1;
-    begin
-      pid := (item->>'product_id')::uuid;
-      qty := (item->>'qty')::numeric;
-    exception when others then
-      raise exception 'Produto ou quantidade inválidos';
-    end;
-
-    if qty <= 0 or qty > 9999 or qty <> trunc(qty) then
-      raise exception 'Quantidade inválida';
-    end if;
-
-    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
-    if not found then
-      raise exception 'Produto não disponível';
-    end if;
-
-    if p.price is null or p.price <= 0 then
-      raise exception 'Produto % está sem preço válido cadastrado', p.name;
-    end if;
-
-    normal_price := case when p.promo_price is not null and p.promo_price > 0 and p.promo_price < p.price then p.promo_price else p.price end;
-    if normal_price is null or normal_price <= 0 then
-      raise exception 'Produto % está sem preço válido cadastrado', p.name;
-    end if;
-
-    wholesale_price := p.wholesale_price;
-    wholesale_qty := p.wholesale_qty;
-    wholesale_mode := p.wholesale_mode;
-    valid_wholesale := wholesale_price is not null and wholesale_price > 0 and wholesale_qty is not null and wholesale_qty > 0 and wholesale_price < normal_price;
-
-    if valid_wholesale and wholesale_mode='block' then
-      w_qty := floor(qty / wholesale_qty) * wholesale_qty;
-      n_qty := qty - w_qty;
-    elsif valid_wholesale and wholesale_mode='threshold' and qty >= wholesale_qty then
-      w_qty := qty;
-      n_qty := 0;
-    else
-      w_qty := 0;
-      n_qty := qty;
-    end if;
-
-    expected_subtotal := round((n_qty * normal_price) + (w_qty * coalesce(wholesale_price, 0)),2);
-    supplied_subtotal := round(coalesce((item->>'subtotal')::numeric, -1),2);
-    if supplied_subtotal <> expected_subtotal then
-      raise exception 'Preço do pedido inválido para o produto %', p.name;
-    end if;
-
-    expected_total := expected_total + expected_subtotal;
-  end loop;
-
-  expected_total := round(expected_total,2);
-  if expected_total is null or expected_total <= 0 then
-    raise exception 'Não foi possível calcular o total do pedido';
-  end if;
-
-  supplied_total := round(coalesce(new.total,-1),2);
-  if supplied_total <> expected_total then
-    raise exception 'Total do pedido inválido';
-  end if;
-
-  new.total := expected_total;
-  new.updated_at := now();
-  return new;
-end;
-$$;
-revoke all on function public.validate_order_totals() from public;
-grant execute on function public.validate_order_totals() to authenticated;
-
-drop trigger if exists trg_validate_order_totals on public.orders;
-create trigger trg_validate_order_totals
-before insert on public.orders
-for each row execute function public.validate_order_totals();
-
 alter table public.orders enable row level security;
 drop policy if exists "customers insert orders" on public.orders;
 create policy "customers insert orders" on public.orders for insert to anon,authenticated with check(user_id is null or user_id=auth.uid());
@@ -441,24 +334,6 @@ create policy "customers read own orders" on public.orders for select to authent
 using(user_id=auth.uid() or public.is_admin());
 
 -- Cancelamento seguro: o cliente não pode alterar preço, itens ou outros dados do pedido.
-create or replace function public.cancel_my_order(target_order_id uuid)
-returns boolean
-language plpgsql
-security definer
-set search_path=public
-as $$
-declare
-  changed boolean := false;
-begin
-  update public.orders
-     set status='cancelled', updated_at=now()
-   where id=target_order_id
-     and user_id=auth.uid()
-     and status in ('received','ready_payment','paid');
-  changed := found;
-  return changed;
-end;
-$$;
 revoke all on function public.cancel_my_order(uuid) from public;
 grant execute on function public.cancel_my_order(uuid) to authenticated;
 
@@ -576,16 +451,6 @@ grant execute on function public.mark_phone_contact_verified() to authenticated;
 grant select on public.contact_verifications to authenticated;
 
 -- Cria o registro automaticamente para contas novas.
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path=public as $$
-begin
-  insert into public.profiles(id,email,nickname,phone)
-    values(new.id,new.email,nullif(trim(new.raw_user_meta_data->>'nickname'),''),new.phone)
-    on conflict(id) do update set email=excluded.email, nickname=coalesce(public.profiles.nickname, excluded.nickname), phone=coalesce(excluded.phone, public.profiles.phone);
-  insert into public.contact_verifications(user_id)
-    values(new.id) on conflict(user_id) do nothing;
-  return new;
-end; $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
@@ -622,70 +487,6 @@ grant select,insert on public.order_chat_messages to authenticated;
 
 -- Permite ao administrador alterar produtos/quantidades de pedidos ainda em separação.
 -- O banco recalcula o total com o preço atual e as regras de atacado do produto.
-create or replace function public.admin_update_order_items(target_order_id uuid, new_items jsonb)
-returns public.orders
-language plpgsql
-security definer
-set search_path=public
-as $$
-declare
-  ord public.orders;
-  item jsonb;
-  p public.products%rowtype;
-  pid uuid;
-  qty integer;
-  base_price numeric;
-  wholesale_price numeric;
-  wholesale_qty integer;
-  w_qty integer;
-  n_qty integer;
-  subtotal numeric;
-  total numeric := 0;
-  rebuilt jsonb := '[]'::jsonb;
-  item_count integer := 0;
-begin
-  if auth.uid() is null or not public.is_admin() then
-    raise exception 'Acesso negado: somente administradores podem alterar pedidos';
-  end if;
-  if jsonb_typeof(new_items) <> 'array' then
-    raise exception 'Itens do pedido inválidos';
-  end if;
-  select * into ord from public.orders where id=target_order_id for update;
-  if not found then raise exception 'Pedido não encontrado'; end if;
-  if ord.status not in ('received','ready_payment','paid') then
-    raise exception 'Este pedido já não está em separação e não pode ser alterado';
-  end if;
-  if jsonb_array_length(new_items)=0 then raise exception 'O pedido precisa ter pelo menos um produto'; end if;
-  if jsonb_array_length(new_items)>100 then raise exception 'Quantidade máxima de itens excedida'; end if;
-
-  for item in select * from jsonb_array_elements(new_items) loop
-    begin pid := (item->>'product_id')::uuid; exception when others then raise exception 'Produto inválido no pedido'; end;
-    qty := floor(coalesce((item->>'qty')::numeric,0));
-    if qty < 1 or qty > 9999 then raise exception 'Quantidade inválida'; end if;
-    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
-    if not found then raise exception 'Produto não disponível'; end if;
-    if p.price is null or p.price <= 0 then raise exception 'Produto % está sem preço válido cadastrado',p.name; end if;
-    base_price := case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
-    wholesale_price := p.wholesale_price; wholesale_qty := p.wholesale_qty;
-    if wholesale_price is not null and wholesale_price>0 and wholesale_qty is not null and wholesale_qty>0 and wholesale_price<base_price and p.wholesale_mode='block' then
-      w_qty := floor(qty::numeric/wholesale_qty); w_qty := w_qty*wholesale_qty; n_qty := qty-w_qty;
-    elsif wholesale_price is not null and wholesale_price>0 and wholesale_qty is not null and wholesale_qty>0 and wholesale_price<base_price and p.wholesale_mode='threshold' and qty>=wholesale_qty then
-      w_qty := qty; n_qty := 0;
-    else w_qty := 0; n_qty := qty; end if;
-    subtotal := round((n_qty*base_price)+(w_qty*coalesce(wholesale_price,0)),2);
-    if subtotal<=0 then raise exception 'Não foi possível calcular o preço do produto %',p.name; end if;
-    total := total + subtotal;
-    rebuilt := rebuilt || jsonb_build_array(jsonb_build_object('product_id',p.id,'name',p.name,'qty',qty,'unit',coalesce(p.unit,'unidade'),'unit_price',round(subtotal/qty,2),'subtotal',subtotal,'image_url',coalesce(p.image_url,'')));
-    item_count := item_count+1;
-  end loop;
-  total := round(total,2);
-  if total<=0 then raise exception 'Não foi possível calcular o total do pedido'; end if;
-  update public.orders set items=rebuilt,total=total,updated_at=now() where id=target_order_id returning * into ord;
-  return ord;
-end;
-$$;
-revoke all on function public.admin_update_order_items(uuid,jsonb) from public;
-grant execute on function public.admin_update_order_items(uuid,jsonb) to authenticated;
 
 -- MACROFOOD - ALTERAÇÕES SOLICITADAS (2026-08-31)
 
@@ -719,51 +520,141 @@ returns trigger
 language plpgsql
 security definer
 set search_path=public
-as $$
+as $func$
 declare
-  item jsonb; p public.products%rowtype; pid uuid; qty numeric;
-  normal_price numeric; wholesale_price numeric; wholesale_qty numeric; wholesale_mode text;
-  valid_wholesale boolean; w_qty numeric; n_qty numeric;
-  expected_subtotal numeric; expected_total numeric:=0;
-  supplied_subtotal numeric; supplied_total numeric;
+  item jsonb;
+  p public.products%rowtype;
+  pid uuid;
+  qty numeric;
+  normal_price numeric;
+  wholesale_price numeric;
+  wholesale_qty numeric;
+  wholesale_mode text;
+  valid_wholesale boolean;
+  w_qty numeric;
+  n_qty numeric;
+  expected_subtotal numeric;
+  expected_total numeric := 0;
+  supplied_subtotal numeric;
+  supplied_total numeric;
 begin
-  if auth.uid() is null or new.user_id is null or new.user_id <> auth.uid() then
+  if auth.uid() is null then
     raise exception 'Pedido inválido: usuário não autenticado';
   end if;
-  if jsonb_typeof(new.items) <> 'array' or jsonb_array_length(new.items)<1 or jsonb_array_length(new.items)>100 then
+
+  if new.user_id is null or new.user_id <> auth.uid() then
+    raise exception 'Pedido inválido: usuário não autenticado';
+  end if;
+
+  if jsonb_typeof(new.items) <> 'array'
+     or jsonb_array_length(new.items) < 1
+     or jsonb_array_length(new.items) > 100 then
     raise exception 'Itens do pedido inválidos';
   end if;
+
   for item in select value from jsonb_array_elements(new.items) loop
-    begin pid := (item->>'product_id')::uuid; qty := (item->>'qty')::numeric;
-    exception when others then raise exception 'Produto ou quantidade inválidos'; end;
-    if qty<=0 or qty>9999 then raise exception 'Quantidade inválida'; end if;
-    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
-    if not found then raise exception 'Produto não disponível'; end if;
-    if p.unit='kg' then
-      if round(qty,3)<>qty then raise exception 'Peso inválido: use no máximo 3 casas decimais'; end if;
-    elsif qty<>trunc(qty) then
-      raise exception 'Quantidade de unidade inválida'; end if;
+    begin
+      pid := (item->>'product_id')::uuid;
+      qty := (item->>'qty')::numeric;
+    exception when others then
+      raise exception 'Produto ou quantidade inválidos';
+    end;
+
+    if qty <= 0 or qty > 9999 then
+      raise exception 'Quantidade inválida';
     end if;
-    if p.price is null or p.price<=0 then raise exception 'Produto % está sem preço válido cadastrado',p.name; end if;
-    normal_price:=case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
-    wholesale_price:=p.wholesale_price; wholesale_qty:=p.wholesale_qty; wholesale_mode:=p.wholesale_mode;
-    valid_wholesale:=wholesale_price is not null and wholesale_price>0 and wholesale_qty is not null and wholesale_qty>0 and wholesale_price<normal_price;
-    if valid_wholesale and wholesale_mode='block' then
-      w_qty:=floor(qty/wholesale_qty)*wholesale_qty; n_qty:=qty-w_qty;
-    elsif valid_wholesale and wholesale_mode='threshold' and qty>=wholesale_qty then
-      w_qty:=qty; n_qty:=0;
-    else w_qty:=0; n_qty:=qty; end if;
-    expected_subtotal:=round((n_qty*normal_price)+(w_qty*coalesce(wholesale_price,0)),2);
-    supplied_subtotal:=round(coalesce((item->>'subtotal')::numeric,-1),2);
-    if supplied_subtotal<>expected_subtotal then raise exception 'Preço do pedido inválido para o produto %',p.name; end if;
-    expected_total:=expected_total+expected_subtotal;
+
+    select * into p
+    from public.products
+    where id = pid and coalesce(active,true) = true
+    limit 1;
+
+    if not found then
+      raise exception 'Produto não disponível';
+    end if;
+
+    if p.unit = 'kg' then
+      if round(qty,3) <> qty then
+        raise exception 'Peso inválido: use no máximo 3 casas decimais';
+      end if;
+    else
+      if qty <> trunc(qty) then
+        raise exception 'Quantidade de unidade inválida';
+      end if;
+    end if;
+
+    if p.price is null or p.price <= 0 then
+      raise exception 'Produto % está sem preço válido cadastrado', p.name;
+    end if;
+
+    normal_price := case
+      when p.promo_price is not null
+       and p.promo_price > 0
+       and p.promo_price < p.price
+      then p.promo_price
+      else p.price
+    end;
+
+    wholesale_price := p.wholesale_price;
+    wholesale_qty := p.wholesale_qty;
+    wholesale_mode := p.wholesale_mode;
+
+    valid_wholesale :=
+      wholesale_price is not null
+      and wholesale_price > 0
+      and wholesale_qty is not null
+      and wholesale_qty > 0
+      and wholesale_price < normal_price;
+
+    if valid_wholesale and wholesale_mode = 'block' then
+      w_qty := floor(qty / wholesale_qty) * wholesale_qty;
+      n_qty := qty - w_qty;
+    elsif valid_wholesale
+       and wholesale_mode = 'threshold'
+       and qty >= wholesale_qty then
+      w_qty := qty;
+      n_qty := 0;
+    else
+      w_qty := 0;
+      n_qty := qty;
+    end if;
+
+    expected_subtotal := round(
+      (n_qty * normal_price)
+      + (w_qty * coalesce(wholesale_price,0)),
+      2
+    );
+
+    supplied_subtotal := round(
+      coalesce((item->>'subtotal')::numeric, -1),
+      2
+    );
+
+    if supplied_subtotal <> expected_subtotal then
+      raise exception 'Preço do pedido inválido para o produto %', p.name;
+    end if;
+
+    expected_total := expected_total + expected_subtotal;
   end loop;
-  expected_total:=round(expected_total,2);
-  supplied_total:=round(coalesce(new.total,-1),2);
-  if expected_total<=0 or supplied_total<>expected_total then raise exception 'Total do pedido inválido'; end if;
-  new.total:=expected_total; new.updated_at:=now(); return new;
+
+  expected_total := round(expected_total,2);
+  supplied_total := round(coalesce(new.total,-1),2);
+
+  if expected_total <= 0 then
+    raise exception 'Não foi possível calcular o total do pedido';
+  end if;
+
+  if supplied_total <> expected_total then
+    raise exception 'Total do pedido inválido';
+  end if;
+
+  new.total := expected_total;
+  new.updated_at := now();
+
+  return new;
 end;
-$$;
+$func$;
+
 revoke all on function public.validate_order_totals() from public;
 grant execute on function public.validate_order_totals() to authenticated;
 
@@ -771,41 +662,153 @@ drop trigger if exists trg_validate_order_totals on public.orders;
 create trigger trg_validate_order_totals before insert on public.orders for each row execute function public.validate_order_totals();
 
 -- RPC de alteração do pedido pelo administrador, aceitando peso exato para kg.
-create or replace function public.admin_update_order_items(target_order_id uuid,new_items jsonb)
+create or replace function public.admin_update_order_items(
+  target_order_id uuid,
+  new_items jsonb
+)
 returns public.orders
-language plpgsql security definer set search_path=public
-as $$
+language plpgsql
+security definer
+set search_path=public
+as $func$
 declare
-  ord public.orders; item jsonb; p public.products%rowtype; pid uuid; qty numeric;
-  base_price numeric; wp numeric; wq numeric; wqty numeric; nqty numeric;
-  subtotal numeric; total numeric:=0; rebuilt jsonb:='[]'::jsonb;
+  ord public.orders;
+  item jsonb;
+  p public.products%rowtype;
+  pid uuid;
+  qty numeric;
+  base_price numeric;
+  wp numeric;
+  wq numeric;
+  wqty numeric;
+  nqty numeric;
+  subtotal numeric;
+  order_total numeric := 0;
+  rebuilt jsonb := '[]'::jsonb;
 begin
-  if auth.uid() is null or not public.is_admin() then raise exception 'Acesso negado: somente administradores podem alterar pedidos'; end if;
-  select * into ord from public.orders where id=target_order_id for update;
-  if not found then raise exception 'Pedido não encontrado'; end if;
-  if ord.status not in ('received','accepted','separating','waiting_payment','ready_pickup','paid') then raise exception 'Este pedido não pode mais ser alterado'; end if;
-  if jsonb_typeof(new_items)<>'array' or jsonb_array_length(new_items)<1 or jsonb_array_length(new_items)>100 then raise exception 'Itens do pedido inválidos'; end if;
-  for item in select * from jsonb_array_elements(new_items) loop
-    begin pid:=(item->>'product_id')::uuid; qty:=(item->>'qty')::numeric; exception when others then raise exception 'Produto ou quantidade inválidos'; end;
-    select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
-    if not found then raise exception 'Produto não disponível'; end if;
-    if qty<=0 or qty>9999 then raise exception 'Quantidade inválida'; end if;
-    if p.unit='kg' then if round(qty,3)<>qty then raise exception 'Peso inválido'; end if;
-    elsif qty<>trunc(qty) then raise exception 'Quantidade de unidade inválida'; end if;
-    base_price:=case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
-    wp:=p.wholesale_price; wq:=p.wholesale_qty;
-    if wp is not null and wp>0 and wq is not null and wq>0 and wp<base_price and p.wholesale_mode='block' then
-      wqty:=floor(qty/wq)*wq; nqty:=qty-wqty;
-    elsif wp is not null and wp>0 and wq is not null and wq>0 and wp<base_price and p.wholesale_mode='threshold' and qty>=wq then
-      wqty:=qty; nqty:=0;
-    else wqty:=0; nqty:=qty; end if;
-    subtotal:=round(nqty*base_price+wqty*coalesce(wp,0),2); total:=total+subtotal;
-    rebuilt:=rebuilt||jsonb_build_array(jsonb_build_object('product_id',p.id,'name',p.name,'qty',qty,'unit',coalesce(p.unit,'unidade'),'unit_price',round(subtotal/qty,2),'subtotal',subtotal,'image_url',coalesce(p.image_url,'')));
+  if auth.uid() is null or not public.is_admin() then
+    raise exception 'Acesso negado: somente administradores podem alterar pedidos';
+  end if;
+
+  select * into ord
+  from public.orders
+  where id = target_order_id
+  for update;
+
+  if not found then
+    raise exception 'Pedido não encontrado';
+  end if;
+
+  if ord.status not in (
+    'received','accepted','separating',
+    'waiting_payment','ready_pickup','paid'
+  ) then
+    raise exception 'Este pedido não pode mais ser alterado';
+  end if;
+
+  if jsonb_typeof(new_items) <> 'array'
+     or jsonb_array_length(new_items) < 1
+     or jsonb_array_length(new_items) > 100 then
+    raise exception 'Itens do pedido inválidos';
+  end if;
+
+  for item in select value from jsonb_array_elements(new_items) loop
+    begin
+      pid := (item->>'product_id')::uuid;
+      qty := (item->>'qty')::numeric;
+    exception when others then
+      raise exception 'Produto ou quantidade inválidos';
+    end;
+
+    if qty <= 0 or qty > 9999 then
+      raise exception 'Quantidade inválida';
+    end if;
+
+    select * into p
+    from public.products
+    where id = pid and coalesce(active,true) = true
+    limit 1;
+
+    if not found then
+      raise exception 'Produto não disponível';
+    end if;
+
+    if p.unit = 'kg' then
+      if round(qty,3) <> qty then
+        raise exception 'Peso inválido: use no máximo 3 casas decimais';
+      end if;
+    else
+      if qty <> trunc(qty) then
+        raise exception 'Quantidade de unidade inválida';
+      end if;
+    end if;
+
+    base_price := case
+      when p.promo_price is not null
+       and p.promo_price > 0
+       and p.promo_price < p.price
+      then p.promo_price
+      else p.price
+    end;
+
+    wp := p.wholesale_price;
+    wq := p.wholesale_qty;
+
+    if wp is not null
+       and wp > 0
+       and wq is not null
+       and wq > 0
+       and wp < base_price
+       and p.wholesale_mode = 'block' then
+      wqty := floor(qty / wq) * wq;
+      nqty := qty - wqty;
+    elsif wp is not null
+       and wp > 0
+       and wq is not null
+       and wq > 0
+       and wp < base_price
+       and p.wholesale_mode = 'threshold'
+       and qty >= wq then
+      wqty := qty;
+      nqty := 0;
+    else
+      wqty := 0;
+      nqty := qty;
+    end if;
+
+    subtotal := round(
+      (nqty * base_price) + (wqty * coalesce(wp,0)),
+      2
+    );
+
+    order_total := order_total + subtotal;
+
+    rebuilt := rebuilt || jsonb_build_array(
+      jsonb_build_object(
+        'product_id', p.id,
+        'name', p.name,
+        'qty', qty,
+        'unit', coalesce(p.unit,'unidade'),
+        'unit_price', round(subtotal / qty,2),
+        'subtotal', subtotal,
+        'image_url', coalesce(p.image_url,'')
+      )
+    );
   end loop;
-  update public.orders set items=rebuilt,total=round(total,2),updated_at=now() where id=target_order_id returning * into ord;
+
+  order_total := round(order_total,2);
+
+  update public.orders
+  set items = rebuilt,
+      total = order_total,
+      updated_at = now()
+  where id = target_order_id
+  returning * into ord;
+
   return ord;
 end;
-$$;
+$func$;
+
 revoke all on function public.admin_update_order_items(uuid,jsonb) from public;
 grant execute on function public.admin_update_order_items(uuid,jsonb) to authenticated;
 

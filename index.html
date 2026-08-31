@@ -45,13 +45,19 @@
 </section>
 
 <div id="ordersMaintenance" class="orders-maintenance hidden">🛠️ <b>Função de pedidos está em manutenção, voltaremos em breve.</b></div>
-<section class="service-strip catalog-wrap">
+<section class="service-strip catalog-wrap" aria-label="Benefícios da MacroFood">
   <div><span>🚚</span><b>Entrega rápida</b><small>Receba com praticidade</small></div>
-  <div><span>💳</span><b>Compre com segurança</b><small>Pagamento combinado</small></div>
+  <div><span>💳</span><b>Compras em lojas parceladas em até 3x sem juros</b><small>Pagamento combinado</small></div>
+  <div><span>⚡</span><b>Compre online via Pix</b><small>Aprovação imediata</small></div>
+  <div><span>🛡️</span><b>100% seguro</b><small>Seus dados protegidos</small></div>
   <div><span>🏪</span><b>Retire na loja</b><small>Escolha como receber</small></div>
-  <div><span>🛡️</span><b>Loja confiável</b><small>Atendimento humanizado</small></div>
 </section>
 <main class="catalog-main">
+  <section class="categories-section">
+    <div class="section-head"><div><h2>▢ CATEGORIAS</h2><p>Encontre rapidamente o que procura.</p></div></div>
+    <div class="cats" id="cats"></div>
+  </section>
+
   <section class="featured-section" id="featuredSection">
     <div class="section-head"><div><h2>🔥 PRODUTOS MAIS VENDIDOS</h2><p>Os produtos que nossos clientes mais compram!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver produtos ›</button></div>
     <div id="featuredGrid" class="featured-grid"></div>
@@ -71,11 +77,6 @@
   <section class="new-section" id="newSection">
     <div class="section-head"><div><h2>✨ NOVIDADES</h2><p>Produtos recém-cadastrados na MacroFood.</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todos ›</button></div>
     <div id="newGrid" class="featured-grid new-grid"></div>
-  </section>
-
-  <section class="categories-section">
-    <div class="section-head"><div><h2>▢ CATEGORIAS</h2><p>Encontre rapidamente o que procura.</p></div></div>
-    <div class="cats" id="cats"></div>
   </section>
 
   <section class="suggestion-strip"><div><b>💡 Não encontrou um produto?</b><span>Sugira para a MacroFood e envie uma foto do produto.</span></div><button class="secondary" onclick="openSuggestion()">📷 Sugerir produto</button></section>
