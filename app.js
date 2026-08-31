@@ -2,6 +2,7 @@ const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY)
 const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
 let sectors=['Todos','Promoções',...defaultSectors];
 let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[];
+let ordersEnabled=true, orderMethods={delivery:true,store:true,uber:true}, bestSellerIds=[];
 let cartUserId=null;
 function numericValue(value){
   if(value===null || value===undefined || value==='') return null;
@@ -113,7 +114,9 @@ async function load(){
   const reviewsReq=client.from('product_reviews').select('product_id,rating,user_id');
   const bannersReq=client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});
   const categoriesReq=client.from('categories').select('name').order('name');
-  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr},{data:cats,error:catErr}]=await Promise.all([productsReq,reviewsReq,bannersReq,categoriesReq]);
+  const settingsReq=client.from('site_settings').select('key,value').in('key',['orders_enabled','delivery_enabled','store_pickup_enabled','uber_pickup_enabled']);
+  const bestReq=client.rpc('get_best_selling_products',{limit_count:12});
+  const [{data,error},{data:rv,error:rvErr},{data:bn,error:bnErr},{data:cats,error:catErr},{data:settings,error:settingsErr},{data:best,error:bestErr}]=await Promise.all([productsReq,reviewsReq,bannersReq,categoriesReq,settingsReq,bestReq]);
 
   if(error){
     $('grid').innerHTML=`<div class="notice"><b>Não foi possível carregar os produtos.</b><br>${esc(error.message)}<br><small>Confira se a tabela products existe e se a política de leitura pública foi criada no Supabase.</small></div>`;
@@ -127,6 +130,10 @@ async function load(){
   const dynamicCats=(!catErr&&cats?.length)?cats.map(c=>c.name).filter(Boolean):defaultSectors;
   sectors=['Todos','Promoções',...dynamicCats];
   banners=bnErr?[]:(bn||[]).filter(b=>b.active===undefined || b.active===null || b.active===true);
+  const settingMap=Object.fromEntries((settings||[]).map(x=>[x.key,String(x.value).toLowerCase()]));
+  ordersEnabled=settingMap.orders_enabled!=='false';
+  orderMethods={delivery:settingMap.delivery_enabled!=='false',store:settingMap.store_pickup_enabled!=='false',uber:settingMap.uber_pickup_enabled!=='false'};
+  bestSellerIds=bestErr?[]:(best||[]).map(x=>String(x.product_id));
   renderBanners();
   render();
   loadAccountHeader();
@@ -210,7 +217,7 @@ function wholesaleBreakdown(p,qty){
   }
   const wholesalePrice=numericValue(p?.wholesale_price);
   const wholesaleQty=Number(p?.wholesale_qty);
-  const valid=wholesalePrice!==null&&wholesalePrice>0&&Number.isInteger(wholesaleQty)&&wholesaleQty>0&&wholesalePrice<normalPrice;
+  const valid=wholesalePrice!==null&&wholesalePrice>0&&wholesaleQty>0&&wholesalePrice<normalPrice;
   if(!valid){
     const total=normalPrice*qty;
     return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:total,wholesaleTotal:0,total,discount:0,valid:true};
@@ -268,7 +275,7 @@ function marketingPriceHtml(p){
 function productCard(p,featured=false){
   const img=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'📦';
   return `<article class="${featured?'feature-card':'card'}">
-    <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">★ DESTAQUE</span>':''}${img}</div>
+    <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</div>
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
       <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>
@@ -280,8 +287,12 @@ function productCard(p,featured=false){
 }
 function renderFeatured(){
   const el=$('featuredGrid'); if(!el)return;
-  const marked=products.filter(p=>p.is_featured===true || p.featured===true);
-  const featured=(marked.length?marked:products).slice(0,6);
+  const rank=new Map(bestSellerIds.map((id,i)=>[id,i]));
+  const featured=[...products].sort((a,b)=>{
+    const ra=rank.has(String(a.id))?rank.get(String(a.id)):9999;
+    const rb=rank.has(String(b.id))?rank.get(String(b.id)):9999;
+    return ra-rb || String(a.name).localeCompare(String(b.name));
+  }).slice(0,6);
   el.innerHTML=featured.length?featured.map(p=>productCard(p,true)).join(''):'<div class="notice">Nenhum produto disponível.</div>';
 }
 function renderPromos(){
@@ -298,8 +309,11 @@ function render(){
   renderCats();
   renderFeatured();
   renderPromos();
-  $('cartCount').textContent=cart.reduce((n,x)=>n+x.qty,0);
-  if($('mobileCartCount'))$('mobileCartCount').textContent=cart.reduce((n,x)=>n+x.qty,0);
+  refreshOrderAvailabilityUI();
+  const cartQty=cart.reduce((n,x)=>n+Number(x.qty||0),0);
+  $('cartCount').textContent=cartQty;
+  if($('mobileCartCount'))$('mobileCartCount').textContent=cartQty;
+  if($('floatingCart')){$('floatingCartCount').textContent=cartQty.toLocaleString('pt-BR',{maximumFractionDigits:3});$('floatingCart').classList.toggle('hidden',cart.length===0);}
   let q=$('search').value.toLowerCase().trim();
   let list=products.filter(p=>{
     const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):p.sector===active);
@@ -326,7 +340,7 @@ async function addCart(id){
   pendingCartProduct=p;
   pendingCartQty=1;
   const qty=$('addQtyInput');
-  if(qty)qty.value='1';
+  if(qty){qty.value=p.unit==='kg'?'0.100':'1';qty.step=p.unit==='kg'?'0.001':'1';qty.min=p.unit==='kg'?'0.001':'1';}
   const title=$('addQtyTitle');
   const price=$('addQtyPrice');
   const img=$('addQtyImage');
@@ -346,8 +360,8 @@ function closeAddQty(){
 function changePendingQty(delta){
   const input=$('addQtyInput');
   if(!input)return;
-  let value=parseInt(input.value,10)||1;
-  value=Math.max(1,Math.min(99,value+delta));
+  let value=Number(input.value)|| (pendingCartProduct?.unit==='kg'?0.1:1);
+  const step=pendingCartProduct?.unit==='kg'?0.1:1; const min=pendingCartProduct?.unit==='kg'?0.1:1; value=Math.max(min,Math.min(99.999,value+delta*step)); value=Number(value.toFixed(3));
   input.value=value;
   updatePendingTotal();
 }
@@ -355,7 +369,7 @@ function updatePendingTotal(){
   const input=$('addQtyInput');
   const total=$('addQtyTotal');
   if(!input||!total||!pendingCartProduct)return;
-  const qty=Math.max(1,Math.min(99,parseInt(input.value,10)||1));
+  const step=pendingCartProduct?.unit==='kg'?0.001:1; const min=pendingCartProduct?.unit==='kg'?0.001:1; const qty=Math.max(min,Math.min(99.999,Number(input.value)||min)); input.value=qty;
   input.value=qty;
   total.textContent=money(wholesaleTotal(pendingCartProduct,qty));
 }
@@ -364,7 +378,8 @@ async function confirmAddCart(){
   const session=await requireLoggedCart();
   if(!session)return;
   const input=$('addQtyInput');
-  const qty=Math.max(1,Math.min(99,parseInt(input?.value,10)||1));
+  const min=pendingCartProduct?.unit==='kg'?0.001:1;
+  const qty=Math.max(min,Math.min(99.999,Number(input?.value)||min));
   const p=pendingCartProduct;
   const x=cart.find(x=>x.id===p.id);
   if(x)x.qty+=qty;
@@ -411,7 +426,7 @@ async function openCart(){
 function closeCart(){$('cartModal').style.display='none'}
 function changeQty(i,d){
   if(!cartUserId||!cart[i])return;
-  cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);
+  const step=cart[i].unit==='kg'?0.1:1; cart[i].qty=Number((Number(cart[i].qty)+d*step).toFixed(3)); if(cart[i].qty<=0)cart.splice(i,1);
   saveUserCart();openCart();render();
 }
 
@@ -439,6 +454,7 @@ async function saveRating(id){
   closeRating();render();alert('Avaliação salva com sucesso!');
 }
 async function showCheckoutForm(){
+  if(!ordersEnabled)return alert('A função de pedidos está em manutenção. Voltaremos em breve.');
   const session=await requireLoggedCart();
   if(!session)return;
   if(!cart.length)return alert('Carrinho vazio.');
@@ -456,6 +472,8 @@ async function showCheckoutForm(){
     if(name && !name.value && profile?.nickname) name.value=profile.nickname;
   }catch(e){console.warn('Não foi possível carregar os dados do contato:',e)}
   toggleCustomerType();
+  const method=$('deliveryMethod'); if(method) method.value=method.value||'delivery';
+  updateDeliveryMethodHelp();
   $('customerHasSalesCadastro').focus();
 }
 function hideCheckoutForm(){
@@ -493,6 +511,26 @@ function toggleCustomerType(){
   if(!has && !cnpj && nameInput) nameInput.focus();
 }
 
+function updateDeliveryMethodHelp(){
+  const select=$('deliveryMethod'),help=$('deliveryMethodHelp'); if(!select||!help)return;
+  const v=select.value;
+  help.innerHTML=v==='uber'
+    ? '🚗 <b>Retirada por aplicativo (Uber):</b> entre em contato pelo <a href="https://wa.me/5581971178793" target="_blank" rel="noopener">+55 (81) 97117-8793</a> e informe a placa do veículo.'
+    : v==='store' ? '🏪 Você fará a retirada diretamente na loja.'
+    : '🚚 A MacroFood fará a entrega conforme combinado.';
+}
+function refreshOrderAvailabilityUI(){
+  const btn=$('checkoutButton'),notice=$('ordersMaintenance'),select=$('deliveryMethod');
+  if(notice) notice.classList.toggle('hidden',ordersEnabled);
+  if(btn){btn.disabled=!ordersEnabled;btn.classList.toggle('hidden',!ordersEnabled);btn.textContent=ordersEnabled?'Continuar para finalizar pedido':'Pedidos temporariamente indisponíveis';}
+  if(select){
+    [...select.options].forEach(o=>o.disabled=!orderMethods[o.value]);
+    if(select.options[select.selectedIndex]?.disabled){
+      const first=[...select.options].find(o=>!o.disabled); if(first)select.value=first.value;
+    }
+    updateDeliveryMethodHelp();
+  }
+}
 async function submitOrder(){
   if(!cart.length)return alert('Carrinho vazio.');
 
@@ -504,6 +542,10 @@ async function submitOrder(){
   const cpfCnpj=normalizeDoc((hasCadastro?$('salesCustomerCpf')?.value:$('customerCpfCnpj')?.value)||'');
   const cep=normalizeDoc($('customerCep')?.value);
   const note=$('customerNote').value.trim();
+  const deliveryMethod=$('deliveryMethod')?.value||'delivery';
+  if(!ordersEnabled)return alert('A função de pedidos está em manutenção. Voltaremos em breve.');
+  if(!orderMethods[deliveryMethod])return alert('Esta opção de entrega/retirada está indisponível no momento.');
+  if(deliveryMethod==='uber' && !confirm('Para retirada por aplicativo (Uber), entre em contato pelo número +55 (81) 97117-8793 para informar a placa do veículo. Deseja continuar?'))return;
 
   if(whatsapp.length!==12&&whatsapp.length!==13)return alert('Informe um número de celular/WhatsApp válido com DDD. Exemplo: +55 (81) 99999-9999.');
 
@@ -539,7 +581,8 @@ async function submitOrder(){
   for(const x of cart){
     const p=freshProducts.find(p=>String(p.id)===String(x.id)) || products.find(p=>String(p.id)===String(x.id)) || x;
     const qty=Number(x.qty);
-    if(!Number.isInteger(qty)||qty<1||qty>9999){
+    const isKg=(p.unit||x.unit)==='kg';
+    if(!Number.isFinite(qty)||qty<=0||qty>9999||(!isKg&&!Number.isInteger(qty))||(isKg&&Number(qty.toFixed(3))!==qty)){
       return alert(`Quantidade inválida para "${x.name}".`);
     }
 
@@ -591,7 +634,8 @@ async function submitOrder(){
     sales_customer:hasCadastro,
     document_type:docType,
     document_number:cpfCnpj||null,
-    zipcode:cep||null
+    zipcode:cep||null,
+    delivery_method:deliveryMethod
   };
 
   const {data,error}=await client.from('orders').insert(payload).select('order_number').single();

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#a9003f">
   <meta name="description" content="MacroFood - Catálogo de produtos">
   <title>MacroFood — Catálogo</title>
-  <link rel="stylesheet" href="styles.css?v=20260827-wholesale-highlight1">
+  <link rel="stylesheet" href="styles.css?v=20260831-v12">
 </head>
 <body>
 <header class="site-header">
@@ -14,13 +14,13 @@
     <a class="brand-wrap" href="index.html"><img class="logo" src="logo-macrofood.jpg" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
     <div class="desktop-search"><div class="search"><input id="search" placeholder="Buscar produtos..." oninput="render()"><span>🔎</span></div></div>
     <div class="header-contact">💬 <span>ATENDIMENTO<br><b>(81) 97117-8793</b></span></div>
-    <a class="account-top admin" href="login.html">👤 <span class="account-nickname">Minha conta</span></a>
+    <button class="theme-toggle desktop-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button><a class="account-top admin" href="login.html">👤 <span class="account-nickname">Minha conta</span></a>
     <button class="cart-top" onclick="openCart()">🛒 <span class="cart-label">Carrinho</span><b id="cartCount">0</b></button>
   </div>
   <nav class="desktop-nav">
     <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
     <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
-    <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">☆ Novidades</button>
+    <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
     <a href="pedidos.html">📦 Meus pedidos</a>
     <a href="suporte.html">💬 Suporte</a>
     <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
@@ -32,11 +32,11 @@
     <a href="index.html" onclick="closeMobileMenu()">🏠 Início</a>
     <button onclick="closeMobileMenu();document.getElementById('cats').scrollIntoView({behavior:'smooth'})">📂 Todas as categorias</button>
     <button onclick="active='Promoções';render();closeMobileMenu();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
-    <button onclick="closeMobileMenu();document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">⭐ Produtos em destaque</button>
+    <button onclick="closeMobileMenu();document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
     <a href="pedidos.html" onclick="closeMobileMenu()">📦 Meus pedidos</a>
     <a href="suporte.html" onclick="closeMobileMenu()">💬 Suporte ao cliente</a>
     <button onclick="closeMobileMenu();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🛍️ Todos os produtos</button>
-    <a href="login.html" onclick="closeMobileMenu()">👤 Minha conta</a>
+    <a href="login.html" onclick="closeMobileMenu()">👤 Minha conta</a><button class="theme-toggle mobile-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button>
   </div>
 </header>
 
@@ -44,9 +44,10 @@
   <div id="bannerArea" class="banner-area hidden"></div>
 </section>
 
+<div id="ordersMaintenance" class="orders-maintenance hidden">🛠️ <b>Função de pedidos está em manutenção, voltaremos em breve.</b></div>
 <main class="catalog-main">
   <section class="featured-section" id="featuredSection">
-    <div class="section-head"><div><h2>⭐ PRODUTOS EM DESTAQUE</h2><p>Selecionamos os melhores produtos para você!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todos os destaques ›</button></div>
+    <div class="section-head"><div><h2>🔥 PRODUTOS MAIS VENDIDOS</h2><p>Os produtos que nossos clientes mais compram!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver produtos ›</button></div>
     <div id="featuredGrid" class="featured-grid"></div>
   </section>
 
@@ -91,6 +92,7 @@
     <button type="button" class="secondary add-qty-cancel" onclick="closeAddQty()">Cancelar</button>
   </div>
 </div>
+<button id="floatingCart" class="floating-cart hidden" type="button" onclick="openCart()">🛒 <span>Ver carrinho</span><b id="floatingCartCount">0</b></button>
 <div id="cartToast" class="cart-toast" role="status" aria-live="polite"></div>
 <div id="cartModal" class="modal cart-modal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
   <div class="modal-box cart-box">
@@ -114,7 +116,7 @@
         <label>Nome<input id="salesCustomerName" placeholder="Nome cadastrado"></label>
         <label>CPF<input id="salesCustomerCpf" inputmode="numeric" placeholder="000.000.000-00"></label>
       </div>
-      <label id="customerWhatsappLabel" class="full">Celular / WhatsApp<input id="customerWhatsapp" inputmode="tel" placeholder="+55 (81) 99999-9999" required></label>
+      <label id="customerWhatsappLabel" class="full">Celular / WhatsApp<input id="customerWhatsapp" inputmode="tel" placeholder="+55 (81) 99999-9999" required></label><label class="full">Forma de recebimento<select id="deliveryMethod" onchange="updateDeliveryMethodHelp()"><option value="delivery">🚚 Entrega</option><option value="store">🏪 Retirada em loja</option><option value="uber">🚗 Retirada por aplicativo (Uber)</option></select><small id="deliveryMethodHelp" class="delivery-method-help"></small></label>
       <label>Observação<textarea id="customerNote" rows="3" placeholder="Alguma observação?" style="width:100%;margin-top:5px;border:1px solid #ccc;border-radius:8px;padding:10px"></textarea></label>
       <button type="button" class="primary" id="submitOrderButton" onclick="submitOrder()">Confirmar pedido</button>
       <button type="button" class="secondary" onclick="hideCheckoutForm()">Voltar ao carrinho</button>
@@ -128,4 +130,4 @@
 <div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">×</button><div id="ratingItems"></div></div></div>
 <div id="suggestionModal" class="modal"><div class="modal-box"><button class="close" onclick="closeSuggestion()">×</button><div id="suggestionContent"><h2>💡 Sugerir produto</h2><p>Envie o nome e uma foto do produto que gostaria de encontrar.</p><label>Nome do produto<input id="suggestionName" type="text" placeholder="Nome do produto"></label><label style="display:block;margin-top:10px">Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label style="display:block;margin-top:10px">Observação<textarea id="suggestionNote" rows="3" placeholder="Opcional" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea></label><button class="primary" style="width:100%;margin-top:12px" onclick="submitSuggestion()">Enviar sugestão</button><p id="suggestionMsg"></p></div></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260826"></script><script src="app.js?v=20260827-catalogo-pricehtml-fix1"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260831"></script><script src="app.js?v=20260831-v11"></script></body></html>
