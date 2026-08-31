@@ -740,11 +740,9 @@ begin
     select * into p from public.products where id=pid and coalesce(active,true)=true limit 1;
     if not found then raise exception 'Produto não disponível'; end if;
     if p.unit='kg' then
-      if round(qty,3)<>qty then
-        raise exception 'Peso inválido: use no máximo 3 casas decimais';
-      end if;
+      if round(qty,3)<>qty then raise exception 'Peso inválido: use no máximo 3 casas decimais'; end if;
     elsif qty<>trunc(qty) then
-      raise exception 'Quantidade de unidade inválida';
+      raise exception 'Quantidade de unidade inválida'; end if;
     end if;
     if p.price is null or p.price<=0 then raise exception 'Produto % está sem preço válido cadastrado',p.name; end if;
     normal_price:=case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
@@ -793,7 +791,7 @@ begin
     if not found then raise exception 'Produto não disponível'; end if;
     if qty<=0 or qty>9999 then raise exception 'Quantidade inválida'; end if;
     if p.unit='kg' then if round(qty,3)<>qty then raise exception 'Peso inválido'; end if;
-    else if qty<>trunc(qty) then raise exception 'Quantidade de unidade inválida'; end if; end if;
+    elsif qty<>trunc(qty) then raise exception 'Quantidade de unidade inválida'; end if;
     base_price:=case when p.promo_price is not null and p.promo_price>0 and p.promo_price<p.price then p.promo_price else p.price end;
     wp:=p.wholesale_price; wq:=p.wholesale_qty;
     if wp is not null and wp>0 and wq is not null and wq>0 and wp<base_price and p.wholesale_mode='block' then

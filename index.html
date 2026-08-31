@@ -8,7 +8,7 @@
   <title>MacroFood — Catálogo</title>
   <link rel="stylesheet" href="styles.css?v=20260831-v12">
 </head>
-<body>
+<body class="catalog-page">
 <header class="site-header">
   <div class="topbar">
     <a class="brand-wrap" href="index.html"><img class="logo" src="logo-macrofood.jpg" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
@@ -45,6 +45,12 @@
 </section>
 
 <div id="ordersMaintenance" class="orders-maintenance hidden">🛠️ <b>Função de pedidos está em manutenção, voltaremos em breve.</b></div>
+<section class="service-strip catalog-wrap">
+  <div><span>🚚</span><b>Entrega rápida</b><small>Receba com praticidade</small></div>
+  <div><span>💳</span><b>Compre com segurança</b><small>Pagamento combinado</small></div>
+  <div><span>🏪</span><b>Retire na loja</b><small>Escolha como receber</small></div>
+  <div><span>🛡️</span><b>Loja confiável</b><small>Atendimento humanizado</small></div>
+</section>
 <main class="catalog-main">
   <section class="featured-section" id="featuredSection">
     <div class="section-head"><div><h2>🔥 PRODUTOS MAIS VENDIDOS</h2><p>Os produtos que nossos clientes mais compram!</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver produtos ›</button></div>
@@ -54,6 +60,17 @@
   <section class="promo-section" id="promoSection">
     <div class="section-head"><div><h2>🔥 PROMOÇÕES</h2><p>Aproveite as ofertas especiais!</p></div><button class="see-all" onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todas as promoções ›</button></div>
     <div id="promoGrid" class="promo-grid"></div>
+  </section>
+
+  <section class="marketing-tiles catalog-wrap">
+    <button onclick="active='Promoções';render();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})"><span>OFERTAS DO DIA</span><b>Descontos imperdíveis</b><small>APROVEITE AGORA ›</small></button>
+    <button onclick="document.getElementById('newSection').scrollIntoView({behavior:'smooth'})"><span>NOVIDADES</span><b>Produtos que acabaram de chegar</b><small>CONFIRA ›</small></button>
+    <button onclick="document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})"><span>COMPRE NO ATACADO</span><b>Preços melhores por quantidade</b><small>SAIBA MAIS ›</small></button>
+  </section>
+
+  <section class="new-section" id="newSection">
+    <div class="section-head"><div><h2>✨ NOVIDADES</h2><p>Produtos recém-cadastrados na MacroFood.</p></div><button class="see-all" onclick="active='Todos';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Ver todos ›</button></div>
+    <div id="newGrid" class="featured-grid new-grid"></div>
   </section>
 
   <section class="categories-section">
@@ -130,4 +147,4 @@
 <div id="ratingModal" class="modal"><div class="modal-box"><button class="close" onclick="closeRating()">×</button><div id="ratingItems"></div></div></div>
 <div id="suggestionModal" class="modal"><div class="modal-box"><button class="close" onclick="closeSuggestion()">×</button><div id="suggestionContent"><h2>💡 Sugerir produto</h2><p>Envie o nome e uma foto do produto que gostaria de encontrar.</p><label>Nome do produto<input id="suggestionName" type="text" placeholder="Nome do produto"></label><label style="display:block;margin-top:10px">Foto do produto<input id="suggestionImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label style="display:block;margin-top:10px">Observação<textarea id="suggestionNote" rows="3" placeholder="Opcional" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea></label><button class="primary" style="width:100%;margin-top:12px" onclick="submitSuggestion()">Enviar sugestão</button><p id="suggestionMsg"></p></div></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260831"></script><script src="app.js?v=20260831-v11"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js?v=20260831"></script><script src="theme.js?v=20260831"></script><script src="app.js?v=20260831-v13"></script></body></html>
