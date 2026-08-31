@@ -2,7 +2,7 @@ const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY)
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 async function init(){
   const {data:{session}}=await client.auth.getSession();
-  if(!session){$('supportApp').innerHTML='<div class="support-shell support-empty"><h2>💬 Suporte ao cliente</h2><p>Entre na sua conta para conversar com a MacroFood.</p><a class="primary" href="login.html">Entrar na minha conta</a></div>';return}
+  if(!session){$('supportApp').innerHTML='<div class="support-shell support-empty"><h2>💬 Suporte ao cliente</h2><p>Entre na sua conta para conversar com a MacroFood.</p><a class="primary" href="login/">Entrar na minha conta</a></div>';return}
   userId=session.user.id;await loadAdminIdentity();render();await loadConversation();await loadAdminIdentity();await loadMessages();timer=setInterval(async()=>{await loadConversation();await loadAdminIdentity();await loadMessages()},5000)
 }
 async function loadAdminIdentity(){
@@ -14,7 +14,7 @@ async function loadConversation(){
   updateResolvedUI();
 }
 function render(){
-  $('supportApp').innerHTML=`<div class="support-shell"><div class="support-head"><div><h2>💬 Suporte ao cliente</h2><p>Você está falando com <b id="supportAdminName">${esc(supportAdminName)}</b>. Envie sua dúvida e aguarde a resposta.</p></div><span id="supportStatus" class="support-status"></span></div><div id="messages" class="support-messages"><div class="support-empty">Carregando conversa...</div></div><form id="chatForm" class="support-compose"><textarea id="chatText" maxlength="1000" placeholder="Digite sua mensagem..." required></textarea><button class="primary" type="submit">Enviar</button></form><div id="resolvedBox"></div></div><p style="text-align:center;margin-top:15px"><a href="login.html">← Voltar para minha conta</a></p>`;
+  $('supportApp').innerHTML=`<div class="support-shell"><div class="support-head"><div><h2>💬 Suporte ao cliente</h2><p>Você está falando com <b id="supportAdminName">${esc(supportAdminName)}</b>. Envie sua dúvida e aguarde a resposta.</p></div><span id="supportStatus" class="support-status"></span></div><div id="messages" class="support-messages"><div class="support-empty">Carregando conversa...</div></div><form id="chatForm" class="support-compose"><textarea id="chatText" maxlength="1000" placeholder="Digite sua mensagem..." required></textarea><button class="primary" type="submit">Enviar</button></form><div id="resolvedBox"></div></div><p style="text-align:center;margin-top:15px"><a href="login/">← Voltar para minha conta</a></p>`;
   $('chatForm').onsubmit=send;updateResolvedUI();
 }
 function updateResolvedUI(){

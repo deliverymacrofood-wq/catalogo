@@ -44,7 +44,7 @@ async function requireLoggedCart(){
   const {data:{session}}=await client.auth.getSession();
   if(!session){
     alert('Para usar o carrinho, entre na sua conta ou crie uma conta.');
-    location.href='login.html?redirect=index.html';
+    location.href='login/?redirect=./';
     return null;
   }
   if(cartUserId!==session.user.id) await loadUserCart(session);
@@ -59,7 +59,7 @@ async function loadAccountHeader(){
     const {data:{session}}=await client.auth.getSession();
     if(!session){
       el.innerHTML='👤 Minha conta';
-      el.href='login.html';
+      el.href='login/';
       return;
     }
 
@@ -73,12 +73,12 @@ async function loadAccountHeader(){
 
     // Após o login, substitui o botão "Minha conta" pela foto + apelido do cliente.
     el.innerHTML=`${avatarUrl?`<img class="mini-avatar" src="${esc(avatarUrl)}" alt="Foto de ${esc(nickname||'cliente')}" onerror="this.style.display='none'">`:''}<span class="account-nickname">${esc(nickname||'Minha conta')}</span>`;
-    el.href='login.html';
+    el.href='login/';
     el.title='Abrir minha conta';
     el.setAttribute('aria-label','Abrir minha conta');
   }catch(e){
     el.innerHTML='👤 Minha conta';
-    el.href='login.html';
+    el.href='login/';
   }
 }
 
@@ -200,7 +200,7 @@ async function openSuggestion(){
     const {data:{session}}=await client.auth.getSession();
     if(!session){
       alert('Entre na sua conta para enviar uma sugestão de produto.');
-      location.href='login.html';
+      location.href='login/';
       return;
     }
     const {data:profile}=await client.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
@@ -232,7 +232,7 @@ async function submitSuggestion(){
   if(!['image/jpeg','image/png','image/webp'].includes(file.type))return setMsg('Use JPG, PNG ou WEBP.');
   if(file.size>5*1024*1024)return setMsg('A foto precisa ter no máximo 5 MB.');
   const {data:{session}}=await client.auth.getSession();
-  if(!session){closeSuggestion();alert('Sua sessão expirou. Entre novamente para enviar a sugestão.');location.href='login.html';return;}
+  if(!session){closeSuggestion();alert('Sua sessão expirou. Entre novamente para enviar a sugestão.');location.href='login/';return;}
   const {data:profile}=await client.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
   if(profile?.role==='admin')return setMsg('Somente clientes podem enviar sugestões.');
   setMsg('Enviando sugestão...','#7a4b00');
@@ -398,7 +398,7 @@ async function addCart(id){
   const {data:{session}} = await client.auth.getSession();
   if(!session){
     alert('Para adicionar produtos ao carrinho, entre na sua conta ou crie uma conta.');
-    location.href='login.html?redirect=index.html';
+    location.href='login/?redirect=./';
     return;
   }
   const p=products.find(x=>String(x.id)===String(id));
@@ -503,7 +503,7 @@ function changeQty(i,d){
 async function openRating(id){
   const p=products.find(x=>x.id===id);if(!p)return;
   const {data:{session}}=await client.auth.getSession();
-  if(!session){if(confirm('Para avaliar, você precisa estar logado. Deseja entrar agora?'))location.href='login.html';return}
+  if(!session){if(confirm('Para avaliar, você precisa estar logado. Deseja entrar agora?'))location.href='login/';return}
   const own=reviews.find(r=>r.product_id===id&&r.user_id===session.user.id);
   $('ratingItems').innerHTML=`<h3>⭐ Avaliar ${esc(p.name)}</h3><p>Escolha de 1 a 5 estrelas. Você pode alterar sua avaliação depois.</p>
     <div class="rating-stars" id="ratingStars">${[1,2,3,4,5].map(n=>`<button class="${own&&Number(own.rating)>=n?'selected':''}" onclick="selectRating(${n})">★</button>`).join('')}</div>

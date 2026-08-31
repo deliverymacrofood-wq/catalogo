@@ -6,7 +6,7 @@ const labels={received:'Novo pedido',accepted:'Pedido aceito',separating:'Pedido
 const classes={received:'status-new',accepted:'status-ready',separating:'status-ready',waiting_payment:'status-ready',ready_pickup:'status-paid',paid:'status-paid',completed:'status-done',cancelled:'status-cancelled'};
 async function init(){
   const {data:{session}}=await client.auth.getSession();
-  if(!session){$('ordersApp').innerHTML='<div class="panel orders-login"><h2>📦 Meus pedidos</h2><p>Entre na sua conta para acompanhar seus pedidos.</p><a class="primary" href="login.html">Entrar na minha conta</a></div>';return;}
+  if(!session){$('ordersApp').innerHTML='<div class="panel orders-login"><h2>📦 Meus pedidos</h2><p>Entre na sua conta para acompanhar seus pedidos.</p><a class="primary" href="login/">Entrar na minha conta</a></div>';return;}
   await loadOrders(session.user.id);
   setInterval(()=>loadOrders(session.user.id,true),15000);
 }
@@ -20,7 +20,7 @@ async function loadOrders(uid,silent=false){
   const {data,error}=await client.from('orders').select('*').eq('user_id',uid).order('created_at',{ascending:false});
   if(error){if(!silent)$('ordersApp').innerHTML=`<div class="panel"><h2>Meus pedidos</h2><p class="notice">Não foi possível carregar seus pedidos: ${esc(error.message)}</p></div>`;return;}
   const orders=data||[];
-  $('ordersApp').innerHTML=`<div class="orders-page-head"><div><h2>📦 Meus pedidos</h2><p>Acompanhe seus pedidos e cancele enquanto eles ainda não foram finalizados.</p></div><a class="secondary" href="index.html">Continuar comprando</a></div>${orders.length?`<div class="my-orders-list">${orders.map(orderCard).join('')}</div>`:'<div class="panel empty-state"><h3>Você ainda não fez nenhum pedido.</h3><p>Escolha seus produtos no catálogo e faça seu primeiro pedido.</p><a class="primary" href="index.html">Ver produtos</a></div>'}`;
+  $('ordersApp').innerHTML=`<div class="orders-page-head"><div><h2>📦 Meus pedidos</h2><p>Acompanhe seus pedidos e cancele enquanto eles ainda não foram finalizados.</p></div><a class="secondary" href="./">Continuar comprando</a></div>${orders.length?`<div class="my-orders-list">${orders.map(orderCard).join('')}</div>`:'<div class="panel empty-state"><h3>Você ainda não fez nenhum pedido.</h3><p>Escolha seus produtos no catálogo e faça seu primeiro pedido.</p><a class="primary" href="./">Ver produtos</a></div>'}`;
 }
 async function cancelMyOrder(id){
   if(!confirm('Deseja realmente cancelar este pedido?'))return;
