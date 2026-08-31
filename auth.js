@@ -23,11 +23,11 @@ async function init(){
 
         <h3 class="account-section-title">Acesso rápido</h3>
         <section class="account-quick-grid">
-          <a class="account-quick-card" href="pedidos.html"><span class="quick-icon wine">🛍</span><span><b>Meus pedidos</b><small>Acompanhe e gerencie seus pedidos.</small></span><strong>›</strong></a>
+          <a class="account-quick-card" href="../pedidos.html"><span class="quick-icon wine">🛍</span><span><b>Meus pedidos</b><small>Acompanhe e gerencie seus pedidos.</small></span><strong>›</strong></a>
           <div class="account-quick-card"><span class="quick-icon orange">👤</span><span><b>Dados da conta</b><small>Seu apelido e e-mail cadastrados.</small></span><strong>✓</strong></div>
-          <a class="account-quick-card" href="suporte.html"><span class="quick-icon purple">💬</span><span><b>Suporte ao cliente</b><small>Converse diretamente com a MacroFood.</small></span><strong>›</strong></a>
+          <a class="account-quick-card" href="../suporte.html"><span class="quick-icon purple">💬</span><span><b>Suporte ao cliente</b><small>Converse diretamente com a MacroFood.</small></span><strong>›</strong></a>
           <div class="account-quick-card"><span class="quick-icon green">🔒</span><span><b>Segurança</b><small>Senha protegida pelo Supabase.</small></span><strong>✓</strong></div>
-          ${p?.role==='admin'?'<a class="account-quick-card admin-quick" href="admin/"><span class="quick-icon purple">⚙️</span><span><b>Painel do administrador</b><small>Acessar a área administrativa.</small></span><strong>›</strong></a>':''}
+          ${p?.role==='admin'?'<a class="account-quick-card admin-quick" href="../admin/"><span class="quick-icon purple">⚙️</span><span><b>Painel do administrador</b><small>Acessar a área administrativa.</small></span><strong>›</strong></a>':''}
         </section>
 
         <h3 class="account-section-title">Confirmação da conta</h3>
@@ -50,21 +50,21 @@ async function init(){
         <h3 class="account-section-title">Gerenciar conta</h3>
         <section class="account-actions-card">
           <button id="logout" class="account-action"><span class="action-icon">↪</span><span><b>Sair da conta</b><small>Encerra sua sessão neste dispositivo.</small></span><strong>›</strong></button>
-          <a class="account-action" href="pedidos.html"><span class="action-icon">📦</span><span><b>Meus pedidos</b><small>Veja o andamento dos seus pedidos.</small></span><strong>›</strong></a>
-          <a class="account-action" href="suporte.html"><span class="action-icon">💬</span><span><b>Suporte ao cliente</b><small>Fale com o administrador pelo chat.</small></span><strong>›</strong></a>
-          <a class="account-action" href="index.html"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
+          <a class="account-action" href="../pedidos.html"><span class="action-icon">📦</span><span><b>Meus pedidos</b><small>Veja o andamento dos seus pedidos.</small></span><strong>›</strong></a>
+          <a class="account-action" href="../suporte.html"><span class="action-icon">💬</span><span><b>Suporte ao cliente</b><small>Fale com o administrador pelo chat.</small></span><strong>›</strong></a>
+          <a class="account-action" href="../"><span class="action-icon">←</span><span><b>Voltar ao catálogo</b><small>Continuar comprando.</small></span><strong>›</strong></a>
         </section>
         <p class="account-footer">♥ Obrigado por escolher a MacroFood!<small>Qualidade e praticidade para o seu dia a dia.</small></p>
       </div>`;
       $('avatarInput').onchange=()=>uploadAvatar($('avatarInput').files[0]);
       initVerificationPanel(session);
       $('nicknameForm').onsubmit=async(e)=>{e.preventDefault();const value=$('nicknameEdit').value.trim();if(value.length<2||value.length>30){$('nicknameMsg').textContent='O apelido deve ter entre 2 e 30 caracteres.';return}const {error}=await client.rpc('update_my_profile',{p_nickname:value});if(error){$('nicknameMsg').textContent='Não foi possível salvar: '+error.message;return}await client.auth.updateUser({data:{nickname:value}});$('nicknameMsg').textContent='Apelido atualizado com sucesso!';$('nicknameMsg').style.color='#23733a';const title=document.querySelector('.account-intro h2');if(title)title.innerHTML='Olá, '+esc(value)+'! <span>👋</span>';updateCatalogHeader();};
-      $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='./'};
+      $('logout').onclick=async()=>{try{localStorage.removeItem('macrofood_cart');if(session?.user?.id)localStorage.removeItem('macrofood_cart_'+session.user.id);}catch(_){ } await client.auth.signOut();location.href='../'};
       return;
     }
     showLogin();
   }catch(e){
-    $('authApp').innerHTML=`<div class="panel login"><h2>Erro ao carregar</h2><p>${esc(e.message)}</p><a class="secondary" href="index.html">Voltar ao catálogo</a></div>`;
+    $('authApp').innerHTML=`<div class="panel login"><h2>Erro ao carregar</h2><p>${esc(e.message)}</p><a class="secondary" href="../">Voltar ao catálogo</a></div>`;
   }
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -97,7 +97,7 @@ function showResetPassword(){
     const {error}=await client.auth.updateUser({password:a});
     if(error)return msg('Não foi possível alterar a senha: '+error.message);
     msg('Senha alterada com sucesso! Você já pode entrar com a nova senha.','green');
-    setTimeout(()=>{history.replaceState({},document.title,'./');location.href='./'},900);
+    setTimeout(()=>{history.replaceState({},document.title,'./');location.href='../'},900);
   };
 }
 let signupMethod='email';
@@ -133,7 +133,7 @@ async function login(){
     if(/phone not confirmed/i.test(error.message)) return msg('Seu celular ainda não foi confirmado.');
     return msg('Não foi possível entrar: '+error.message);
   }
-  location.href='./';
+  location.href='../';
 }
 function normalizePhoneAuth(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('55'))return '+'+n;if(n.length===10||n.length===11)return '+55'+n;return n?('+'+n):'';}
 function formatBrazilPhoneAuth(v){const n=normalizePhoneAuth(v).replace(/^\+/,'');const local=n.startsWith('55')?n.slice(2):n;if(local.length===11)return '+55 ('+local.slice(0,2)+') '+local.slice(2,7)+'-'+local.slice(7);if(local.length===10)return '+55 ('+local.slice(0,2)+') '+local.slice(2,6)+'-'+local.slice(6);return v||'';}
@@ -154,7 +154,7 @@ async function signup(){
   if(phone){
     try{await client.rpc('update_my_profile',{p_nickname:nickname,p_phone:phone||null});}catch(e){}
   }
-  if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada com sucesso! A confirmação será feita em Minha conta quando você quiser comprar.','green');setTimeout(()=>location.href='./',900);}
+  if(data.session){await finishProfile(data.user,nickname,file);msg('Conta criada com sucesso! A confirmação será feita em Minha conta quando você quiser comprar.','green');setTimeout(()=>location.href='../',900);}
   else msg('Conta criada. Se o Supabase estiver exigindo confirmação de e-mail, desative “Confirm email” em Authentication > Providers > Email para permitir entrar sem confirmar agora.','green');
 }
 

@@ -19,7 +19,7 @@ async function init(){
 }
 function panel(){
   $('app').innerHTML=`<div class="admin-shell">
-    <aside class="sidebar"><div class="side-brand"><img src="logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div><button class="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeMobileSidebar()">×</button></div>
+    <aside class="sidebar"><div class="side-brand"><img src="../logo-macrofood.jpg"><div><b>MacroFood</b><span>Painel Administrativo</span></div><button class="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeMobileSidebar()">×</button></div>
       <nav class="side-nav">
         <button onclick="showTab('dashboard')" data-nav="dashboard">⌂ <span>Dashboard</span></button>
         <button onclick="showTab('prod')" data-nav="prod">◈ <span>Produtos</span></button>
