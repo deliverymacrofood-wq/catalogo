@@ -152,7 +152,19 @@ async function save(e){
   const f=$('image').files[0];
   try{
     if(f)payload.image_url=await upload(f,$('removeBg')?.checked===true);
-    const r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);
+    let r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);
+    // Compatibilidade com bancos antigos que ainda não possuem a coluna opcional `note`.
+    // Nesse caso, salva o produto sem a observação em vez de bloquear todo o cadastro.
+    if(r.error && /could not find the ['\"]note['\"] column of ['\"]products['\"] in the schema cache/i.test(r.error.message||'')){
+      const {note,...payloadCompat}=payload;
+      r=editing?await client.from('products').update(payloadCompat).eq('id',editing):await client.from('products').insert(payloadCompat);
+      if(r.error)throw r.error;
+      editing=null;
+      productTab();
+      alert('Produto salvo!
+\nA observação não foi salva porque o banco ainda não possui a coluna "note". Execute a migração MIGRACAO_PRODUTOS_NOTE.sql no Supabase para ativar esse campo.');
+      return;
+    }
     if(r.error)throw r.error;
     editing=null;
     productTab();
