@@ -84,7 +84,7 @@ async function ensureCategories(){
 async function productTab(){
   await ensureCategories();
   $('tab').innerHTML=`${pageTitle('Produtos','Gerencie os produtos exibidos no catálogo.')}
-  <div class="panel-card"><div class="card-head"><div><h3>${editing?'Editar produto':'Cadastrar produto'}</h3><p>Preencha os dados do produto.</p></div></div><form class="form" id="pf"><label>Nome<input id="name" required></label><label class="full"><span>Observação (opcional)</span><textarea id="productNote" maxlength="300" rows="2" placeholder="Ex.: Produto disponível somente por encomenda."></textarea></label><label>Código (até 6 dígitos)<input id="productCode" inputmode="numeric" maxlength="6" placeholder="Ex.: 123456"></label><label>Preço normal<input id="price" type="number" step="0.01" min="0" required></label><label>Venda por<select id="unit"><option value="unidade">Unidade</option><option value="kg">Kg</option></select></label><label>Setor<select id="sector">${sectors.map(s=>`<option>${s}</option>`).join('')}</select></label><label>Imagem<input id="image" type="file" accept="image/*" capture="environment"></label><label class="remove-bg-option"><input id="removeBg" type="checkbox"><span>✂️ Remover fundo automaticamente</span></label><div id="imageBgStatus" class="full image-bg-status"></div><label>Estoque<select id="stock"><option value="true">Com estoque</option><option value="false">Sem estoque</option></select></label><label>Preço promocional<input id="promo" type="number" step="0.01" min="0" placeholder="Opcional"></label><div class="wholesale-box full"><h4>🏷️ Preço de atacado</h4><p>Defina quando o preço de atacado será aplicado.</p><div class="form"><label>Tipo<select id="wholesaleMode"><option value="threshold">A partir de X quantidade</option><option value="block">A cada X quantidade</option></select></label><label>Quantidade X<input id="wholesaleQty" type="number" min="0.001" step="0.001" placeholder="Ex.: 10"></label><label>Preço de atacado<input id="wholesalePrice" type="number" step="0.01" min="0" placeholder="Ex.: 9,90"></label></div></div><label class="featured-toggle"><input id="isNew" type="checkbox"><span>✨ Marcar como novidade no catálogo</span></label><div class="form-actions full"><button class="primary">${editing?'Salvar alterações':'Cadastrar produto'}</button>${editing?'<button type="button" class="secondary" onclick="editing=null;productTab()">Cancelar</button>':''}</div></form></div>
+  <div class="panel-card"><div class="card-head"><div><h3>${editing?'Editar produto':'Cadastrar produto'}</h3><p>Preencha os dados do produto.</p></div></div><form class="form" id="pf"><label>Nome<input id="name" required></label><label class="full"><span>Observação (opcional)</span><textarea id="productNote" maxlength="300" rows="2" placeholder="Ex.: Produto disponível somente por encomenda."></textarea></label><label>Código (até 6 dígitos)<input id="productCode" inputmode="numeric" maxlength="6" placeholder="Ex.: 123456"></label><label>Preço normal<input id="price" type="number" step="0.01" min="0" required></label><label>Venda por<select id="unit"><option value="unidade">Unidade</option><option value="kg">Kg</option></select></label><label>Setor<select id="sector">${sectors.map(s=>`<option>${s}</option>`).join('')}</select></label><label class="full image-input-group"><span>📷 Imagem do produto</span><input id="image" type="file" accept="image/*"><small>Celular: escolha uma foto da galeria ou tire uma foto. Opcionalmente, use o link abaixo.</small></label><label class="full"><span>🔗 Link da imagem (opcional)</span><input id="imageUrl" type="url" inputmode="url" placeholder="https://exemplo.com/imagem.jpg" autocomplete="off"><small class="field-help">A imagem fica vinculada somente a este produto. Se informar um link, ele será usado como imagem do produto.</small></label><label class="remove-bg-option"><input id="removeBg" type="checkbox"><span>✂️ Remover fundo automaticamente</span></label><div id="imageBgStatus" class="full image-bg-status"></div><label>Estoque<select id="stock"><option value="true">Com estoque</option><option value="false">Sem estoque</option></select></label><label>Preço promocional<input id="promo" type="number" step="0.01" min="0" placeholder="Opcional"></label><div class="wholesale-box full"><h4>🏷️ Preço de atacado</h4><p>Defina quando o preço de atacado será aplicado.</p><div class="form"><label>Tipo<select id="wholesaleMode"><option value="threshold">A partir de X quantidade</option><option value="block">A cada X quantidade</option></select></label><label>Quantidade X<input id="wholesaleQty" type="number" min="0.001" step="0.001" placeholder="Ex.: 10"></label><label>Preço de atacado<input id="wholesalePrice" type="number" step="0.01" min="0" placeholder="Ex.: 9,90"></label></div></div><label class="featured-toggle"><input id="isNew" type="checkbox"><span>✨ Marcar como novidade no catálogo</span></label><div class="form-actions full"><button class="primary">${editing?'Salvar alterações':'Cadastrar produto'}</button>${editing?'<button type="button" class="secondary" onclick="editing=null;productTab()">Cancelar</button>':''}</div></form></div>
   <div class="panel-card"><div class="card-head product-list-head"><div><h3>Produtos cadastrados</h3><p>Pesquise pelo nome ou filtre por categoria para encontrar rapidamente o produto que deseja editar.</p></div></div><div class="product-filters"><label class="product-search"><span>🔎 Buscar produto</span><input id="productSearch" type="search" placeholder="Digite o nome do produto..." autocomplete="off"></label><label class="product-category-filter"><span>📂 Categoria</span><select id="productCategoryFilter"><option value="">Todas as categorias</option>${sectors.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select></label><button class="secondary clear-product-filters" type="button" onclick="clearProductFilters()">Limpar filtros</button></div><div id="productFilterCount" class="product-filter-count"></div><div id="list"></div></div>`;
   $('pf').onsubmit=save; $('unit').onchange=()=>{const q=$('wholesaleQty');if(q){q.step=$('unit').value==='kg'?'0.001':'1';q.min=$('unit').value==='kg'?'0.001':'1';}};
   $('productSearch').oninput=renderProductList; $('productCategoryFilter').onchange=renderProductList; load();
@@ -108,13 +108,44 @@ async function removeBackgroundLocal(file){
   ctx.putImageData(d,0,0);
   return await new Promise(r=>c.toBlob(r,'image/png',.92));
 }
+async function prepareProductImage(file,removeBg=false){
+  let source=file;
+  if(removeBg){
+    const status=$('imageBgStatus');
+    if(status){status.textContent='Removendo o fundo e otimizando a imagem...';status.classList.add('show')}
+    source=await removeBackgroundLocal(file);
+  }else{
+    const status=$('imageBgStatus');
+    if(status){status.textContent='Otimizando a imagem para carregar mais rápido...';status.classList.add('show')}
+  }
+  const img=await new Promise((resolve,reject)=>{
+    const i=new Image();
+    i.onload=()=>resolve(i);
+    i.onerror=()=>reject(new Error('Não foi possível processar a imagem.'));
+    i.src=URL.createObjectURL(source);
+  });
+  const max=1400;
+  const scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+  const c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(img.naturalWidth*scale));
+  c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+  const ctx=c.getContext('2d');
+  ctx.drawImage(img,0,0,c.width,c.height);
+  URL.revokeObjectURL(img.src);
+  const blob=await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível compactar a imagem.')),'image/webp',0.82));
+  return blob;
+}
 async function upload(file,removeBg=false){
   if(!file)return null;
-  let uploadFile=file;
-  if(removeBg){const status=$('imageBgStatus');if(status){status.textContent='Removendo o fundo da foto...';status.classList.add('show')}uploadFile=await removeBackgroundLocal(file);if(status)status.textContent='✅ Fundo removido. A imagem será salva com transparência.';}
-  const path=`${crypto.randomUUID()}.${removeBg?'png':(file.name.split('.').pop()||'jpg').toLowerCase()}`;
-  const {error}=await client.storage.from('product-images').upload(path,uploadFile,{upsert:false,contentType:uploadFile.type||'image/png'});if(error)throw error;
-  return client.storage.from('product-images').getPublicUrl(path).data.publicUrl
+  if(!file.type.startsWith('image/'))throw new Error('Escolha um arquivo de imagem válido.');
+  if(file.size>15*1024*1024)throw new Error('A imagem original precisa ter no máximo 15 MB.');
+  const uploadFile=await prepareProductImage(file,removeBg);
+  const path=`${crypto.randomUUID()}.webp`;
+  const {error}=await client.storage.from('product-images').upload(path,uploadFile,{upsert:false,contentType:'image/webp'});
+  if(error)throw error;
+  const status=$('imageBgStatus');
+  if(status)status.textContent='✅ Imagem otimizada e salva. O catálogo usará uma versão mais leve.';
+  return client.storage.from('product-images').getPublicUrl(path).data.publicUrl;
 }
 async function save(e){
   e.preventDefault();
@@ -153,9 +184,15 @@ async function save(e){
     active:true,
     updated_at:new Date().toISOString()
   };
-  const f=$('image').files[0];
+  const f=$('image')?.files?.[0]||null;
+  const imageUrl=($('imageUrl')?.value||'').trim();
+  if(imageUrl){
+    try{new URL(imageUrl)}catch(_){return alert('Informe um link de imagem válido, começando com http:// ou https://.');}
+    if(!/^https?:\\/\\//i.test(imageUrl))return alert('O link da imagem deve começar com http:// ou https://.');
+    payload.image_url=imageUrl;
+  }
   try{
-    if(f)payload.image_url=await upload(f,$('removeBg')?.checked===true);
+    if(!imageUrl && f)payload.image_url=await upload(f,$('removeBg')?.checked===true);
     let r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);
     // Compatibilidade com bancos antigos que ainda não possuem a coluna opcional `note`.
     // Nesse caso, salva o produto sem a observação em vez de bloquear todo o cadastro.
@@ -192,6 +229,8 @@ async function edit(id){
   $('wholesalePrice').value=p.wholesale_price??'';
   $('isNew').checked=p.is_new===true;
   if($('productNote')) $('productNote').value=p.note||'';
+  if($('imageUrl')) $('imageUrl').value=p.image_url||'';
+  if($('image')) $('image').value='';
   const form=$('pf'); if(form) form.scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function removeProduct(id){if(!confirm('Excluir este produto?'))return;const {error}=await client.from('products').delete().eq('id',id);if(error)alert(error.message);else load()}

@@ -33,3 +33,10 @@ Os pedidos antigos com status `ready_payment` são migrados para `waiting_paymen
 
 ## Observação sobre kg
 Produtos marcados como `Kg` aceitam pesos como `0,125`, `0,750` ou `1,250`. O administrador pode corrigir o peso durante a separação e o Supabase recalcula subtotal e total.
+
+
+## Atualização 01/09/2026 — imagens de produtos
+- O painel administrativo agora permite escolher imagens da galeria no celular (sem forçar a câmera).
+- Também é possível informar um link HTTPS/HTTP de imagem por produto.
+- Ao enviar arquivo, a imagem é redimensionada e convertida para WebP antes do upload, reduzindo o tamanho e acelerando o catálogo.
+- As imagens do catálogo usam carregamento lazy/assíncrono para não baixar todas de uma vez.
