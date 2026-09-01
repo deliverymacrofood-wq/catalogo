@@ -188,7 +188,7 @@ async function save(e){
   const imageUrl=($('imageUrl')?.value||'').trim();
   if(imageUrl){
     try{new URL(imageUrl)}catch(_){return alert('Informe um link de imagem válido, começando com http:// ou https://.');}
-    if(!/^https?:\\/\\//i.test(imageUrl))return alert('O link da imagem deve começar com http:// ou https://.');
+    if(!/^https?:\/\//i.test(imageUrl))return alert('O link da imagem deve começar com http:// ou https://.');
     payload.image_url=imageUrl;
   }
   try{
