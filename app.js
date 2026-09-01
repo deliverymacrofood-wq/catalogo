@@ -345,7 +345,7 @@ function productCard(p,featured=false){
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
       <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
-      ${featured&&p.product_code?`<small class="muted">Código: ${esc(p.product_code)}</small>`:''}
+      ${p.product_code?`<small class="code">Código: ${esc(p.product_code)}</small>`:''}
       ${featured?marketingPriceHtml(p):priceHtml(p)}
       ${featured?`<div class="feature-rating">${stars(p)} <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div><button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
     </div>
