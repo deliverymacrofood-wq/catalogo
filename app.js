@@ -57,31 +57,36 @@ async function requireLoggedCart(){
 
 async function loadAccountHeader(){
   const el=document.querySelector('.admin');
-  if(!el)return;
+  const mobile=document.querySelector('.mobile-account-top');
   try{
     const {data:{session}}=await client.auth.getSession();
     if(!session){
-      el.innerHTML='👤 Minha conta';
-      el.href='login/';
+      if(el){el.innerHTML='👤 Minha conta';el.href='login/';}
+      if(mobile){mobile.innerHTML='<span class="mobile-account-login">Login</span>';mobile.href='login/';mobile.title='Entrar ou criar conta';mobile.setAttribute('aria-label','Login');}
       return;
     }
-
-    let nickname=session.user.user_metadata?.nickname?.trim()||'';
+    let nickname=session.user.user_metadata?.nickname?.trim()||session.user.user_metadata?.name?.trim()||'';
     let avatarUrl='';
     try{
       const {data:profile}=await client.from('profiles').select('nickname,avatar_url').eq('id',session.user.id).maybeSingle();
-      if(profile?.nickname?.trim()) nickname=profile.nickname.trim();
+      if(profile?.nickname?.trim())nickname=profile.nickname.trim();
       avatarUrl=profile?.avatar_url||'';
     }catch(_){}
-
-    // Após o login, substitui o botão "Minha conta" pela foto + apelido do cliente.
-    el.innerHTML=`${avatarUrl?`<img class="mini-avatar" src="${esc(avatarUrl)}" alt="Foto de ${esc(nickname||'cliente')}" onerror="this.style.display='none'">`:''}<span class="account-nickname">${esc(nickname||'Minha conta')}</span>`;
-    el.href='login/';
-    el.title='Abrir minha conta';
-    el.setAttribute('aria-label','Abrir minha conta');
+    const displayName=nickname||session.user.email?.split('@')[0]||'Cliente';
+    const initial=Array.from(displayName.trim())[0]?.toLocaleUpperCase('pt-BR')||'C';
+    if(el){
+      el.innerHTML=`${avatarUrl?`<img class="mini-avatar" src="${esc(avatarUrl)}" alt="Foto de ${esc(displayName)}" onerror="this.style.display='none'">`:''}<span class="account-nickname">${esc(displayName)}</span>`;
+      el.href='login/';el.title='Abrir minha conta';el.setAttribute('aria-label','Abrir minha conta');
+    }
+    if(mobile){
+      mobile.innerHTML=avatarUrl
+        ? `<span class="mobile-account-avatar"><img src="${esc(avatarUrl)}" alt="" onerror="this.parentElement.textContent='${esc(initial)}';this.parentElement.classList.add('is-initial')"></span>`
+        : `<span class="mobile-account-avatar is-initial">${esc(initial)}</span>`;
+      mobile.href='login/';mobile.title=`Minha conta: ${displayName}`;mobile.setAttribute('aria-label',`Minha conta de ${displayName}`);
+    }
   }catch(e){
-    el.innerHTML='👤 Minha conta';
-    el.href='login/';
+    if(el){el.innerHTML='👤 Minha conta';el.href='login/';}
+    if(mobile){mobile.innerHTML='<span class="mobile-account-login">Login</span>';mobile.href='login/';mobile.setAttribute('aria-label','Login');}
   }
 }
 
@@ -847,6 +852,7 @@ async function submitOrder(){
 
 // Mantém o carrinho isolado por conta e sincroniza login/logout.
 client.auth.onAuthStateChange(async (_event, session)=>{
+  loadAccountHeader();
   if(session?.user?.id){
     if(cartUserId!==session.user.id) await loadUserCart(session);
   }else{
@@ -886,9 +892,12 @@ function renderMobileMenuCategories(){
     group.appendChild(trigger);
     if(ds.length){
       const panel=document.createElement('div');panel.className='mobile-department-panel';
+      const all=document.createElement('button');all.type='button';all.className='mobile-department-link mobile-department-all';all.textContent='Ver tudo';
+      all.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectMobileCategory(c.name);});
+      panel.appendChild(all);
       ds.forEach(d=>{
         const b=document.createElement('button');b.type='button';b.className='mobile-department-link';b.textContent=d.name;
-        b.addEventListener('click',()=>{active=c.name;activeDepartmentId=d.id;render();closeMobileMenu();document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});});
+        b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectDepartment(d.id,c.name);closeMobileMenu();});
         panel.appendChild(b);
       });
       group.appendChild(panel);
