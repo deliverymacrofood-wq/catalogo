@@ -751,22 +751,41 @@ if (document.readyState === 'loading') {
 
 loadAccountHeader();
 
+function renderMobileMenuCategories(){
+  const container=document.getElementById('mobileMenuCategories');
+  if(!container)return;
+  container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
+  (Array.isArray(sectors)?sectors:['Todos','Promoções']).forEach(name=>{
+    const button=document.createElement('button');
+    button.type='button';button.className='mobile-category-link';
+    button.textContent=(name==='Todos'?'🛍️ ':name==='Promoções'?'🔥 ':'📦 ')+name;
+    button.addEventListener('click',()=>selectMobileCategory(name));
+    container.appendChild(button);
+  });
+}
+function selectMobileCategory(name){
+  active=name;render();closeMobileMenu();
+  document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function toggleMobileMenu(){
   const menu=document.getElementById('mobileMenu');
+  const trigger=document.querySelector('.mobile-menu-trigger');
   if(!menu)return;
-  const open=menu.classList.toggle('open');
-  menu.setAttribute('aria-hidden',String(!open));
+  const open=!menu.classList.contains('open');
+  if(open)renderMobileMenuCategories();
+  menu.classList.toggle('open',open);menu.setAttribute('aria-hidden',String(!open));
+  trigger?.setAttribute('aria-expanded',String(open));
 }
 function closeMobileMenu(){
   const menu=document.getElementById('mobileMenu');
+  const trigger=document.querySelector('.mobile-menu-trigger');
   if(!menu)return;
-  menu.classList.remove('open');
-  menu.setAttribute('aria-hidden','true');
+  menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
+  trigger?.setAttribute('aria-expanded','false');
 }
-
 document.addEventListener('click',function(e){
   const menu=document.getElementById('mobileMenu');
-  const trigger=e.target.closest?.('.mobile-head > button:first-child');
-  if(menu && menu.classList.contains('open') && !menu.contains(e.target) && !trigger) closeMobileMenu();
+  const trigger=e.target.closest?.('.mobile-menu-trigger');
+  if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!trigger)closeMobileMenu();
 });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMobileMenu(); });
