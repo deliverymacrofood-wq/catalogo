@@ -863,7 +863,7 @@ function renderMobileMenuCategories(){
   const container=document.getElementById('mobileMenuCategories');
   if(!container)return;
   container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
-  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;container.appendChild(b);return b;};
+  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();handler?.();});return b;};
   addButton('🛍️ Todos os produtos',()=>selectMobileCategory('Todos'));
   addButton('🔥 Promoções',()=>selectMobileCategory('Promoções'));
   const cats=categoryRows.length?categoryRows:sectors.filter(x=>!['Todos','Promoções'].includes(x)).map(name=>({name,id:''}));
