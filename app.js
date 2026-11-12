@@ -195,6 +195,8 @@ async function load(){
 
     renderBanners();
     render();
+    const requestedProduct=new URL(location.href).searchParams.get('produto');
+    if(requestedProduct){const selected=products.find(p=>String(p.id)===requestedProduct);if(selected)renderProductDetail(selected);}
     loadAccountHeader();
   }catch(e){
     if(grid) grid.innerHTML=`<div class="notice"><b>Não foi possível carregar o catálogo.</b><br>${esc(e?.message||e)}<br><small>Verifique a conexão com o Supabase.</small></div>`;
@@ -341,10 +343,10 @@ function marketingPriceHtml(p){
 function productCard(p,featured=false){
   const img=p.image_url?`<img ${productImageAttrs(featured)} src="${esc(p.image_url)}" alt="${esc(p.name)}" width="320" height="240" onerror="this.style.display='none'">`:'📦';
   return `<article class="${featured?'feature-card':'card'}">
-    <div class="${featured?'feature-pic':'pic'}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</div>
+    <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" onclick="openProduct(${JSON.stringify(String(p.id))})" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</button>
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
-      <div class="${featured?'feature-name':'name'}">${esc(p.name)}</div>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
+      <button type="button" class="product-open-name ${featured?'feature-name':'name'}" onclick="openProduct(${JSON.stringify(String(p.id))})">${esc(p.name)}</button>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
       ${p.product_code?`<small class="code">Código: ${esc(p.product_code)}</small>`:''}
       ${featured?marketingPriceHtml(p):priceHtml(p)}
       ${featured?`<div class="feature-rating">${stars(p)} <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div><button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
@@ -377,6 +379,68 @@ function renderNew(){
   el.innerHTML=newest.length?newest.map(p=>productCard(p,true)).join(''):'<div class="notice">Nenhuma novidade cadastrada no momento.</div>';
 }
 
+let currentDetailProductId=null;
+function openProduct(id,updateHistory=true){
+  const p=products.find(x=>String(x.id)===String(id));
+  if(!p)return;
+  currentDetailProductId=String(p.id);
+  if(updateHistory){
+    const url=new URL(location.href);url.searchParams.set('produto',String(p.id));
+    history.pushState({macrofoodProduct:String(p.id)},'',url);
+  }
+  renderProductDetail(p);
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function closeProductDetail(updateHistory=true){
+  if(!currentDetailProductId)return;
+  currentDetailProductId=null;
+  if(updateHistory){
+    const url=new URL(location.href);url.searchParams.delete('produto');
+    history.pushState({},'',url);
+  }
+  $('productDetailPage').hidden=true;
+  document.querySelector('.catalog-main')?.classList.remove('detail-open');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderProductDetail(p){
+  const page=$('productDetailPage');if(!page)return;
+  currentDetailProductId=String(p.id);
+  const related=products.filter(x=>String(x.id)!==String(p.id)&&(
+    (p.sector&&x.sector===p.sector)||
+    (p.category&&x.category===p.category)
+  ));
+  const recommendations=(related.length?related:products.filter(x=>String(x.id)!==String(p.id))).slice(0,8);
+  const image=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="eager" decoding="async">`:'<div class="detail-no-image">📦</div>';
+  const stock=p.in_stock===false?'<span class="detail-stock out">Sem estoque</span>':'<span class="detail-stock">Disponível</span>';
+  page.innerHTML=`
+    <div class="detail-breadcrumb"><button type="button" onclick="closeProductDetail()">‹ Voltar ao catálogo</button><span> / ${esc(p.sector||'Produtos')}</span></div>
+    <div class="detail-product">
+      <div class="detail-gallery">${image}</div>
+      <div class="detail-info">
+        <div class="detail-eyebrow">${esc(p.sector||'MACROFOOD')}</div>
+        <h1>${esc(p.name)}</h1>
+        ${p.product_code?`<div class="detail-code">Código: ${esc(p.product_code)}</div>`:''}
+        <div class="detail-rating">${stars(p)} <button type="button" class="rate-btn" onclick="openRating('${p.id}')">Avaliar produto</button></div>
+        <div class="detail-prices">${priceHtml(p)}</div>
+        ${stock}
+        ${p.note?`<p class="detail-description">${esc(p.note)}</p>`:''}
+        <div class="detail-unit">Preço por ${unitLabel(p)} ${p.wholesale_price&&Number(p.wholesale_qty)>0?` • Atacado a partir de ${p.wholesale_qty} ${unitLabel(p)}`:''}</div>
+        <button class="detail-add" type="button" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>🛒 Adicionar ao carrinho</button>
+        <div class="detail-assurance">Compra prática • Consulte disponibilidade e condições no pedido</div>
+      </div>
+    </div>
+    <section class="detail-recommendations">
+      <div class="detail-section-heading"><div><span>VOCÊ TAMBÉM PODE GOSTAR</span><h2>Produtos semelhantes</h2></div></div>
+      <div class="detail-recommendation-grid">${recommendations.length?recommendations.map(x=>productCard(x,false)).join(''):'<p>Em breve teremos mais recomendações para você.</p>'}</div>
+    </section>`;
+  page.hidden=false;
+  document.querySelector('.catalog-main')?.classList.add('detail-open');
+}
+window.addEventListener('popstate',()=>{
+  const id=new URL(location.href).searchParams.get('produto');
+  if(id){const p=products.find(x=>String(x.id)===id);if(p)renderProductDetail(p);}
+  else if(currentDetailProductId){currentDetailProductId=null;$('productDetailPage').hidden=true;document.querySelector('.catalog-main')?.classList.remove('detail-open');}
+});
 function render(){
   renderCats();
   const title=$('productsTitle'); const subtitle=$('productsSubtitle');
