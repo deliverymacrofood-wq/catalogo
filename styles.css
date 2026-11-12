@@ -1623,3 +1623,22 @@ html[data-theme="dark"] .product-filter-count{color:#aeb6be}
   .image-input-group input[type="file"]{font-size:14px}
 }
 .pic img,.feature-pic img,.promo-card img{content-visibility:auto}
+
+/* Navegação superior fixa no celular — substitui a barra inferior */
+@media (max-width:760px){
+  html,body{padding-bottom:0!important}
+  body{padding-bottom:0!important}
+  .site-header{position:sticky!important;top:0!important;z-index:5000!important;display:flex!important;flex-direction:column!important;background:linear-gradient(135deg,#f05a00,#ff7900 58%,#ff9700)!important;box-shadow:0 3px 14px #0003!important}
+  .topbar{display:none!important}
+  .mobile-head{order:1!important;display:flex!important;height:52px!important;min-height:52px!important}
+  .mobile-search{order:2!important;display:block!important;padding:4px 12px 9px!important}
+  .mobile-search .search{height:44px!important;margin:0!important;border-radius:11px!important}
+  .desktop-nav{order:3!important;display:flex!important;align-items:center!important;gap:5px!important;width:100%!important;max-width:none!important;margin:0!important;padding:0 9px 8px!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;scrollbar-width:none!important;background:transparent!important;box-shadow:none!important;-webkit-overflow-scrolling:touch!important}
+  .desktop-nav::-webkit-scrollbar{display:none!important}
+  .desktop-nav button,.desktop-nav a{flex:0 0 auto!important;display:inline-flex!important;align-items:center!important;min-height:34px!important;padding:8px 11px!important;border:1px solid #ffffff55!important;border-radius:999px!important;background:#ffffff18!important;color:#fff!important;font-size:12px!important;font-weight:800!important;text-decoration:none!important}
+  .desktop-nav button:first-child{margin-right:0!important;background:#fff!important;color:#e96500!important}
+  .desktop-nav button:hover,.desktop-nav a:hover{background:#fff!important;color:#e96500!important}
+  .mobile-bottom{display:none!important}
+  .catalog-main{padding-bottom:28px!important}
+}
+@media(min-width:761px){.desktop-nav{display:flex!important}.mobile-bottom{display:none!important}}
