@@ -130,10 +130,18 @@ function renderDesktopCategoryNav(cats){
   nav.innerHTML=(cats||[]).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');
 }
 document.addEventListener('click',event=>{
- const item=event.target.closest('.desktop-category-trigger,.desktop-department-link');if(!item)return;
- const category=item.getAttribute('data-category');const department=item.getAttribute('data-department');
- if(department){active=category;activeDepartmentId=department;render();}
- else{active=category;activeDepartmentId='';render();}
+ const trigger=event.target.closest('.desktop-category-trigger');
+ if(trigger){
+   const item=trigger.closest('.desktop-category-item');
+   const willOpen=!item.classList.contains('open');
+   document.querySelectorAll('.desktop-category-item.open').forEach(el=>el.classList.remove('open'));
+   item.classList.toggle('open',willOpen);
+   trigger.setAttribute('aria-expanded',String(willOpen));
+   return;
+ }
+ const link=event.target.closest('.desktop-department-link');if(!link)return;
+ const category=link.getAttribute('data-category');const department=link.getAttribute('data-department');
+ active=category;activeDepartmentId=department||'';render();
  document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});
 });
 function selectDepartment(id,category){active=category;activeDepartmentId=id;render();$('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
