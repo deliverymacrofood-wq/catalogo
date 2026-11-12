@@ -2000,3 +2000,21 @@ html[data-theme="dark"] .catalog-page .mobile-head>button,
 html[data-theme="dark"] .catalog-page .mobile-menu-trigger{color:#e0e5e9!important;background:transparent!important}
 html[data-theme="dark"] .catalog-page .mobile-search .search{background:#202830!important;border-color:#3a444d!important}
 html[data-theme="dark"] .catalog-page .mobile-search .search input{color:#f3f5f7!important}
+
+
+/* FIX DEFINITIVO MOBILE: cabeçalho preso à viewport durante toda a rolagem.
+   position:fixed evita que o sticky seja neutralizado por overflow dos ancestrais. */
+@media(max-width:760px){
+ html,body{overflow-x:clip!important}
+ body.catalog-page{padding-top:calc(101px + env(safe-area-inset-top,0px))!important}
+ body.catalog-page .site-header{
+   position:fixed!important;top:0!important;left:0!important;right:0!important;
+   width:100%!important;max-width:100%!important;margin:0!important;
+   z-index:30000!important;transform:none!important;
+   padding-top:env(safe-area-inset-top,0px)!important;
+   box-sizing:border-box!important;
+ }
+ body.catalog-page .mobile-head{height:43px!important;min-height:43px!important}
+ body.catalog-page .mobile-search{min-height:58px!important;box-sizing:border-box!important}
+ body.catalog-page .mobile-menu{position:absolute!important;top:100%!important}
+}
