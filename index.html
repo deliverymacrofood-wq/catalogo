@@ -17,6 +17,7 @@
     <button class="theme-toggle desktop-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button><a class="account-top admin" href="login/">👤 <span class="account-nickname">Minha conta</span></a>
     <button class="cart-top" onclick="openCart()">🛒 <span class="cart-label">Carrinho</span><b id="cartCount">0</b></button>
   </div>
+  <div class="mobile-head"><button onclick="toggleMobileMenu()" aria-label="Abrir menu">⋮</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
   <nav class="desktop-nav">
     <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
     <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
@@ -24,8 +25,8 @@
     <a href="pedidos.html">📦 Meus pedidos</a>
     <a href="suporte.html">💬 Suporte</a>
     <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
+      <a href="login/">👤 Minha conta</a>
   </nav>
-  <div class="mobile-head"><button onclick="toggleMobileMenu()" aria-label="Abrir menu">⋮</button><b>MACROFOOD</b><button onclick="openCart()">🛒<span id="mobileCartCount">0</span></button></div>
   <div class="mobile-search"><div class="search"><input id="mobileSearch" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('mobileSearch')?.value || '',true)">🔎</button></div></div>
   <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-head"><b>Menu MacroFood</b><button type="button" onclick="closeMobileMenu()">×</button></div>
@@ -87,8 +88,6 @@
   </section>
 </main>
 <footer><b>Macrofood Service</b><br>Catálogo Online<br><br>📍 Rodovia BR-101, nº 550, bairro Curado, Recife - PE, CEP 50790-640<br>📱 WhatsApp: <a href="https://wa.me/5581971178793">+55 (81) 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
-<nav class="mobile-bottom"><a href="./">⌂<span>Início</span></a><a href="#cats">☰<span>Categorias</span></a><button onclick="document.getElementById('mobileSearch').focus();window.scrollTo({top:0,behavior:'smooth'})">⌕<span>Buscar</span></button><a href="pedidos.html">▣<span>Pedidos</span></a><a href="login/">♙<span>Perfil</span></a></nav>
-
 <div id="addQtyModal" class="modal add-qty-modal" role="dialog" aria-modal="true" aria-labelledby="addQtyTitle">
   <div class="modal-box add-qty-box">
     <button class="close" type="button" onclick="closeAddQty()" aria-label="Fechar">×</button>
