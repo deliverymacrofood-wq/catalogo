@@ -439,8 +439,10 @@ function closeProductDetail(updateHistory=true){
   document.querySelector('.catalog-main')?.classList.remove('detail-open');
   window.scrollTo({top:0,behavior:'smooth'});
 }
-function getDetailQty(id){const el=document.getElementById('detailQtyValue');if(!el)return 1;const p=products.find(x=>String(x.id)===String(id));const raw=String(el.textContent||'1').replace(',','.');const n=Number(raw);return Math.max(p?.unit==='kg'?0.001:1,n||1);}
-function changeDetailQty(delta,id){const el=document.getElementById('detailQtyValue');if(!el)return;const p=products.find(x=>String(x.id)===String(id));const kg=p?.unit==='kg';let n=getDetailQty(id)+(kg?delta*.1:delta);n=Math.max(kg?.1:1,Math.min(99.999,n));el.textContent=kg?n.toFixed(3).replace('.',','):String(Math.round(n));}
+function getDetailQty(id){const el=document.getElementById('detailQtyValue');if(!el)return 1;const p=products.find(x=>String(x.id)===String(id));const raw=String(el.value??el.textContent??'1').replace(',','.');const n=Number(raw);return Math.max(p?.unit==='kg'?0.001:1,n||1);}
+function updateDetailPriceSummary(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const b=wholesaleBreakdown(p,getDetailQty(id));const total=document.getElementById('detailTotalValue'),saving=document.getElementById('detailSavingValue');if(total)total.textContent=b.valid?money(b.total):'Preço indisponível';if(saving){const d=Number(b.discount)||0;saving.textContent=d>0.009?'Você economizou '+money(d)+' no atacado':'';saving.hidden=d<=0.009;}}
+function updateDetailQtyInput(id){const el=document.getElementById('detailQtyValue');if(!el)return;const p=products.find(x=>String(x.id)===String(id)),kg=p?.unit==='kg',min=kg?0.001:1;let n=Number(String(el.value).replace(',','.'));if(!Number.isFinite(n))return;n=Math.max(min,Math.min(99.999,n));el.value=kg?n.toFixed(3):String(Math.round(n));updateDetailPriceSummary(id);}
+function changeDetailQty(delta,id){const el=document.getElementById('detailQtyValue');if(!el)return;const p=products.find(x=>String(x.id)===String(id)),kg=p?.unit==='kg';let n=getDetailQty(id)+(kg?delta*.1:delta);n=Math.max(kg?.001:1,Math.min(99.999,n));el.value=kg?n.toFixed(3):String(Math.round(n));updateDetailPriceSummary(id);}
 function renderProductDetail(p){
   const page=$('productDetailPage');if(!page)return;
   currentDetailProductId=String(p.id);
@@ -467,7 +469,8 @@ function renderProductDetail(p){
         ${stock}
         ${p.note?`<p class="detail-description">${esc(p.note)}</p>`:''}
         <div class="detail-unit">Preço por ${unitLabel(p)} ${p.wholesale_price&&Number(p.wholesale_qty)>0?` • Atacado a partir de ${p.wholesale_qty} ${unitLabel(p)}`:''}</div>
-        <div class="detail-purchase-row"><div class="detail-quantity" aria-label="Quantidade do produto"><button type="button" onclick="changeDetailQty(-1,'${p.id}')" aria-label="Diminuir quantidade">−</button><output id="detailQtyValue" data-unit="${esc(p.unit||'unidade')}">${p.unit==='kg'?'0,100':'1'}</output><button type="button" onclick="changeDetailQty(1,'${p.id}')" aria-label="Aumentar quantidade">+</button></div><button class="detail-add" type="button" onclick="addCart('${p.id}',getDetailQty('${p.id}'))" ${p.in_stock===false?'disabled':''}>🛒 Adicionar ao carrinho</button></div>
+         <div class="detail-purchase-row"><div class="detail-quantity" aria-label="Quantidade do produto"><button type="button" onclick="changeDetailQty(-1,'${p.id}')" aria-label="Diminuir quantidade">−</button><input id="detailQtyValue" type="number" inputmode="decimal" min="${p.unit==='kg'?'0.001':'1'}" step="${p.unit==='kg'?'0.001':'1'}" value="${p.unit==='kg'?'0.100':'1'}" aria-label="Digite a quantidade" oninput="updateDetailQtyInput('${p.id}')"><button type="button" onclick="changeDetailQty(1,'${p.id}')" aria-label="Aumentar quantidade">+</button></div><button class="detail-add" type="button" onclick="addCart('${p.id}',getDetailQty('${p.id}'))" ${p.in_stock===false?'disabled':''}>🛒 Adicionar ao carrinho</button></div>
+         <div class="detail-price-summary"><strong>Total: <span id="detailTotalValue"></span></strong><strong id="detailSavingValue" class="detail-saving" hidden></strong></div>
         <div class="detail-assurance">Compra prática • Consulte disponibilidade e condições no pedido</div>
       </div>
     </div>
@@ -477,6 +480,7 @@ function renderProductDetail(p){
     </section>`;
   page.hidden=false;
   document.querySelector('.catalog-main')?.classList.add('detail-open');
+  updateDetailPriceSummary(p.id);
 }
 window.addEventListener('popstate',()=>{
   const id=new URL(location.href).searchParams.get('produto');
