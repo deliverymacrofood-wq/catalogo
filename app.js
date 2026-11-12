@@ -123,7 +123,19 @@ function renderCats(){
   const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));
   const departmentStatus=departmentLoadError?`<div class="department-load-warning">Não foi possível carregar os departamentos: ${esc(departmentLoadError.message||departmentLoadError)}. Confira a permissão de leitura da tabela departments no Supabase.</div>`:!departmentRows.length?'<div class="department-load-warning">Nenhum departamento foi retornado pelo banco. Confira se a migração foi executada no projeto conectado ao site.</div>':'';
   $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${departmentStatus}${cats.map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return ds.length?`<div class="category-department-group"><b>${esc(c.name)}</b><div>${ds.map(d=>`<button type="button" class="department-chip ${activeDepartmentId===d.id?'active':''}" onclick="selectDepartment('${d.id}','${esc(c.name)}')">${esc(d.name)}</button>`).join('')}</div></div>`:''}).join('')}</div>`;
+  renderDesktopCategoryNav(cats);
 }
+function renderDesktopCategoryNav(cats){
+  const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
+  nav.innerHTML=(cats||[]).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');
+}
+document.addEventListener('click',event=>{
+ const item=event.target.closest('.desktop-category-trigger,.desktop-department-link');if(!item)return;
+ const category=item.getAttribute('data-category');const department=item.getAttribute('data-department');
+ if(department){active=category;activeDepartmentId=department;render();}
+ else{active=category;activeDepartmentId='';render();}
+ document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+});
 function selectDepartment(id,category){active=category;activeDepartmentId=id;render();$('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
 
 async function fetchAllRows(builder, pageSize=500){
@@ -419,6 +431,8 @@ function closeProductDetail(updateHistory=true){
   document.querySelector('.catalog-main')?.classList.remove('detail-open');
   window.scrollTo({top:0,behavior:'smooth'});
 }
+function getDetailQty(id){const el=document.getElementById('detailQtyValue');if(!el)return 1;const p=products.find(x=>String(x.id)===String(id));const raw=String(el.textContent||'1').replace(',','.');const n=Number(raw);return Math.max(p?.unit==='kg'?0.001:1,n||1);}
+function changeDetailQty(delta,id){const el=document.getElementById('detailQtyValue');if(!el)return;const p=products.find(x=>String(x.id)===String(id));const kg=p?.unit==='kg';let n=getDetailQty(id)+(kg?delta*.1:delta);n=Math.max(kg?.1:1,Math.min(99.999,n));el.textContent=kg?n.toFixed(3).replace('.',','):String(Math.round(n));}
 function renderProductDetail(p){
   const page=$('productDetailPage');if(!page)return;
   currentDetailProductId=String(p.id);
@@ -445,7 +459,7 @@ function renderProductDetail(p){
         ${stock}
         ${p.note?`<p class="detail-description">${esc(p.note)}</p>`:''}
         <div class="detail-unit">Preço por ${unitLabel(p)} ${p.wholesale_price&&Number(p.wholesale_qty)>0?` • Atacado a partir de ${p.wholesale_qty} ${unitLabel(p)}`:''}</div>
-        <button class="detail-add" type="button" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>🛒 Adicionar ao carrinho</button>
+        <div class="detail-purchase-row"><div class="detail-quantity" aria-label="Quantidade do produto"><button type="button" onclick="changeDetailQty(-1,'${p.id}')" aria-label="Diminuir quantidade">−</button><output id="detailQtyValue" data-unit="${esc(p.unit||'unidade')}">${p.unit==='kg'?'0,100':'1'}</output><button type="button" onclick="changeDetailQty(1,'${p.id}')" aria-label="Aumentar quantidade">+</button></div><button class="detail-add" type="button" onclick="addCart('${p.id}',getDetailQty('${p.id}'))" ${p.in_stock===false?'disabled':''}>🛒 Adicionar ao carrinho</button></div>
         <div class="detail-assurance">Compra prática • Consulte disponibilidade e condições no pedido</div>
       </div>
     </div>
@@ -486,7 +500,7 @@ function render(){
 let pendingCartProduct=null;
 let pendingCartQty=1;
 
-async function addCart(id){
+async function addCart(id,presetQty=1){
   const {data:{session}} = await client.auth.getSession();
   if(!session){
     alert('Para adicionar produtos ao carrinho, entre na sua conta ou crie uma conta.');
@@ -502,7 +516,7 @@ async function addCart(id){
   pendingCartProduct=p;
   pendingCartQty=1;
   const qty=$('addQtyInput');
-  if(qty){qty.value=p.unit==='kg'?'0.100':'1';qty.step=p.unit==='kg'?'0.001':'1';qty.min=p.unit==='kg'?'0.001':'1';}
+  if(qty){qty.value=String(Math.max(p.unit==='kg'?0.001:1,Number(presetQty)||1));qty.step=p.unit==='kg'?'0.001':'1';qty.min=p.unit==='kg'?'0.001':'1';}
   const title=$('addQtyTitle');
   const price=$('addQtyPrice');
   const img=$('addQtyImage');
