@@ -2450,3 +2450,12 @@ body.catalog-page .catalog-main.detail-open #productDetailPage .detail-info{
  body.catalog-page .catalog-main.detail-open #productDetailPage .detail-gallery{min-height:230px!important;max-height:320px!important}
  body.catalog-page .catalog-main.detail-open #productDetailPage .detail-gallery img{max-width:100%!important;max-height:300px!important;object-fit:contain!important}
 }
+
+.catalog-page .detail-quantity input#detailQtyValue{width:58px!important;min-width:48px!important;height:100%!important;padding:0 3px!important;border:0!important;outline:0!important;background:#fff!important;color:#303840!important;text-align:center!important;font:800 15px/1 inherit!important;font-variant-numeric:tabular-nums!important;appearance:textfield!important;-moz-appearance:textfield!important}
+.catalog-page .detail-quantity input#detailQtyValue::-webkit-inner-spin-button,.catalog-page .detail-quantity input#detailQtyValue::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.catalog-page .detail-price-summary{display:flex;flex-direction:column;gap:5px;margin:12px 0 2px;color:#26313a;font-size:16px}
+.catalog-page .detail-price-summary .detail-saving{color:#07834d;font-size:14px;font-weight:850}
+html[data-theme="dark"] .catalog-page .detail-price-summary{color:#f4f6f8}
+html[data-theme="dark"] .catalog-page .detail-quantity input#detailQtyValue{background:#fff!important;color:#303840!important}
+.catalog-page #cartModal.cart-modal{z-index:60000!important}
+.catalog-page .site-header{z-index:30000!important}
