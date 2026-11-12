@@ -128,9 +128,10 @@ function renderCats(){
 }
 function renderDesktopCategoryNav(cats){
   const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
-  nav.innerHTML=`<button type="button" class="desktop-nav-action" onclick="selectCategory('Todos')">☰ Todos</button><button type="button" class="desktop-nav-action" onclick="selectCategory('Promoções')">🔥 Promoções</button>`+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');+`<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>`;
+  nav.innerHTML='<button type="button" class="desktop-nav-action" data-category="Todos">☰ Todos</button><button type="button" class="desktop-nav-action" data-category="Promoções">🔥 Promoções</button>'+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('')+'<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>';
 }
 document.addEventListener('click',event=>{
+ const action=event.target.closest('.desktop-nav-action[data-category]');if(action){selectCategory(action.getAttribute('data-category'));return;}
  const trigger=event.target.closest('.desktop-category-trigger');
  if(trigger){selectCategory(trigger.getAttribute('data-category'));return;}
  const link=event.target.closest('.desktop-department-link');if(!link)return;
@@ -897,7 +898,7 @@ function renderMobileMenuCategories(){
   if(departmentLoadError)addButton('⚠ Falha ao carregar departamentos',()=>alert(departmentLoadError.message),'mobile-department-link');
 }
 function selectMobileCategory(name){
-  active=name;render();closeMobileMenu();
+  active=name;activeDepartmentId='';render();closeMobileMenu();
   document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function toggleMobileMenu(){
