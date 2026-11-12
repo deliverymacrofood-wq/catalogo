@@ -843,7 +843,7 @@ function selectMobileCategory(name){
 }
 function toggleMobileMenu(){
   const menu=document.getElementById('mobileMenu');
-  const trigger=document.querySelector('.mobile-menu-trigger');
+  const trigger=document.querySelector('.mobile-menu-trigger, .desktop-menu-trigger');
   if(!menu)return;
   const open=!menu.classList.contains('open');
   if(open)renderMobileMenuCategories();
@@ -852,14 +852,14 @@ function toggleMobileMenu(){
 }
 function closeMobileMenu(){
   const menu=document.getElementById('mobileMenu');
-  const trigger=document.querySelector('.mobile-menu-trigger');
+  const trigger=document.querySelector('.mobile-menu-trigger, .desktop-menu-trigger');
   if(!menu)return;
   menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
   trigger?.setAttribute('aria-expanded','false');
 }
 document.addEventListener('click',function(e){
   const menu=document.getElementById('mobileMenu');
-  const trigger=e.target.closest?.('.mobile-menu-trigger');
+  const trigger=e.target.closest?.('.mobile-menu-trigger, .desktop-menu-trigger');
   if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!trigger)closeMobileMenu();
 });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMobileMenu(); });
