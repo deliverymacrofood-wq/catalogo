@@ -18,15 +18,8 @@
     <span id="cartCount" hidden>0</span>
   </div>
   <div class="mobile-head"><b>MACROFOOD</b><span id="mobileCartCount" hidden>0</span></div>
-  <nav class="desktop-nav">
-    <button type="button" class="desktop-menu-trigger" aria-expanded="false" onclick="toggleMobileMenu()">☰ &nbsp; Todas as categorias⌄</button>
+  <nav class="desktop-nav" aria-label="Categorias">
     <div id="desktopCategoryNav" class="desktop-category-nav" aria-label="Categorias do catálogo"></div>
-    <button onclick="active='Promoções';activeDepartmentId='';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
-    <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
-    <a href="pedidos.html">📦 Meus pedidos</a>
-    <a href="suporte.html">💬 Suporte</a>
-    <button onclick="alert('Entre na sua conta para avaliar produtos.')">☆ Avaliações</button>
-      <a href="login/">👤 Minha conta</a>
   </nav>
   <div class="mobile-search"><button class="mobile-menu-trigger" type="button" onclick="toggleMobileMenu()" aria-label="Abrir categorias e menu">☰</button><div class="search"><input id="mobileSearch" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('mobileSearch')?.value || '',true)">🔎</button></div></div>
   <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
