@@ -2060,3 +2060,22 @@ html[data-theme="dark"] body.catalog-page .mobile-menu-label{color:#ff9a59!impor
 html[data-theme="dark"] body.catalog-page .mobile-menu-head{background:#151b20!important;color:#fff!important}
 html[data-theme="dark"] body.catalog-page .mobile-menu-head button{background:#29323a!important;color:#fff!important}
 html[data-theme="dark"] body.catalog-page .cart-box>.close{background:#3a2418!important;color:#ffad79!important;border-color:#684027!important}
+
+
+/* CARRINHO: modal e fundo de bloqueio ficam acima do cabeçalho fixo. */
+@media(max-width:760px){
+ body.catalog-page #cartModal.cart-modal{
+   position:fixed!important;inset:0!important;z-index:60000!important;
+   width:100vw!important;height:100dvh!important;box-sizing:border-box!important;
+   background:rgba(12,16,20,.62)!important;
+   align-items:flex-end!important;justify-content:center!important;
+   padding:0!important;isolation:isolate!important;
+ }
+ body.catalog-page #cartModal.cart-modal .cart-box{
+   position:relative!important;z-index:60001!important;
+   width:100%!important;max-width:100%!important;
+   max-height:92dvh!important;height:92dvh!important;margin:0!important;
+   border-radius:18px 18px 0 0!important;
+ }
+ body.catalog-page .site-header{z-index:30000!important}
+}
