@@ -2588,3 +2588,40 @@ html[data-theme="dark"] .catalog-page .product-filters input,html[data-theme="da
  body.catalog-page.category-view .products-section>#grid .card-actions{display:flex!important;flex-direction:column!important;gap:5px!important;margin-top:auto!important}
  body.catalog-page.category-view .products-section>#grid .card-actions .primary,body.catalog-page.category-view .products-section>#grid .card-actions .rate-btn{width:100%!important;margin:0!important;font-size:11px!important}
 }
+
+
+/* Marca Macrofood: usar somente a logomarca no cabeçalho, sem texto duplicado */
+body.catalog-page .site-header .brand-wrap{
+  flex:0 0 auto!important;
+  min-width:0!important;
+  width:auto!important;
+  gap:0!important;
+}
+body.catalog-page .site-header .brand-wrap .logo{
+  display:block!important;
+  width:76px!important;
+  height:62px!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+}
+@media(max-width:760px){
+  body.catalog-page .site-header .mobile-head .mobile-brand-wrap{
+    min-width:0!important;
+    width:auto!important;
+    flex:0 0 auto!important;
+  }
+  body.catalog-page .site-header .mobile-head .mobile-brand-wrap .logo{
+    width:66px!important;
+    height:54px!important;
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    padding:0!important;
+    box-shadow:none!important;
+  }
+}
