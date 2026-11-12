@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f36b12">
   <meta name="description" content="MacroFood - Catálogo de produtos">
   <title>MacroFood — Catálogo</title>
-  <link rel="stylesheet" href="styles.css?v=20261112-remove-desktop-category-sidebar">
+  <link rel="stylesheet" href="styles.css?v=20261112-category-pages-filters-banners">
 <link rel="icon" type="image/webp" href="assets/macrofood-logo.webp"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"></head>
 <body class="catalog-page">
 <header class="site-header">
@@ -79,7 +79,7 @@
 
   <section id="productsSection" class="products-section">
     <div class="section-head"><div><h2 id="productsTitle">Todos os produtos</h2><p id="productsSubtitle">Confira nosso catálogo completo.</p></div></div>
-    <div class="grid" id="grid"></div>
+    <div class="product-filters" id="productFilters" hidden><b class="product-filter-title">Filtrar produtos</b><label><span>Preço mínimo (R$)</span><input id="filterMinPrice" type="number" min="0" step="0.01" placeholder="Ex.: 10,00" oninput="updateProductFilters()"></label><label><span>Preço máximo (R$)</span><input id="filterMaxPrice" type="number" min="0" step="0.01" placeholder="Ex.: 150,00" oninput="updateProductFilters()"></label><label class="product-filter-check"><input id="filterOffers" type="checkbox" onchange="updateProductFilters()"> Só produtos em oferta</label><label><span>Ordenar por</span><select id="filterSort" onchange="updateProductFilters()"><option value="best">Mais vendidos</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="name">Nome A–Z</option></select></label><button type="button" class="clear-product-filters" onclick="clearProductFilters()">Limpar filtros</button><p id="productFilterCount" class="product-filter-count"></p></div><div class="grid" id="grid"></div>
   </section>
 </main>
 <footer><b>Macrofood Service</b><br>Catálogo Online<br><br>📍 Rodovia BR-101, nº 550, bairro Curado, Recife - PE, CEP 50790-640<br>📱 WhatsApp: <a href="https://wa.me/5581971178793">+55 (81) 97117-8793</a> • Instagram: <a href="https://instagram.com/macrofoodpe">@macrofoodpe</a></footer>
