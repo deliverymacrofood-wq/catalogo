@@ -1,7 +1,8 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
 let sectors=['Todos','Promoções',...defaultSectors];
-let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[];
+let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[],departmentRows=[],categoryRows=[];
+let activeDepartmentId='';
 let ordersEnabled=true, orderMethods={delivery:true,store:true,uber:true}, bestSellerIds=[];
 let cartUserId=null;
 function numericValue(value){
@@ -105,7 +106,7 @@ function showBanner(i){
 function moveBanner(step){showBanner((window.currentBanner||0)+step)}
 
 function selectCategory(category){
-  active=String(category||'Todos');
+  active=String(category||'Todos');activeDepartmentId='';
   render();
   const title=$('productsTitle');
   const subtitle=$('productsSubtitle');
@@ -113,14 +114,17 @@ function selectCategory(category){
     title.textContent=active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
   }
   if(subtitle){
-    subtitle.textContent=active==='Todos'?'Confira nosso catálogo completo.':`Produtos da categoria ${active}.`;
+    subtitle.textContent=activeDepartmentId?`Produtos do departamento ${departmentRows.find(d=>d.id===activeDepartmentId)?.name||''}.`:active==='Todos'?'Confira nosso catálogo completo.':`Produtos da categoria ${active}.`;
   }
   const target=$('productsSection');
   if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
 function renderCats(){
-  $('cats').innerHTML=sectors.map(s=>`<button type="button" class="cat ${s===active?'active':''}" data-sector="${esc(s)}" onclick="selectCategory(this.dataset.sector)">${s==='Promoções'?'🔥 ':''}${esc(s)}</button>`).join('');
+  const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));
+  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${cats.map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return ds.length?`<div class="category-department-group"><b>${esc(c.name)}</b><div>${ds.map(d=>`<button type="button" class="department-chip ${activeDepartmentId===d.id?'active':''}" onclick="selectDepartment('${d.id}','${esc(c.name)}')">${esc(d.name)}</button>`).join('')}</div></div>`:''}).join('')}</div>`;
 }
+function selectDepartment(id,category){active=category;activeDepartmentId=id;render();$('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
+
 async function fetchAllRows(builder, pageSize=500){
   const out=[];
   for(let from=0;;from+=pageSize){
@@ -141,7 +145,7 @@ async function load(){
 
     // Cada fonte é carregada de forma independente. Assim, uma tabela opcional
     // (banners, avaliações, configurações ou ranking) não impede os produtos de aparecerem.
-    let data=[], rv=[], bn=[], cats=[], settings=[], best=[];
+    let data=[], rv=[], bn=[], cats=[], deps=[], settings=[], best=[];
     let productError=null;
     try{
       data=await fetchAllRows(client.from('products').select('*').order('name',{ascending:true}),500);
@@ -153,7 +157,8 @@ async function load(){
 
     try{rv=await fetchAllRows(client.from('product_reviews').select('product_id,rating,user_id'),500);}catch(_){rv=[];}
     try{bn=await fetchAllRows(client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true}),100);}catch(_){bn=[];}
-    try{cats=await fetchAllRows(client.from('categories').select('name').order('name'),200);}catch(_){cats=[];}
+    try{cats=await fetchAllRows(client.from('categories').select('id,name').order('name'),200);}catch(_){cats=[];}
+    try{deps=await fetchAllRows(client.from('departments').select('id,name,category_id').order('name'),500);}catch(_){deps=[];}
     try{settings=await fetchAllRows(client.from('site_settings').select('key,value').in('key',['orders_enabled','delivery_enabled','store_pickup_enabled','uber_pickup_enabled']),100);}catch(_){settings=[];}
 
     // Ranking: usa a RPC quando disponível; se ainda não tiver sido criada,
@@ -185,7 +190,8 @@ async function load(){
     banners=[];
     render();
     reviews=rv||[];
-    const dynamicCats=(cats||[]).map(c=>c?.name).filter(Boolean);
+    categoryRows=cats||[];departmentRows=deps||[];
+    const dynamicCats=categoryRows.map(c=>c?.name).filter(Boolean);
     sectors=['Todos','Promoções',...(dynamicCats.length?dynamicCats:defaultSectors)];
     banners=(bn||[]).filter(b=>b && b.image_url && (b.active===undefined || b.active===null || b.active===true)).slice(0,10);
     const settingMap=Object.fromEntries((settings||[]).map(x=>[x.key,String(x.value).toLowerCase()]));
@@ -345,7 +351,7 @@ function productCard(p,featured=false){
   return `<article class="${featured?'feature-card':'card'}">
     <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" data-product-open="${esc(String(p.id))}" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</button>
     <div class="${featured?'feature-info':'info'}">
-      ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
+      ${featured?'':`<div class="sector">${esc(categoryRows.find(c=>c.id===p.category_id)?.name||p.sector||'')}</div>${p.department_id&&departmentRows.find(d=>d.id===p.department_id)?`<small class="product-department">${esc(departmentRows.find(d=>d.id===p.department_id).name)}</small>`:''}`}
       <button type="button" class="product-open-name ${featured?'feature-name':'name'}" data-product-open="${esc(String(p.id))}">${esc(p.name)}</button>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
       ${p.product_code?`<small class="code">Código: ${esc(p.product_code)}</small>`:''}
       ${featured?marketingPriceHtml(p):priceHtml(p)}
@@ -416,18 +422,21 @@ function renderProductDetail(p){
   const page=$('productDetailPage');if(!page)return;
   currentDetailProductId=String(p.id);
   const related=products.filter(x=>String(x.id)!==String(p.id)&&(
-    (p.sector&&x.sector===p.sector)||
-    (p.category&&x.category===p.category)
+    (p.department_id&&x.department_id===p.department_id)||
+    (p.category_id&&x.category_id===p.category_id)||
+    (p.sector&&x.sector===p.sector)
   ));
   const recommendations=(related.length?related:products.filter(x=>String(x.id)!==String(p.id))).slice(0,8);
+  const categoryName=categoryRows.find(c=>c.id===p.category_id)?.name||p.sector||'Produtos';
+  const departmentName=departmentRows.find(d=>d.id===p.department_id)?.name||'';
   const image=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="eager" decoding="async">`:'<div class="detail-no-image">📦</div>';
   const stock=p.in_stock===false?'<span class="detail-stock out">Sem estoque</span>':'<span class="detail-stock">Disponível</span>';
   page.innerHTML=`
-    <div class="detail-breadcrumb"><button type="button" onclick="closeProductDetail()">‹ Voltar ao catálogo</button><span> / ${esc(p.sector||'Produtos')}</span></div>
+    <div class="detail-breadcrumb"><button type="button" onclick="closeProductDetail()">‹ Voltar ao catálogo</button><span> / ${esc(categoryName)}${departmentName?' / '+esc(departmentName):''}</span></div>
     <div class="detail-product">
       <div class="detail-gallery">${image}</div>
       <div class="detail-info">
-        <div class="detail-eyebrow">${esc(p.sector||'MACROFOOD')}</div>
+        <div class="detail-eyebrow">${esc(categoryName)}${departmentName?' • '+esc(departmentName):''}</div>
         <h1>${esc(p.name)}</h1>
         ${p.product_code?`<div class="detail-code">Código: ${esc(p.product_code)}</div>`:''}
         <div class="detail-rating">${stars(p)} <button type="button" class="rate-btn" onclick="openRating('${p.id}')">Avaliar produto</button></div>
@@ -466,8 +475,10 @@ function render(){
   if($('floatingCart')){$('floatingCartCount').textContent=cartQty.toLocaleString('pt-BR',{maximumFractionDigits:3});$('floatingCart').classList.toggle('hidden',cart.length===0);}
   let q=String(($('search')?.value || $('mobileSearch')?.value || '')).toLowerCase().trim();
   let list=products.filter(p=>{
-    const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):p.sector===active);
-    return categoryOk&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q));
+    const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):(p.category_id?categoryRows.find(c=>c.id===p.category_id)?.name===active:p.sector===active));
+    const departmentOk=!activeDepartmentId||p.department_id===activeDepartmentId;
+    const deptName=departmentRows.find(d=>d.id===p.department_id)?.name||'';
+    return categoryOk&&departmentOk&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q)||deptName.toLowerCase().includes(q));
   });
   $('grid').innerHTML=list.length?list.map(p=>productCard(p,false)).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
 }
