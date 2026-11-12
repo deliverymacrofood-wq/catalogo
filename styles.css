@@ -2487,3 +2487,19 @@ body.catalog-page .site-header .brand-wrap .logo{
  }
 }
 .catalog-page .detail-quantity input#detailQtyValue{font-size:15px!important;font-weight:800!important;line-height:1!important;font-family:inherit!important}
+
+
+/* Desktop: categorias já ficam no menu superior; remover a coluna lateral */
+@media(min-width:761px){
+ body.catalog-page .catalog-main{
+  display:block!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;max-width:1400px!important;
+ }
+ body.catalog-page .catalog-main>.categories-section{
+  display:none!important;
+ }
+ body.catalog-page .catalog-main>section:not(#productDetailPage){
+  width:100%!important;min-width:0!important;
+ }
+}
