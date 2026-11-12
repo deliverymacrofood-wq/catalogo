@@ -2217,3 +2217,49 @@ html[data-theme="dark"] .catalog-page .detail-description{color:#c3cbd2}
 /* Correção definitiva da camada do submenu desktop e dos toques no menu mobile */
 @media(min-width:761px){body.catalog-page .site-header{z-index:50000!important;overflow:visible!important;isolation:isolate!important}body.catalog-page .desktop-nav{position:relative!important;z-index:50001!important;overflow:visible!important;overflow-x:visible!important;overflow-y:visible!important;clip-path:none!important}body.catalog-page .desktop-category-nav{position:relative!important;z-index:50002!important;overflow:visible!important;isolation:auto!important}body.catalog-page .desktop-category-item{position:relative!important;z-index:50003!important}body.catalog-page .desktop-category-item:hover,body.catalog-page .desktop-category-item:focus-within,body.catalog-page .desktop-category-item.open{z-index:50004!important}body.catalog-page .desktop-category-dropdown{position:absolute!important;top:100%!important;left:0!important;z-index:50005!important;display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}body.catalog-page .desktop-category-item:hover .desktop-category-dropdown,body.catalog-page .desktop-category-item:focus-within .desktop-category-dropdown,body.catalog-page .desktop-category-item.open .desktop-category-dropdown{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}}
 @media(max-width:760px){body.catalog-page #mobileMenu{z-index:50010!important;pointer-events:auto!important}body.catalog-page #mobileMenuCategories{position:relative!important;z-index:2!important;pointer-events:auto!important}body.catalog-page .mobile-category-group>.mobile-category-link,body.catalog-page .mobile-department-link{position:relative!important;z-index:3!important;pointer-events:auto!important;touch-action:manipulation!important}}
+
+
+/* Barra desktop de categorias: limpa, sem cápsulas, com no máximo sete categorias visíveis */
+@media(min-width:761px){
+ body.catalog-page .desktop-nav{
+   display:flex!important;align-items:center!important;gap:clamp(8px,1.15vw,18px)!important;
+   flex-wrap:nowrap!important;overflow:visible!important;white-space:nowrap!important;
+   min-height:46px!important;padding:0 20px!important;
+ }
+ body.catalog-page .desktop-nav .desktop-menu-trigger{
+   flex:0 0 auto!important;margin:0!important;padding:0 8px 0 0!important;
+   min-height:38px!important;border:0!important;border-radius:0!important;
+   background:transparent!important;color:#fff!important;box-shadow:none!important;
+ }
+ body.catalog-page .desktop-category-nav{
+   display:flex!important;flex:1 1 auto!important;min-width:0!important;
+   align-items:center!important;justify-content:flex-start!important;gap:clamp(8px,.9vw,15px)!important;
+   overflow:visible!important;
+ }
+ body.catalog-page .desktop-category-item{flex:0 1 auto!important;min-width:0!important;height:46px!important}
+ body.catalog-page .desktop-category-trigger{
+   display:inline-flex!important;align-items:center!important;gap:4px!important;
+   max-width:clamp(92px,10vw,150px)!important;height:46px!important;
+   padding:0 2px!important;margin:0!important;border:0!important;border-radius:0!important;
+   background:transparent!important;box-shadow:none!important;color:#fff!important;
+   font-size:clamp(11px,.82vw,13px)!important;font-weight:700!important;
+   white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ }
+ body.catalog-page .desktop-category-trigger:hover,
+ body.catalog-page .desktop-category-item:focus-within>.desktop-category-trigger,
+ body.catalog-page .desktop-category-item.open>.desktop-category-trigger{
+   background:transparent!important;color:#fff!important;
+   box-shadow:inset 0 -2px 0 rgba(255,255,255,.95)!important;
+ }
+ body.catalog-page .desktop-nav>.desktop-category-nav~button,
+ body.catalog-page .desktop-nav>.desktop-category-nav~a{
+   flex:0 0 auto!important;padding:0 8px!important;border:0!important;
+   border-radius:0!important;background:transparent!important;color:#fff!important;
+   box-shadow:none!important;font-size:12px!important;
+ }
+ body.catalog-page .desktop-nav>.desktop-category-nav~button:hover,
+ body.catalog-page .desktop-nav>.desktop-category-nav~a:hover{
+   background:transparent!important;color:#fff!important;text-decoration:underline!important;
+ }
+ body.catalog-page .desktop-category-dropdown{top:100%!important}
+}
