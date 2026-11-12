@@ -1,7 +1,7 @@
 const client=supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
 const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaurante','Ocidental','Frios','Congelados'];
 let sectors=['Todos','Promoções',...defaultSectors];
-let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[],departmentRows=[],categoryRows=[];
+let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[],departmentRows=[],categoryRows=[],departmentLoadError=null;
 let activeDepartmentId='';
 let ordersEnabled=true, orderMethods={delivery:true,store:true,uber:true}, bestSellerIds=[];
 let cartUserId=null;
@@ -121,7 +121,8 @@ function selectCategory(category){
 }
 function renderCats(){
   const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));
-  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${cats.map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return ds.length?`<div class="category-department-group"><b>${esc(c.name)}</b><div>${ds.map(d=>`<button type="button" class="department-chip ${activeDepartmentId===d.id?'active':''}" onclick="selectDepartment('${d.id}','${esc(c.name)}')">${esc(d.name)}</button>`).join('')}</div></div>`:''}).join('')}</div>`;
+  const departmentStatus=departmentLoadError?`<div class="department-load-warning">Não foi possível carregar os departamentos: ${esc(departmentLoadError.message||departmentLoadError)}. Confira a permissão de leitura da tabela departments no Supabase.</div>`:!departmentRows.length?'<div class="department-load-warning">Nenhum departamento foi retornado pelo banco. Confira se a migração foi executada no projeto conectado ao site.</div>':'';
+  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${departmentStatus}${cats.map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return ds.length?`<div class="category-department-group"><b>${esc(c.name)}</b><div>${ds.map(d=>`<button type="button" class="department-chip ${activeDepartmentId===d.id?'active':''}" onclick="selectDepartment('${d.id}','${esc(c.name)}')">${esc(d.name)}</button>`).join('')}</div></div>`:''}).join('')}</div>`;
 }
 function selectDepartment(id,category){active=category;activeDepartmentId=id;render();$('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
 
@@ -158,7 +159,7 @@ async function load(){
     try{rv=await fetchAllRows(client.from('product_reviews').select('product_id,rating,user_id'),500);}catch(_){rv=[];}
     try{bn=await fetchAllRows(client.from('site_banners').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true}),100);}catch(_){bn=[];}
     try{cats=await fetchAllRows(client.from('categories').select('id,name').order('name'),200);}catch(_){cats=[];}
-    try{deps=await fetchAllRows(client.from('departments').select('id,name,category_id').order('name'),500);}catch(_){deps=[];}
+    try{deps=await fetchAllRows(client.from('departments').select('id,name,category_id').order('name'),500);departmentLoadError=null;}catch(e){deps=[];departmentLoadError=e;console.error('Falha ao carregar departamentos:',e);}
     try{settings=await fetchAllRows(client.from('site_settings').select('key,value').in('key',['orders_enabled','delivery_enabled','store_pickup_enabled','uber_pickup_enabled']),100);}catch(_){settings=[];}
 
     // Ranking: usa a RPC quando disponível; se ainda não tiver sido criada,
@@ -840,13 +841,15 @@ function renderMobileMenuCategories(){
   const container=document.getElementById('mobileMenuCategories');
   if(!container)return;
   container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
-  (Array.isArray(sectors)?sectors:['Todos','Promoções']).forEach(name=>{
-    const button=document.createElement('button');
-    button.type='button';button.className='mobile-category-link';
-    button.textContent=(name==='Todos'?'🛍️ ':name==='Promoções'?'🔥 ':'📦 ')+name;
-    button.addEventListener('click',()=>selectMobileCategory(name));
-    container.appendChild(button);
+  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',handler);container.appendChild(b);};
+  addButton('🛍️ Todos os produtos',()=>selectMobileCategory('Todos'));
+  addButton('🔥 Promoções',()=>selectMobileCategory('Promoções'));
+  const cats=categoryRows.length?categoryRows:sectors.filter(x=>!['Todos','Promoções'].includes(x)).map(name=>({name,id:''}));
+  cats.forEach(c=>{
+    addButton('📦 '+c.name,()=>selectMobileCategory(c.name));
+    departmentRows.filter(d=>d.category_id===c.id).forEach(d=>addButton('↳ '+d.name,()=>{active=c.name;activeDepartmentId=d.id;render();closeMobileMenu();document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});},'mobile-department-link'));
   });
+  if(departmentLoadError)addButton('⚠ Falha ao carregar departamentos',()=>alert(departmentLoadError.message),'mobile-department-link');
 }
 function selectMobileCategory(name){
   active=name;render();closeMobileMenu();
