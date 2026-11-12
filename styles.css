@@ -2263,3 +2263,83 @@ html[data-theme="dark"] .catalog-page .detail-description{color:#c3cbd2}
  }
  body.catalog-page .desktop-category-dropdown{top:100%!important}
 }
+
+
+/* CABEÇALHO MACROFOOD — laranja integral com textos e ícones brancos */
+body.catalog-page .site-header,
+html[data-theme="dark"] body.catalog-page .site-header{
+  background:#ff7900!important;
+  background-image:linear-gradient(90deg,#ff7900 0%,#ff7900 100%)!important;
+  color:#fff!important;
+  border:0!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.14)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+body.catalog-page .site-header .topbar,
+body.catalog-page .site-header .mobile-head,
+body.catalog-page .site-header .mobile-search,
+body.catalog-page .site-header .desktop-nav{
+  background:transparent!important;color:#fff!important;border-color:rgba(255,255,255,.22)!important;
+}
+body.catalog-page .site-header .brand,
+body.catalog-page .site-header .brand h1,
+body.catalog-page .site-header .brand p,
+body.catalog-page .site-header .header-contact,
+body.catalog-page .site-header .header-contact b,
+body.catalog-page .site-header .mobile-head>b,
+body.catalog-page .site-header .mobile-head button,
+body.catalog-page .site-header .mobile-menu-trigger,
+body.catalog-page .site-header .account-top,
+body.catalog-page .site-header .account-top span,
+body.catalog-page .site-header .theme-toggle,
+body.catalog-page .site-header .theme-toggle span,
+body.catalog-page .site-header .desktop-nav,
+body.catalog-page .site-header .desktop-nav a,
+body.catalog-page .site-header .desktop-nav button,
+body.catalog-page .site-header .desktop-category-trigger,
+body.catalog-page .site-header .desktop-category-item,
+body.catalog-page .site-header .desktop-nav [aria-label="Categorias do catálogo"]{
+  color:#fff!important;
+}
+body.catalog-page .site-header .account-top,
+body.catalog-page .site-header .theme-toggle{
+  background:transparent!important;border:1px solid rgba(255,255,255,.65)!important;
+  box-shadow:none!important;
+}
+body.catalog-page .site-header .desktop-category-trigger{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;text-shadow:none!important;
+}
+body.catalog-page .site-header .desktop-category-trigger:hover,
+body.catalog-page .site-header .desktop-category-item.open>.desktop-category-trigger,
+body.catalog-page .site-header .desktop-category-item:focus-within>.desktop-category-trigger{
+  color:#fff!important;background:transparent!important;
+  box-shadow:inset 0 -2px 0 #fff!important;
+}
+body.catalog-page .site-header .desktop-search .search,
+body.catalog-page .site-header .mobile-search .search{
+  background:#fff!important;border:1px solid #fff!important;
+  box-shadow:none!important;
+}
+body.catalog-page .site-header .desktop-search .search input,
+body.catalog-page .site-header .mobile-search .search input{
+  background:transparent!important;color:#303840!important;
+}
+body.catalog-page .site-header .desktop-search .search input::placeholder,
+body.catalog-page .site-header .mobile-search .search input::placeholder{
+  color:#858b91!important;opacity:1!important;
+}
+body.catalog-page .site-header .search-btn{
+  color:#f36b12!important;background:transparent!important;
+}
+body.catalog-page .site-header #cartCount,
+body.catalog-page .site-header #mobileCartCount{
+  background:#fff!important;color:#f36b12!important;
+}
+body.catalog-page .site-header .mobile-menu{
+  background:#fff!important;color:#303840!important;
+}
+@media(min-width:761px){
+ body.catalog-page .site-header .topbar{background:transparent!important}
+ body.catalog-page .site-header .desktop-nav{background:transparent!important}
+}
