@@ -2175,3 +2175,18 @@ html[data-theme="dark"] .catalog-page .detail-description{color:#c3cbd2}
 @media(min-width:1200px){
  body.catalog-page .detail-recommendation-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
+
+
+/* Navegação hierárquica de categorias e departamentos do catálogo Macrofood */
+.category-department-browser{display:grid;gap:16px}
+.category-main-links{display:flex;flex-wrap:wrap;gap:9px}
+.category-main-links .cat{border:1px solid #e6e8eb;background:#fff;border-radius:999px;padding:10px 15px;font-weight:800;color:#3d4650}
+.category-main-links .cat.active{background:#f36b12;border-color:#f36b12;color:#fff}
+.category-department-group{padding:13px 15px;border:1px solid #eceff2;border-radius:13px;background:#fff}
+.category-department-group>b{display:block;margin-bottom:10px;color:#e7650b;font-size:14px}
+.category-department-group>div{display:flex;flex-wrap:wrap;gap:8px}
+.department-chip{border:1px solid #e7e9ec;background:#f8f9fa;border-radius:8px;padding:8px 11px;color:#424b55;font-size:13px}
+.department-chip.active,.department-chip:hover{border-color:#f36b12;background:#fff1e7;color:#c94e00}
+.product-department{display:block;color:#737d87;font-size:11px;margin-top:3px}
+.category-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:640px){.category-main-links{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.category-main-links .cat{white-space:nowrap}.category-department-group{padding:11px}.department-chip{font-size:12px}}
