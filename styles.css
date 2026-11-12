@@ -2459,3 +2459,31 @@ html[data-theme="dark"] .catalog-page .detail-price-summary{color:#f4f6f8}
 html[data-theme="dark"] .catalog-page .detail-quantity input#detailQtyValue{background:#fff!important;color:#303840!important}
 .catalog-page #cartModal.cart-modal{z-index:60000!important}
 .catalog-page .site-header{z-index:30000!important}
+
+
+/* Logomarca transparente do MacroFood no cabeçalho desktop e mobile */
+body.catalog-page .site-header .brand-wrap .logo{
+ width:72px!important;height:60px!important;object-fit:contain!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ padding:0!important;box-shadow:none!important;
+}
+@media(max-width:760px){
+ body.catalog-page .site-header .mobile-head{
+  display:flex!important;justify-content:space-between!important;align-items:center!important;
+  height:62px!important;min-height:62px!important;padding:0 14px!important;
+ }
+ body.catalog-page .site-header .mobile-head .mobile-brand-wrap{
+  display:flex!important;align-items:center!important;gap:9px!important;
+  min-width:0!important;color:#fff!important;text-decoration:none!important;
+ }
+ body.catalog-page .site-header .mobile-head .mobile-brand-wrap .logo{
+  width:58px!important;height:48px!important;flex:0 0 58px!important;
+ }
+ body.catalog-page .site-header .mobile-head .mobile-brand-wrap .brand h1{
+  margin:0!important;color:#fff!important;font-size:18px!important;font-weight:950!important;
+ }
+ body.catalog-page .site-header .mobile-head .mobile-brand-wrap .brand p{
+  margin:2px 0 0!important;color:#fff!important;font-size:9px!important;
+ }
+}
+.catalog-page .detail-quantity input#detailQtyValue{font-size:15px!important;font-weight:800!important;line-height:1!important;font-family:inherit!important}
