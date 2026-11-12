@@ -19,7 +19,7 @@
   </div>
   <div class="mobile-head"><b>MACROFOOD</b><span id="mobileCartCount" hidden>0</span></div>
   <nav class="desktop-nav">
-    <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
+    <button type="button" class="desktop-menu-trigger" aria-expanded="false" onclick="toggleMobileMenu()">☰ &nbsp; Todas as categorias⌄</button>
     <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
     <button onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
     <a href="pedidos.html">📦 Meus pedidos</a>
