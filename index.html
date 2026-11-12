@@ -15,9 +15,9 @@
     <div class="desktop-search"><div class="search"><input id="search" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('search')?.value || '',true)">🔎</button></div></div>
     <div class="header-contact">💬 <span>ATENDIMENTO<br><b>(81) 97117-8793</b></span></div>
     <button class="theme-toggle desktop-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button><a class="account-top admin" href="login/">👤 <span class="account-nickname">Minha conta</span></a>
-    <button class="cart-top" onclick="openCart()">🛒 <span class="cart-label">Carrinho</span><b id="cartCount">0</b></button>
+    <span id="cartCount" hidden>0</span>
   </div>
-  <div class="mobile-head"><b>MACROFOOD</b><button onclick="openCart()" aria-label="Abrir carrinho">🛒<span id="mobileCartCount">0</span></button></div>
+  <div class="mobile-head"><b>MACROFOOD</b><span id="mobileCartCount" hidden>0</span></div>
   <nav class="desktop-nav">
     <button onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">☰ &nbsp; Todas as categorias⌄</button>
     <button onclick="active='Promoções';render();document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
@@ -31,7 +31,7 @@
   <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-head"><b>Menu MacroFood</b><button type="button" onclick="closeMobileMenu()">×</button></div>
     <a href="./" onclick="closeMobileMenu()">🏠 Início</a>
-    <button onclick="closeMobileMenu();document.getElementById('cats').scrollIntoView({behavior:'smooth'})">📂 Todas as categorias</button>
+    <button onclick="closeMobileMenu();document.getElementById('cats').scrollIntoView({behavior:'smooth'})">📂 Todas as categorias</button><div id="mobileMenuCategories" class="mobile-menu-categories"></div>
     <button onclick="active='Promoções';render();closeMobileMenu();document.getElementById('promoSection').scrollIntoView({behavior:'smooth'})">🔥 Promoções</button>
     <button onclick="closeMobileMenu();document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">🔥 Mais vendidos</button>
     <a href="pedidos.html" onclick="closeMobileMenu()">📦 Meus pedidos</a>
