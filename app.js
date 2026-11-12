@@ -122,7 +122,7 @@ function selectCategory(category){
 function renderCats(){
   const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));
   const departmentStatus=departmentLoadError?`<div class="department-load-warning">Não foi possível carregar os departamentos: ${esc(departmentLoadError.message||departmentLoadError)}. Confira a permissão de leitura da tabela departments no Supabase.</div>`:!departmentRows.length?'<div class="department-load-warning">Nenhum departamento foi retornado pelo banco. Confira se a migração foi executada no projeto conectado ao site.</div>':'';
-  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${departmentStatus}${cats.map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return ds.length?`<div class="category-department-group"><b>${esc(c.name)}</b><div>${ds.map(d=>`<button type="button" class="department-chip ${activeDepartmentId===d.id?'active':''}" onclick="selectDepartment('${d.id}','${esc(c.name)}')">${esc(d.name)}</button>`).join('')}</div></div>`:''}).join('')}</div>`;
+  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${departmentStatus}</div>`;
   renderDesktopCategoryNav(cats);
 }
 function renderDesktopCategoryNav(cats){
@@ -855,13 +855,30 @@ function renderMobileMenuCategories(){
   const container=document.getElementById('mobileMenuCategories');
   if(!container)return;
   container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
-  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',handler);container.appendChild(b);};
+  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;container.appendChild(b);return b;};
   addButton('🛍️ Todos os produtos',()=>selectMobileCategory('Todos'));
   addButton('🔥 Promoções',()=>selectMobileCategory('Promoções'));
   const cats=categoryRows.length?categoryRows:sectors.filter(x=>!['Todos','Promoções'].includes(x)).map(name=>({name,id:''}));
   cats.forEach(c=>{
-    addButton('📦 '+c.name,()=>selectMobileCategory(c.name));
-    departmentRows.filter(d=>d.category_id===c.id).forEach(d=>addButton('↳ '+d.name,()=>{active=c.name;activeDepartmentId=d.id;render();closeMobileMenu();document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});},'mobile-department-link'));
+    const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));
+    const group=document.createElement('div');group.className='mobile-category-group';
+    const trigger=addButton('📦 '+c.name+(ds.length?'　⌄':''),()=>{
+      if(!ds.length){selectMobileCategory(c.name);return;}
+      const isOpen=group.classList.toggle('open');
+      trigger.setAttribute('aria-expanded',String(isOpen));
+    });
+    trigger.setAttribute('aria-expanded','false');
+    group.appendChild(trigger);
+    if(ds.length){
+      const panel=document.createElement('div');panel.className='mobile-department-panel';
+      ds.forEach(d=>{
+        const b=document.createElement('button');b.type='button';b.className='mobile-department-link';b.textContent=d.name;
+        b.addEventListener('click',()=>{active=c.name;activeDepartmentId=d.id;render();closeMobileMenu();document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth',block:'start'});});
+        panel.appendChild(b);
+      });
+      group.appendChild(panel);
+    }
+    container.appendChild(group);
   });
   if(departmentLoadError)addButton('⚠ Falha ao carregar departamentos',()=>alert(departmentLoadError.message),'mobile-department-link');
 }
