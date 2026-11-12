@@ -343,10 +343,10 @@ function marketingPriceHtml(p){
 function productCard(p,featured=false){
   const img=p.image_url?`<img ${productImageAttrs(featured)} src="${esc(p.image_url)}" alt="${esc(p.name)}" width="320" height="240" onerror="this.style.display='none'">`:'📦';
   return `<article class="${featured?'feature-card':'card'}">
-    <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" onclick="openProduct(${JSON.stringify(String(p.id))})" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</button>
+    <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" data-product-open="${esc(String(p.id))}" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</button>
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(p.sector)}</div>`}
-      <button type="button" class="product-open-name ${featured?'feature-name':'name'}" onclick="openProduct(${JSON.stringify(String(p.id))})">${esc(p.name)}</button>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
+      <button type="button" class="product-open-name ${featured?'feature-name':'name'}" data-product-open="${esc(String(p.id))}">${esc(p.name)}</button>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
       ${p.product_code?`<small class="code">Código: ${esc(p.product_code)}</small>`:''}
       ${featured?marketingPriceHtml(p):priceHtml(p)}
       ${featured?`<div class="feature-rating">${stars(p)} <button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div><button class="feature-add" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button>`:`${stars(p)}<div class="card-actions"><button class="primary" onclick="addCart('${p.id}')" ${p.in_stock===false?'disabled':''}>${p.in_stock===false?'Sem estoque':'🛒 Adicionar'}</button><button class="rate-btn" onclick="openRating('${p.id}')">⭐ Avaliar</button></div>`}
@@ -391,6 +391,16 @@ function openProduct(id,updateHistory=true){
   renderProductDetail(p);
   window.scrollTo({top:0,behavior:'instant'});
 }
+// Delegação de clique: evita que IDs de produtos quebrem atributos HTML inline.
+document.addEventListener('click',(event)=>{
+  const trigger=event.target.closest('[data-product-open]');
+  if(!trigger)return;
+  event.preventDefault();
+  event.stopPropagation();
+  openProduct(trigger.getAttribute('data-product-open'));
+});
+window.openProduct=openProduct;
+
 function closeProductDetail(updateHistory=true){
   if(!currentDetailProductId)return;
   currentDetailProductId=null;
