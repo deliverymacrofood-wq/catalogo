@@ -7,17 +7,17 @@
   <meta name="description" content="MacroFood - Catálogo de produtos">
   <title>MacroFood — Catálogo</title>
   <link rel="stylesheet" href="styles.css?v=20261112-quantity-cart-layer">
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"></head>
+<link rel="icon" type="image/webp" href="assets/macrofood-logo.webp"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"></head>
 <body class="catalog-page">
 <header class="site-header">
   <div class="topbar">
-    <a class="brand-wrap" href="./"><img class="logo" src="logo-macrofood.jpg" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
+    <a class="brand-wrap" href="./"><img class="logo" src="assets/macrofood-logo.webp" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a>
     <div class="desktop-search"><div class="search"><input id="search" placeholder="Buscar produtos..." autocomplete="off" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProducts(this.value,true)}"><button type="button" class="search-btn" aria-label="Buscar" onclick="searchProducts(document.getElementById('search')?.value || '',true)">🔎</button></div></div>
     <div class="header-contact">💬 <span>ATENDIMENTO<br><b>(81) 97117-8793</b></span></div>
     <button class="theme-toggle desktop-theme" type="button" data-theme-toggle onclick="toggleMacrofoodTheme()">🌙 <span>Modo escuro</span></button><a class="account-top admin" href="login/">👤 <span class="account-nickname">Minha conta</span></a>
     <span id="cartCount" hidden>0</span>
   </div>
-  <div class="mobile-head"><b>MACROFOOD</b><span id="mobileCartCount" hidden>0</span></div>
+  <div class="mobile-head"><a class="brand-wrap mobile-brand-wrap" href="./"><img class="logo" src="assets/macrofood-logo.webp" alt="MacroFood"><div class="brand"><h1>MACROFOOD</h1><p>Catálogo de produtos</p></div></a><span id="mobileCartCount" hidden>0</span></div>
   <nav class="desktop-nav" aria-label="Categorias">
     <div id="desktopCategoryNav" class="desktop-category-nav" aria-label="Categorias do catálogo"></div>
   </nav>
