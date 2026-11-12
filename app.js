@@ -3,6 +3,7 @@ const defaultSectors=['Chocolates','Confeitaria','Sorveteria','Padaria','Restaur
 let sectors=['Todos','Promoções',...defaultSectors];
 let active='Todos',products=[],reviews=[],banners=[],bannerTimer=null,cart=[],departmentRows=[],categoryRows=[],departmentLoadError=null;
 let activeDepartmentId='';
+let productFilters={min:'',max:'',offers:false,sort:'best'};
 let ordersEnabled=true, orderMethods={delivery:true,store:true,uber:true}, bestSellerIds=[];
 let cartUserId=null;
 function numericValue(value){
@@ -127,18 +128,11 @@ function renderCats(){
 }
 function renderDesktopCategoryNav(cats){
   const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
-  nav.innerHTML=(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');
+  nav.innerHTML=`<button type="button" class="desktop-nav-action" onclick="selectCategory('Todos')">☰ Todos</button><button type="button" class="desktop-nav-action" onclick="selectCategory('Promoções')">🔥 Promoções</button>`+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');+`<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>`;
 }
 document.addEventListener('click',event=>{
  const trigger=event.target.closest('.desktop-category-trigger');
- if(trigger){
-   const item=trigger.closest('.desktop-category-item');
-   const willOpen=!item.classList.contains('open');
-   document.querySelectorAll('.desktop-category-item.open').forEach(el=>el.classList.remove('open'));
-   item.classList.toggle('open',willOpen);
-   trigger.setAttribute('aria-expanded',String(willOpen));
-   return;
- }
+ if(trigger){selectCategory(trigger.getAttribute('data-category'));return;}
  const link=event.target.closest('.desktop-department-link');if(!link)return;
  const category=link.getAttribute('data-category');const department=link.getAttribute('data-department');
  active=category;activeDepartmentId=department||'';render();
@@ -487,11 +481,14 @@ window.addEventListener('popstate',()=>{
   if(id){const p=products.find(x=>String(x.id)===id);if(p)renderProductDetail(p);}
   else if(currentDetailProductId){currentDetailProductId=null;$('productDetailPage').hidden=true;document.querySelector('.catalog-main')?.classList.remove('detail-open');}
 });
+function updateProductFilters(){productFilters={min:$('filterMinPrice')?.value||'',max:$('filterMaxPrice')?.value||'',offers:!!$('filterOffers')?.checked,sort:$('filterSort')?.value||'best'};render();}
+function clearProductFilters(){productFilters={min:'',max:'',offers:false,sort:'best'};['filterMinPrice','filterMaxPrice'].forEach(id=>{if($(id))$(id).value='';});if($('filterOffers'))$('filterOffers').checked=false;if($('filterSort'))$('filterSort').value='best';render();}
 function render(){
   renderCats();
+  const categoryView=active!=='Todos';document.body.classList.toggle('category-view',categoryView);
   const title=$('productsTitle'); const subtitle=$('productsSubtitle');
   if(title) title.textContent=active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
-  if(subtitle) subtitle.textContent=active==='Todos'?'Confira nosso catálogo completo.':`Produtos da categoria ${active}.`;
+  if(subtitle) subtitle.textContent=active==='Todos'?'Confira nosso catálogo completo.':active==='Promoções'?'Confira os produtos com desconto.':activeDepartmentId?`Departamento: ${departmentRows.find(d=>String(d.id)===String(activeDepartmentId))?.name||''}`:`Produtos da categoria ${active}.`;
   renderFeatured();
   renderNew();
   renderPromos();
@@ -501,12 +498,17 @@ function render(){
   if($('mobileCartCount'))$('mobileCartCount').textContent=cartQty;
   if($('floatingCart')){$('floatingCartCount').textContent=cartQty.toLocaleString('pt-BR',{maximumFractionDigits:3});$('floatingCart').classList.toggle('hidden',cart.length===0);}
   let q=String(($('search')?.value || $('mobileSearch')?.value || '')).toLowerCase().trim();
+  const min=productFilters.min===''?null:Number(productFilters.min),max=productFilters.max===''?null:Number(productFilters.max);
   let list=products.filter(p=>{
-    const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)<Number(p.price):(p.category_id?categoryRows.find(c=>c.id===p.category_id)?.name===active:p.sector===active));
-    const departmentOk=!activeDepartmentId||p.department_id===activeDepartmentId;
-    const deptName=departmentRows.find(d=>d.id===p.department_id)?.name||'';
-    return categoryOk&&departmentOk&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q)||deptName.toLowerCase().includes(q));
+    const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)>0&&Number(p.promo_price)<Number(p.price):(p.category_id?String(categoryRows.find(c=>String(c.id)===String(p.category_id))?.name||'')===active:p.sector===active));
+    const departmentOk=!activeDepartmentId||String(p.department_id)===String(activeDepartmentId);
+    const deptName=departmentRows.find(d=>String(d.id)===String(p.department_id))?.name||'';
+    const price=effectiveBasePrice(p),offerOk=!productFilters.offers||(p.promo_price!=null&&Number(p.promo_price)>0&&Number(p.promo_price)<Number(p.price));
+    return categoryOk&&departmentOk&&offerOk&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max))&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q)||deptName.toLowerCase().includes(q));
   });
+  if(productFilters.sort==='price-asc')list.sort((x,y)=>(effectiveBasePrice(x)??Infinity)-(effectiveBasePrice(y)??Infinity));else if(productFilters.sort==='price-desc')list.sort((x,y)=>(effectiveBasePrice(y)??-Infinity)-(effectiveBasePrice(x)??-Infinity));else if(productFilters.sort==='name')list.sort((x,y)=>String(x.name).localeCompare(String(y.name),'pt-BR'));
+  if($('productFilterCount'))$('productFilterCount').textContent=list.length+' produto(s) encontrado(s)';
+  if($('productFilters'))$('productFilters').hidden=!categoryView;
   $('grid').innerHTML=list.length?list.map(p=>productCard(p,false)).join(''):'<div style="grid-column:1/-1;text-align:center;padding:40px;color:#777">Nenhum produto encontrado.</div>';
 }
 let pendingCartProduct=null;
