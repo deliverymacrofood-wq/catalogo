@@ -1930,3 +1930,73 @@ html[data-theme="dark"] .catalog-page .desktop-nav a{background:#202830!importan
 html[data-theme="dark"] .catalog-page .suggestion-strip{background:#241a14!important;border-color:#56341f!important}
 html[data-theme="dark"] .catalog-page .suggestion-strip span{color:#c7b9ae!important}
 html[data-theme="dark"] .catalog-page footer{background:#050709!important}
+
+
+/* Cabeçalho compacto persistente: menu hambúrguer + busca lado a lado */
+@media(max-width:760px){
+ .catalog-page .site-header{
+   position:sticky!important;position:-webkit-sticky!important;top:0!important;
+   z-index:15000!important;display:flex!important;flex-direction:column!important;
+   overflow:visible!important;background:#fff!important;
+   box-shadow:0 4px 16px rgba(0,0,0,.12)!important;
+ }
+ .catalog-page .mobile-head{
+   order:1!important;display:flex!important;align-items:center!important;
+   justify-content:space-between!important;height:43px!important;min-height:43px!important;
+   padding:0 15px!important;background:#fff!important;
+ }
+ .catalog-page .mobile-head>b{font-size:17px!important;letter-spacing:.5px!important;color:#292f35!important}
+ .catalog-page .mobile-head>button{
+   display:grid!important;place-items:center!important;position:relative!important;
+   width:42px!important;height:38px!important;padding:0!important;
+   border:0!important;background:transparent!important;color:#858b91!important;font-size:23px!important;
+ }
+ .catalog-page .mobile-head>button span{
+   position:absolute!important;top:0!important;right:0!important;
+   min-width:15px!important;height:15px!important;padding:0 3px!important;
+   border-radius:50%!important;background:#e85e0b!important;color:#fff!important;
+   font-size:9px!important;line-height:15px!important;
+ }
+ .catalog-page .mobile-search{
+   order:2!important;display:flex!important;align-items:center!important;
+   gap:10px!important;padding:5px 12px 11px!important;background:#fff!important;
+ }
+ .catalog-page .mobile-menu-trigger{
+   flex:0 0 38px!important;width:38px!important;height:42px!important;
+   display:grid!important;place-items:center!important;padding:0!important;
+   border:0!important;border-radius:8px!important;background:#fff!important;
+   color:#6d747b!important;font-size:27px!important;font-weight:500!important;
+   line-height:1!important;cursor:pointer!important;
+ }
+ .catalog-page .mobile-search .search{
+   flex:1 1 auto!important;min-width:0!important;width:auto!important;
+   height:42px!important;margin:0!important;border:1px solid #dfe3e6!important;
+   border-radius:9px!important;background:#fff!important;box-shadow:none!important;
+ }
+ .catalog-page .mobile-search .search input{
+   min-width:0!important;padding:0 12px!important;background:transparent!important;
+   color:#303840!important;font-size:13px!important;
+ }
+ .catalog-page .mobile-search .search-btn{
+   flex:0 0 43px!important;width:43px!important;height:40px!important;
+   border-radius:0 8px 8px 0!important;background:transparent!important;
+   color:#8b9299!important;font-size:21px!important;
+ }
+ .catalog-page .desktop-nav{display:none!important}
+ .catalog-page .mobile-menu{
+   position:absolute!important;top:100%!important;left:0!important;right:0!important;
+   max-height:calc(100vh - 105px)!important;overflow-y:auto!important;
+   z-index:15001!important;box-shadow:0 12px 24px rgba(0,0,0,.2)!important;
+ }
+}
+@media(max-width:760px) and (prefers-reduced-motion:no-preference){
+ .catalog-page .mobile-menu{transition:transform .18s ease,opacity .18s ease!important}
+}
+html[data-theme="dark"] .catalog-page .site-header,
+html[data-theme="dark"] .catalog-page .mobile-head,
+html[data-theme="dark"] .catalog-page .mobile-search{background:#11171c!important}
+html[data-theme="dark"] .catalog-page .mobile-head>b{color:#f3f5f7!important}
+html[data-theme="dark"] .catalog-page .mobile-head>button,
+html[data-theme="dark"] .catalog-page .mobile-menu-trigger{color:#e0e5e9!important;background:transparent!important}
+html[data-theme="dark"] .catalog-page .mobile-search .search{background:#202830!important;border-color:#3a444d!important}
+html[data-theme="dark"] .catalog-page .mobile-search .search input{color:#f3f5f7!important}
