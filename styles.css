@@ -2664,3 +2664,52 @@ body.catalog-page .site-header .brand-wrap .logo{
  body.catalog-page .site-header .mobile-account-top{padding:4px 5px!important}
  body.catalog-page .site-header .mobile-account-top span{font-size:9px!important}
 }
+
+
+/* Conta mobile: foto do perfil ou inicial do cliente; login para visitantes */
+@media(max-width:760px){
+ body.catalog-page .site-header .mobile-account-top{
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+  padding:0!important;border-radius:50%!important;overflow:hidden!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+ }
+ body.catalog-page .site-header .mobile-account-top .mobile-account-avatar{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:34px!important;height:34px!important;border-radius:50%!important;overflow:hidden!important;
+  background:#fff!important;color:#e85f00!important;font-size:17px!important;font-weight:950!important;
+  border:2px solid rgba(255,255,255,.95)!important;line-height:1!important;
+ }
+ body.catalog-page .site-header .mobile-account-top .mobile-account-avatar img{
+  display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:50%!important;
+ }
+ body.catalog-page .site-header .mobile-account-top .mobile-account-login{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;height:auto!important;padding:0 7px!important;color:#fff!important;
+  font-size:11px!important;font-weight:900!important;white-space:nowrap!important;
+ }
+ body.catalog-page .site-header .mobile-account-top:has(.mobile-account-login){
+  width:auto!important;min-width:54px!important;border-radius:18px!important;padding:0 7px!important;
+ }
+ body.catalog-page #mobileMenu .mobile-department-panel{
+  display:none!important;position:relative!important;z-index:5!important;pointer-events:auto!important;
+ }
+ body.catalog-page #mobileMenu .mobile-category-group.open>.mobile-department-panel{
+  display:block!important;visibility:visible!important;opacity:1!important;
+ }
+ body.catalog-page #mobileMenu .mobile-department-link{
+  display:flex!important;position:relative!important;z-index:6!important;pointer-events:auto!important;
+  width:100%!important;min-height:42px!important;align-items:center!important;
+  padding:10px 12px 10px 24px!important;border:0!important;border-left:3px solid #f36b12!important;
+  border-radius:0 8px 8px 0!important;background:transparent!important;color:#46515b!important;
+  font-size:13px!important;font-weight:750!important;text-align:left!important;
+  touch-action:manipulation!important;cursor:pointer!important;
+ }
+ body.catalog-page #mobileMenu .mobile-department-link.mobile-department-all{
+  color:#e85f00!important;font-weight:950!important;background:#fff4eb!important;
+ }
+ body.catalog-page #mobileMenu .mobile-department-link:active{
+  background:#ffe4d1!important;color:#c94b00!important;
+ }
+}
+html[data-theme="dark"] body.catalog-page #mobileMenu .mobile-department-link{color:#eef2f5!important}
+html[data-theme="dark"] body.catalog-page #mobileMenu .mobile-department-link.mobile-department-all{color:#ff9a59!important;background:#30251f!important}
