@@ -2190,3 +2190,16 @@ html[data-theme="dark"] .catalog-page .detail-description{color:#c3cbd2}
 .product-department{display:block;color:#737d87;font-size:11px;margin-top:3px}
 .category-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 @media(max-width:640px){.category-main-links{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.category-main-links .cat{white-space:nowrap}.category-department-group{padding:11px}.department-chip{font-size:12px}}
+
+/* Departamentos vinculados às categorias no catálogo e no menu responsivo */
+.catalog-page .category-department-browser{display:flex;flex-direction:column;gap:12px;min-width:0}
+.catalog-page .category-main-links{display:flex;flex-direction:column;gap:5px}
+.catalog-page .category-department-group{padding:10px 11px;border:1px solid var(--mf-border,#e8eaed);border-radius:11px;background:var(--mf-surface-2,#fafafa)}
+.catalog-page .category-department-group>b{display:block;margin:0 0 7px;color:var(--mf-text,#303840);font-size:11px;font-weight:900}
+.catalog-page .category-department-group>div{display:flex;flex-direction:column;gap:3px}
+.catalog-page .department-chip{width:100%;padding:7px 9px;border:0;border-radius:7px;background:transparent;color:var(--mf-muted,#68727d);font-size:11px;text-align:left;cursor:pointer}
+.catalog-page .department-chip:hover,.catalog-page .department-chip.active{background:#fff0e6;color:#d95308}
+.catalog-page .department-load-warning{padding:9px 10px;border-radius:8px;background:#fff5e8;color:#8a4b08;font-size:11px;line-height:1.45}
+.mobile-department-link{display:flex;width:100%;padding:9px 14px 9px 25px;border:0;background:transparent;color:var(--mf-muted,#68727d);font-size:13px;text-align:left;cursor:pointer}
+.mobile-department-link:hover{background:#fff0e6;color:#d95308}
+@media(max-width:760px){.catalog-page .category-department-browser{gap:8px}.catalog-page .category-main-links{flex-direction:row;overflow-x:auto;gap:7px}.catalog-page .category-main-links .cat{flex:0 0 auto;width:auto;white-space:nowrap}.catalog-page .category-department-group{min-width:220px}.catalog-page .category-department-group>div{display:flex;flex-direction:row;flex-wrap:wrap}.catalog-page .department-chip{width:auto;max-width:100%;border:1px solid var(--mf-border,#e8eaed);white-space:normal}}
