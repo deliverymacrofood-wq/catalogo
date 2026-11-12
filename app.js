@@ -127,7 +127,7 @@ function renderCats(){
 }
 function renderDesktopCategoryNav(cats){
   const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
-  nav.innerHTML=(cats||[]).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');
+  nav.innerHTML=(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>d.category_id===c.id);return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('');
 }
 document.addEventListener('click',event=>{
  const trigger=event.target.closest('.desktop-category-trigger');
