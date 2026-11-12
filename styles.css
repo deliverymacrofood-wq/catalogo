@@ -2343,3 +2343,43 @@ body.catalog-page .site-header .mobile-menu{
  body.catalog-page .site-header .topbar{background:transparent!important}
  body.catalog-page .site-header .desktop-nav{background:transparent!important}
 }
+
+
+/* SUBMENU DE DEPARTAMENTOS — contraste correto nos modos claro e escuro */
+@media(min-width:761px){
+ body.catalog-page .site-header .desktop-category-dropdown,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-dropdown{
+   background:#fff!important;color:#303840!important;
+   border:1px solid #e5e8eb!important;
+   box-shadow:0 12px 28px rgba(20,30,40,.2)!important;
+ }
+ body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link{
+   display:block!important;width:100%!important;
+   background:#fff!important;color:#303840!important;
+   border:0!important;border-radius:6px!important;
+   text-align:left!important;text-shadow:none!important;
+ }
+ body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link.all,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link.all{
+   color:#d95308!important;font-weight:900!important;
+ }
+ body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link:hover,
+ body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link:focus,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link:hover,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-dropdown .desktop-department-link:focus{
+   background:#fff0e6!important;color:#d95308!important;
+ }
+ body.catalog-page .site-header .desktop-category-trigger,
+ body.catalog-page .site-header .desktop-category-item:hover>.desktop-category-trigger,
+ body.catalog-page .site-header .desktop-category-item:focus-within>.desktop-category-trigger,
+ body.catalog-page .site-header .desktop-category-item.open>.desktop-category-trigger,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-trigger,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-item:hover>.desktop-category-trigger,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-item:focus-within>.desktop-category-trigger,
+ html[data-theme="dark"] body.catalog-page .site-header .desktop-category-item.open>.desktop-category-trigger{
+   color:#fff!important;background:transparent!important;
+   border:0!important;border-radius:0!important;outline:0!important;
+   box-shadow:none!important;text-shadow:none!important;
+ }
+}
