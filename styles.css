@@ -2855,3 +2855,11 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
  body.catalog-page .desktop-all-dropdown .desktop-category-trigger{justify-content:space-between!important}
  body.catalog-page .desktop-all-dropdown{overscroll-behavior:contain;scrollbar-gutter:stable}
 }
+
+
+/* Painel de promoções: lista rolável e campos de data/hora */
+.promo-manager .promo-products-list{max-height:calc(100vh - 300px);min-height:180px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;padding:0 12px 8px 0}
+.promo-manager .promo-manager-toolbar{position:sticky;top:0;z-index:3;background:var(--admin-card,#fff);padding:8px 0 12px}
+.promo-fields label small{font-size:10px;font-weight:500;color:#737a85;line-height:1.3}
+.promo-fields input[type="datetime-local"]{font-size:12px;min-width:0;padding:8px 6px}
+@media(max-width:760px){.promo-manager .promo-products-list{max-height:65vh;padding-right:7px}.promo-fields input[type="datetime-local"]{font-size:11px}}
