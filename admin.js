@@ -235,7 +235,8 @@ async function categoriesTab(){
 <label>Categoria<select id="departmentCategory" required>${categoryRows.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></label>
 <label>Nome do departamento<input id="newDepartmentName" required maxlength="100" placeholder="Ex.: Bebidas"></label><button class="primary">+ Criar departamento</button></form></div>
 <div class="panel-card"><div class="department-list-head"><h3>Departamentos cadastrados</h3><span id="departmentCount"></span></div>
-<div class="department-filters"><input id="departmentSearch" type="search" placeholder="Pesquisar departamento..."><select id="departmentCategoryFilter"><option value="">Todas as categorias</option>${categoryRows.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div><div id="departmentTable" class="table-wrap"></div></div> $('categoryForm').onsubmit=addCategory;$('departmentForm').onsubmit=addDepartment;$('departmentSearch').oninput=renderDepartmentTable;$('departmentCategoryFilter').onchange=renderDepartmentTable;renderDepartmentTable();
+<div class="department-filters"><input id="departmentSearch" type="search" placeholder="Pesquisar departamento..."><select id="departmentCategoryFilter"><option value="">Todas as categorias</option>${categoryRows.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div><div id="departmentTable" class="table-wrap"></div></div>`;
+ $('categoryForm').onsubmit=addCategory;$('departmentForm').onsubmit=addDepartment;$('departmentSearch').oninput=renderDepartmentTable;$('departmentCategoryFilter').onchange=renderDepartmentTable;renderDepartmentTable();
 }
 function renderDepartmentTable(){
  const target=$('departmentTable');if(!target)return;
