@@ -361,6 +361,7 @@ function priceHtml(p){
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
+  if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
   if(p.wholesale_price!=null && Number(p.wholesale_price)>0 && Number(p.wholesale_price)<base && Number.isInteger(Number(p.wholesale_qty)) && Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
@@ -621,7 +622,7 @@ async function openCart(){
     </div>`
   }).join(''):'<div class="empty-cart">🛒<p>Seu carrinho está vazio.</p></div>';
   const total=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+wholesaleTotal(p,x.qty)},0);
-  const normalTotal=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+(effectiveBasePrice(p)*x.qty)},0);
+  const normalTotal=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+(Number(p.price)*x.qty)},0);
   const totalDiscount=Math.max(0,normalTotal-total);
   const discountEl=$('cartDiscountValue');
   if(discountEl){discountEl.textContent=totalDiscount>0?`Você economizou ${money(totalDiscount)} em descontos`:' ';discountEl.classList.toggle('hidden',totalDiscount<=0);}
