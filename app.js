@@ -305,7 +305,7 @@ function promoBreakdown(p,qty){
  if(p.promo_mode==='block'){const promoQty=Math.floor(qty/x)*x,normalQty=qty-promoQty;if(promoQty<=0)return null;return {promoQty,normalQty,total:promoQty*promo+normalQty*normal,discount:promoQty*(normal-promo)}}
  if(qty<x)return null;return {promoQty:qty,normalQty:0,total:qty*promo,discount:qty*(normal-promo)};
 }
-function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&promotionQuantity(p)<=0?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
+function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&(promotionQuantity(p)<=0||(promotionQuantity(p)===1&&p.promo_mode!=='block'))?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
 function wholesaleBreakdown(p,qty){
   qty=Math.max(0,Number(qty)||0);
   const normalPrice=numericValue(p?.price);
@@ -343,7 +343,7 @@ function priceHtml(p){
   if(base===null || !Number.isFinite(base) || base<=0){
     return '<div class="price error-price">Preço não informado</div>';
   }
-  const hasPromo=promotionIsActive(p)&&promotionQuantity(p)<=0;
+  const hasPromo=promotionIsActive(p)&&(promotionQuantity(p)<=0||(promotionQuantity(p)===1&&p.promo_mode!=='block'));
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
@@ -356,7 +356,7 @@ function priceHtml(p){
 }
 function marketingPriceHtml(p){
   const unit=unitLabel(p);
-  const hasPromo=promotionIsActive(p)&&(!Number(p.promo_qty)||Number(p.promo_qty)<=0);
+  const hasPromo=promotionIsActive(p)&&(!Number(p.promo_qty)||Number(p.promo_qty)<=0||(Number(p.promo_qty)===1&&p.promo_mode!=='block'));
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
