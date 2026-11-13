@@ -373,6 +373,7 @@ function marketingPriceHtml(p){
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
+  if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
   if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
