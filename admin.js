@@ -110,7 +110,7 @@ function renderProductList(){
  <img class="thumb" src="${esc(p.image_url||'')}" alt="">
  <div class="grow"><b>${esc(p.name)} ${p.is_new?'<span class="featured-admin-badge">✨ Novidade</span>':''}</b>
  <small>${esc(categoryRows.find(x=>x.id===p.category_id)?.name||p.sector)}${p.department_id&&departmentRows.find(d=>d.id===p.department_id)?' / '+esc(departmentRows.find(d=>d.id===p.department_id).name):''} • Código ${esc(p.product_code||'—')} • ${p.unit==='kg'?'Kg':'Unidade'} • ${money(p.price)} • ${p.in_stock===false?'Sem estoque':'Com estoque'} • ${p.active===false?'Arquivado':'Ativo'}${p.wholesale_price!=null?' • Atacado '+money(p.wholesale_price)+' / '+p.wholesale_qty:''}</small></div>
- <button class="outline-btn" onclick="edit('${p.id}')">Editar</button>
+ <button class="outline-btn" onclick="edit('${p.id}')">Editar</button><button class="secondary" onclick="viewProductHistory('${p.id}')">Histórico</button>
  ${p.active===false?`<button class="secondary" onclick="restoreProduct('${p.id}')">Restaurar</button>`:`<button class="secondary" onclick="archiveProduct('${p.id}')">Arquivar</button>`}
  <button class="danger" onclick="removeProduct('${p.id}')">Excluir</button></div>`).join(''):'<div class="empty-state">Nenhum produto encontrado com esses filtros.</div>';
  updateSelectedProductCount();
@@ -213,6 +213,7 @@ async function save(e){
     payload.image_url=imageUrl;
   }
   try{
+    const previousProduct=editing?products.find(p=>String(p.id)===String(editing))||null:null;
     if(!imageUrl && f)payload.image_url=await upload(f,$('removeBg')?.checked===true);
     let r=editing?await client.from('products').update(payload).eq('id',editing):await client.from('products').insert(payload);
     // Compatibilidade com bancos antigos que ainda não possuem a coluna opcional `note`.
@@ -227,6 +228,7 @@ async function save(e){
       return;
     }
     if(r.error)throw r.error;
+    if(editing)await recordProductHistory(editing,'updated',previousProduct,payload);
     editing=null;
     productTab();
     alert('Produto salvo!');
@@ -256,6 +258,17 @@ async function edit(id){
 async function archiveProduct(id){if(!confirm('Arquivar este produto? Ele poderá ser restaurado depois.'))return;const {error}=await client.from('products').update({active:false,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else{selectedProductIds.delete(String(id));await load()}}
 async function restoreProduct(id){const {error}=await client.from('products').update({active:true,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else load()}
 async function removeProduct(id){if(!confirm('Excluir definitivamente este produto? Prefira Arquivar para poder restaurá-lo.'))return;const {error}=await client.from('products').delete().eq('id',id);if(error)alert(error.message);else load()}
+async function recordProductHistory(productId,action,oldData,newData){
+ try{await client.from('product_change_history').insert({product_id:productId,changed_by:currentUserId,action,old_data:oldData||null,new_data:newData||null})}catch(_){}
+}
+async function viewProductHistory(productId){
+ const {data,error}=await client.from('product_change_history').select('action,changed_at,old_data,new_data').eq('product_id',productId).order('changed_at',{ascending:false}).limit(30);
+ if(error){alert('O histórico ainda não está disponível. Execute MIGRACAO_HISTORICO_PRODUTOS.sql no Supabase.');return}
+ const rows=data||[];
+ const content=rows.length?rows.map(x=>'<div class="history-row"><b>'+esc(x.action==='updated'?'Produto atualizado':x.action)+'</b><small>'+esc(new Date(x.changed_at).toLocaleString('pt-BR'))+'</small><details><summary>Ver alterações</summary><pre>'+esc(JSON.stringify({antes:x.old_data,depois:x.new_data},null,2))+'</pre></details></div>').join(''):'<p>Nenhuma alteração registrada ainda.</p>';
+ const modal=document.createElement('div');modal.className='product-history-modal';modal.innerHTML='<div class="product-history-box"><button class="product-history-close" type="button">×</button><h3>Histórico do produto</h3>'+content+'</div>';
+ modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('.product-history-close'))modal.remove()});document.body.appendChild(modal);
+}
 function toggleProductSelection(id,checked){checked?selectedProductIds.add(String(id)):selectedProductIds.delete(String(id));updateSelectedProductCount()}
 function toggleAllProducts(checked){document.querySelectorAll('#list .product-select').forEach(el=>{el.checked=checked;const row=el.closest('.product-admin-row'),btn=row?.querySelector('button[onclick*="edit("]'),id=btn?.getAttribute('onclick')?.match(/edit\('([^']+)'\)/)?.[1];if(id){checked?selectedProductIds.add(String(id)):selectedProductIds.delete(String(id))}});updateSelectedProductCount()}
 function updateSelectedProductCount(){const el=$('selectedProductCount');if(el)el.textContent=selectedProductIds.size+' selecionado(s)'}
