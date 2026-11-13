@@ -262,7 +262,7 @@ function renderPromoProducts(){
  const rows=products.filter(p=>!term||String(p.name||'').toLocaleLowerCase('pt-BR').includes(term)||String(p.product_code||'').includes(term));$('promoCount').textContent=rows.length+' produto(s)';
  target.innerHTML=rows.length?rows.map(p=>'<div class="promo-product-row"><div class="promo-product-info"><b>'+esc(p.name)+'</b><small>Preço normal: '+money(p.price)+(p.promo_price!=null?' • Oferta atual: '+money(p.promo_price):'')+'</small></div><div class="promo-fields">'+
  '<label>Preço de oferta<input id="pr_'+p.id+'" type="number" step="0.01" min="0" value="'+(p.promo_price??'')+'" placeholder="Ex.: 18,90"></label>'+
- '<label>Regra de quantidade<select id="pm_'+p.id+'"><option value="threshold" '+(p.promo_mode!=='block'?'selected':'')+'>A partir de X unidades</option><option value="block" '+(p.promo_mode==='block'?'selected':'')+'>A cada X unidades</option></select></label>'+
+ '<label>Regra de quantidade<select id="pm_'+p.id+'"><option value="threshold" '+(p.promo_mode!=='block'?'selected':'')+'>A partir de X '+(p.unit==='kg'?'kg':'unidades')+'</option><option value="block" '+(p.promo_mode==='block'?'selected':'')+'>A cada X '+(p.unit==='kg'?'kg':'unidades')</option></select></label>'+
  '<label>Quantidade X<input id="pq_'+p.id+'" type="number" min="0.001" step="0.001" value="'+(p.promo_qty??'')+'" placeholder="Ex.: 10"></label>'+
  '<label>Início da oferta<input id="ps_'+p.id+'" type="date" value="'+(p.promo_starts_at?promoDateInput(p.promo_starts_at):'')+'"></label>'+
  '<label>Fim da oferta<input id="pe_'+p.id+'" type="date" value="'+(p.promo_ends_at?promoDateInput(p.promo_ends_at):'')+'"></label></div>'+
@@ -272,7 +272,7 @@ async function setPromo(id){
  const p=products.find(x=>String(x.id)===String(id));if(!p)return;const raw=$('pr_'+id).value.trim(),qtyRaw=$('pq_'+id).value.trim(),mode=$('pm_'+id).value,start=$('ps_'+id).value,end=$('pe_'+id).value;
  if(!raw)return alert('Informe o preço de oferta ou use Remover oferta.');const price=Number(raw.replace(',','.')),qty=Number(qtyRaw);
  if(!Number.isFinite(price)||price<=0||price>=Number(p.price))return alert('O preço de oferta deve ser positivo e menor que o preço normal.');
- if(!Number.isFinite(qty)||qty<=0)return alert('Informe a quantidade X da promoção.');if(start&&end&&end<start)return alert('A data final não pode ser anterior à data inicial.');
+ if(!Number.isFinite(qty)||qty<=0)return alert('Informe a quantidade X da promoção.');if(p.unit!=='kg'&&!Number.isInteger(qty))return alert('Para produtos vendidos por unidade, use uma quantidade inteira.');if(start&&end&&end<start)return alert('A data final não pode ser anterior à data inicial.');
  const payload={promo_price:price,promo_mode:mode,promo_qty:qty,promo_starts_at:start?new Date(start+'T00:00:00').toISOString():null,promo_ends_at:end?new Date(end+'T23:59:59.999').toISOString():null,updated_at:new Date().toISOString()};
  const {error}=await client.from('products').update(payload).eq('id',id);if(error)return alert('Não foi possível salvar. Execute a migração SQL de promoções no Supabase. '+error.message);alert('Oferta salva!');await promoTab();
 }
