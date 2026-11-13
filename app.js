@@ -408,7 +408,8 @@ function renderPromos(){
     const unit=unitLabel(p);
     const wholesale=(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0)
       ? `<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>` : '';
-    return `<article class="promo-card"><img loading="lazy" decoding="async" src="${esc(p.image_url||'')}" alt="${esc(p.name)}" width="320" height="220" onerror="this.style.display='none'"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div><div class="new">Por ${money(p.promo_price)} / ${unit}</div>${wholesale}<button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`;
+    const offerRule=Number(p.promo_qty)>0?`<div class="wholesale-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`:`<div class="new">Por ${money(p.promo_price)} / ${unit}</div>`;
+    return `<article class="promo-card"><img loading="lazy" decoding="async" src="${esc(p.image_url||'')}" alt="${esc(p.name)}" width="320" height="220" onerror="this.style.display='none'"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div>${offerRule}${wholesale}<button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`;
   }).join(''):'<div class="notice">Nenhuma promoção ativa no momento.</div>';
 }
 function renderNew(){
