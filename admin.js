@@ -276,7 +276,7 @@ async function setPromo(id){
  const raw=$('pr_'+id).value.trim(),qtyRaw=$('pq_'+id).value.trim(),mode=$('pm_'+id).value;
  const wholesaleRaw=$('pwp_'+id)?.value.trim()||'',wholesaleQtyRaw=$('pwq_'+id)?.value.trim()||'',wholesaleMode=$('pwm_'+id)?.value||'threshold';
  const start=$('ps_'+id).value.trim(),end=$('pe_'+id).value.trim();
- if(!raw&&!wholesaleRaw)return alert('Informe ao menos um preço promocional: varejo ou atacado.');
+ if(!raw)return alert('Informe o preço promocional de varejo. O preço promocional de atacado é opcional.');
  const price=raw?Number(raw.replace(',','.')):null,qty=qtyRaw?Number(qtyRaw):null;
  if(raw&&(!Number.isFinite(price)||price<=0||price>=Number(p.price)))return alert('O preço promocional de varejo deve ser positivo e menor que o preço normal.');
  if(raw&&(!Number.isFinite(qty)||qty<=0))return alert('Informe a quantidade mínima da oferta de varejo.');
