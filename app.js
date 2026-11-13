@@ -134,13 +134,13 @@ function renderCats(){
 }
 function renderDesktopCategoryNav(cats){
  const nav=document.getElementById('desktopCategoryNav');if(!nav)return;const groups=getMainAndExtraCategories(cats||[]);
- const renderGroup=c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return '<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="'+esc(c.name)+'" aria-haspopup="true">'+esc(c.navLabel||c.name)+(ds.length?' ⌄':'')+'</button>'+(ds.length?'<div class="desktop-category-dropdown">'+ds.map(d=>'<button type="button" class="desktop-department-link" data-category="'+esc(c.name)+'" data-department="'+esc(String(d.id))+'">'+esc(d.name)+'</button>').join('')+'<button type="button" class="desktop-department-link all" data-category="'+esc(c.name)+'">Ver tudo</button></div>':'')+'</div>'};
+ const renderGroup=c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return '<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="'+esc(c.name)+'" data-toggle-departments="'+(ds.length?'true':'false')+'" aria-expanded="false" aria-haspopup="true">'+esc(c.navLabel||c.name)+(ds.length?' ⌄':'')+'</button>'+(ds.length?'<div class="desktop-category-dropdown">'+ds.map(d=>'<button type="button" class="desktop-department-link" data-category="'+esc(c.name)+'" data-department="'+esc(String(d.id))+'">'+esc(d.name)+'</button>').join('')+'<button type="button" class="desktop-department-link all" data-category="'+esc(c.name)+'">Ver tudo</button></div>':'')+'</div>'};
  nav.innerHTML='<div class="desktop-all-categories"><button type="button" class="desktop-nav-action" data-category="Todos" aria-haspopup="true">☰ Todos⌄</button><div class="desktop-all-dropdown"><button type="button" class="desktop-department-link all" data-category="Todos">Ver tudo</button>'+groups.extra.map(renderGroup).join('')+'</div></div><button type="button" class="desktop-nav-action" data-category="Promoções">Promoções</button>'+groups.main.map(renderGroup).join('');
 }
 document.addEventListener('click',event=>{
  const action=event.target.closest('.desktop-nav-action[data-category]');if(action){selectCategory(action.getAttribute('data-category'));return;}
  const trigger=event.target.closest('.desktop-category-trigger');
- if(trigger){selectCategory(trigger.getAttribute('data-category'));return;}
+ if(trigger){if(trigger.getAttribute('data-toggle-departments')==='true'){const item=trigger.closest('.desktop-category-item');const open=!item.classList.contains('open');item.classList.toggle('open',open);trigger.setAttribute('aria-expanded',String(open));return;}selectCategory(trigger.getAttribute('data-category'));return;}
  const link=event.target.closest('.desktop-department-link');if(!link)return;
  const category=link.getAttribute('data-category');const department=link.getAttribute('data-department');
  active=category;activeDepartmentId=department||'';render();
