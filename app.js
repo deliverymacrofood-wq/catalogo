@@ -292,15 +292,23 @@ function stars(p){
   const r=reviewInfo(p);
   return `<div class="stars" title="Avaliação média">${r.avg?`★ ${r.avg.toFixed(1)}`:'☆ Sem avaliações'} <small>(${r.count})</small></div>`;
 }
-function effectiveBasePrice(p){
-  const normal=numericValue(p?.price);
-  const promo=numericValue(p?.promo_price);
-  if(normal===null) return null;
-  return promo!==null && promo>0 && promo<normal ? promo : normal;
+function promotionIsActive(p){
+ const price=numericValue(p?.promo_price);if(price===null||price<=0||price>=Number(p?.price))return false;
+ const now=Date.now(),start=p?.promo_starts_at?new Date(p.promo_starts_at).getTime():null,end=p?.promo_ends_at?new Date(p.promo_ends_at).getTime():null;
+ return (start===null||!Number.isFinite(start)||now>=start)&&(end===null||!Number.isFinite(end)||now<=end);
 }
+function promoBreakdown(p,qty){
+ const normal=Number(p?.price),promo=Number(p?.promo_price),x=Number(p?.promo_qty);if(!promotionIsActive(p))return null;
+ if(!Number.isFinite(x)||x<=0)return {promoQty:qty,normalQty:0,total:qty*promo,discount:qty*(normal-promo)};
+ if(p.promo_mode==='block'){const promoQty=Math.floor(qty/x)*x,normalQty=qty-promoQty;if(promoQty<=0)return null;return {promoQty,normalQty,total:promoQty*promo+normalQty*normal,discount:promoQty*(normal-promo)}}
+ if(qty<x)return null;return {promoQty:qty,normalQty:0,total:qty*promo,discount:qty*(normal-promo)};
+}
+function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&(!Number(p?.promo_qty)||Number(p?.promo_qty)<=0)?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
 function wholesaleBreakdown(p,qty){
   qty=Math.max(0,Number(qty)||0);
   const normalPrice=effectiveBasePrice(p);
+  const promo=promoBreakdown(p,qty);
+  if(promo)return {normalQty:promo.normalQty,wholesaleQty:promo.promoQty,normalPrice:Number(p.price),wholesalePrice:Number(p.promo_price),normalTotal:promo.normalQty*Number(p.price),wholesaleTotal:promo.promoQty*Number(p.promo_price),total:promo.total,discount:promo.discount,valid:true,promotion:true};
   if(normalPrice===null){
     return {normalQty:qty,wholesaleQty:0,normalPrice:null,wholesalePrice:null,normalTotal:null,wholesaleTotal:0,total:null,discount:null,valid:false,reason:'O produto está sem preço válido cadastrado.'};
   }
@@ -349,7 +357,7 @@ function priceHtml(p){
   if(base===null || !Number.isFinite(base) || base<=0){
     return '<div class="price error-price">Preço não informado</div>';
   }
-  const hasPromo=p.promo_price!=null && Number(p.promo_price)>0 && Number(p.promo_price)<Number(p.price);
+  const hasPromo=promotionIsActive(p)&&(!Number(p.promo_qty)||Number(p.promo_qty)<=0);
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
@@ -360,7 +368,7 @@ function priceHtml(p){
 }
 function marketingPriceHtml(p){
   const unit=unitLabel(p);
-  const hasPromo=p.promo_price!=null&&Number(p.promo_price)<Number(p.price);
+  const hasPromo=promotionIsActive(p)&&(!Number(p.promo_qty)||Number(p.promo_qty)<=0);
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
@@ -394,7 +402,7 @@ function renderFeatured(){
 }
 function renderPromos(){
   const el=$('promoGrid'); if(!el)return;
-  const promos=products.filter(p=>p.promo_price!=null&&Number(p.promo_price)<Number(p.price)).slice(0,4);
+  const promos=products.filter(p=>promotionIsActive(p)).slice(0,4);
   el.innerHTML=promos.length?promos.map(p=>{
     const unit=unitLabel(p);
     const wholesale=(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0)
@@ -508,10 +516,10 @@ function render(){
   let q=String(($('search')?.value || $('mobileSearch')?.value || '')).toLowerCase().trim();
   const min=productFilters.min===''?null:Number(productFilters.min),max=productFilters.max===''?null:Number(productFilters.max);
   let list=products.filter(p=>{
-    const categoryOk=active==='Todos'||(active==='Promoções'?p.promo_price!=null&&Number(p.promo_price)>0&&Number(p.promo_price)<Number(p.price):(p.category_id?String(categoryRows.find(c=>String(c.id)===String(p.category_id))?.name||'')===active:p.sector===active));
+    const categoryOk=active==='Todos'||(active==='Promoções'?promotionIsActive(p):(p.category_id?String(categoryRows.find(c=>String(c.id)===String(p.category_id))?.name||'')===active:p.sector===active));
     const departmentOk=!activeDepartmentId||String(p.department_id)===String(activeDepartmentId);
     const deptName=departmentRows.find(d=>String(d.id)===String(p.department_id))?.name||'';
-    const price=effectiveBasePrice(p),offerOk=!productFilters.offers||(p.promo_price!=null&&Number(p.promo_price)>0&&Number(p.promo_price)<Number(p.price));
+    const price=effectiveBasePrice(p),offerOk=!productFilters.offers||promotionIsActive(p);
     return categoryOk&&departmentOk&&offerOk&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max))&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q)||deptName.toLowerCase().includes(q));
   });
   if(productFilters.sort==='price-asc')list.sort((x,y)=>(effectiveBasePrice(x)??Infinity)-(effectiveBasePrice(y)??Infinity));else if(productFilters.sort==='price-desc')list.sort((x,y)=>(effectiveBasePrice(y)??-Infinity)-(effectiveBasePrice(x)??-Infinity));else if(productFilters.sort==='name')list.sort((x,y)=>String(x.name).localeCompare(String(y.name),'pt-BR'));else if(bestSellerIds.length){const rank=new Map(bestSellerIds.map((id,i)=>[String(id),i]));list.sort((x,y)=>(rank.get(String(x.id))??999999)-(rank.get(String(y.id))??999999));}
@@ -603,7 +611,7 @@ async function openCart(){
     const hasWholesale=b.wholesaleQty>0;
     const unit=unitLabel(p);
     const pricing=hasWholesale
-      ? `<div class="cart-pricing">${b.wholesaleQty?`<span>🏷️ ${b.wholesaleQty} ${unit} no atacado: <b>${money(b.wholesalePrice)} / ${unit}</b></span>`:''}${b.normalQty?`<span>${b.normalQty} ${unit} no preço normal: <b>${money(b.normalPrice)} / ${unit}</b></span>`:''}<strong class="cart-discount">Você economizou ${money(b.discount)}</strong></div>`
+      ? `<div class="cart-pricing">${b.wholesaleQty?`<span>🏷️ ${b.promotion?'em oferta':'no atacado'}: ${b.wholesaleQty} ${unit}: <b>${money(b.wholesalePrice)} / ${unit}</b></span>`:''}${b.normalQty?`<span>${b.normalQty} ${unit} no preço normal: <b>${money(b.normalPrice)} / ${unit}</b></span>`:''}<strong class="cart-discount">Você economizou ${money(b.discount)}</strong></div>`
       : `<small>${money(effective)} / ${unit}</small>`;
     return `<div class="cart-row">
       <img class="cart-img" src="${esc(x.image_url||p.image_url||'')}" alt="${esc(x.name)}" onerror="this.style.display='none'">
@@ -616,7 +624,7 @@ async function openCart(){
   const normalTotal=cart.reduce((s,x)=>{const p=products.find(p=>p.id===x.id)||x;return s+(effectiveBasePrice(p)*x.qty)},0);
   const totalDiscount=Math.max(0,normalTotal-total);
   const discountEl=$('cartDiscountValue');
-  if(discountEl){discountEl.textContent=totalDiscount>0?`Você economizou ${money(totalDiscount)} no atacado`:' ';discountEl.classList.toggle('hidden',totalDiscount<=0);}
+  if(discountEl){discountEl.textContent=totalDiscount>0?`Você economizou ${money(totalDiscount)} em descontos`:' ';discountEl.classList.toggle('hidden',totalDiscount<=0);}
   if(totalEl)totalEl.textContent=money(total);
   if(checkout){checkout.classList.toggle('hidden',!cart.length);checkout.disabled=!cart.length;}
   $('cartModal').style.display='flex';
