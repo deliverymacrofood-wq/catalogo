@@ -297,13 +297,15 @@ function promotionIsActive(p){
  const now=Date.now(),start=p?.promo_starts_at?new Date(p.promo_starts_at).getTime():null,end=p?.promo_ends_at?new Date(p.promo_ends_at).getTime():null;
  return (start===null||!Number.isFinite(start)||now>=start)&&(end===null||!Number.isFinite(end)||now<=end);
 }
+function promotionQuantity(p){const q=numericValue(p?.promo_qty);return q!==null&&q>0?q:0;}
+function promotionQuantityLabel(p){return promotionQuantity(p).toLocaleString('pt-BR',{maximumFractionDigits:3});}
 function promoBreakdown(p,qty){
- const normal=Number(p?.price),promo=Number(p?.promo_price),x=Number(p?.promo_qty);if(!promotionIsActive(p))return null;
+ const normal=Number(p?.price),promo=Number(p?.promo_price),x=promotionQuantity(p);if(!promotionIsActive(p))return null;
  if(!Number.isFinite(x)||x<=0)return {promoQty:qty,normalQty:0,total:qty*promo,discount:qty*(normal-promo)};
  if(p.promo_mode==='block'){const promoQty=Math.floor(qty/x)*x,normalQty=qty-promoQty;if(promoQty<=0)return null;return {promoQty,normalQty,total:promoQty*promo+normalQty*normal,discount:promoQty*(normal-promo)}}
  if(qty<x)return null;return {promoQty:qty,normalQty:0,total:qty*promo,discount:qty*(normal-promo)};
 }
-function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&(!Number(p?.promo_qty)||Number(p?.promo_qty)<=0)?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
+function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&promotionQuantity(p)<=0?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
 function wholesaleBreakdown(p,qty){
   qty=Math.max(0,Number(qty)||0);
   const normalPrice=effectiveBasePrice(p);
@@ -357,11 +359,11 @@ function priceHtml(p){
   if(base===null || !Number.isFinite(base) || base<=0){
     return '<div class="price error-price">Preço não informado</div>';
   }
-  const hasPromo=promotionIsActive(p)&&(!Number(p.promo_qty)||Number(p.promo_qty)<=0);
+  const hasPromo=promotionIsActive(p)&&promotionQuantity(p)<=0;
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
-  if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
+  if(promotionIsActive(p)&&promotionQuantity(p)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
   if(p.wholesale_price!=null && Number(p.wholesale_price)>0 && Number(p.wholesale_price)<base && Number.isInteger(Number(p.wholesale_qty)) && Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
@@ -373,7 +375,7 @@ function marketingPriceHtml(p){
   let html=hasPromo
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
-  if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
+  if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
   if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
@@ -409,7 +411,7 @@ function renderPromos(){
     const unit=unitLabel(p);
     const wholesale=(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0)
       ? `<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>` : '';
-    const offerRule=Number(p.promo_qty)>0?`<div class="wholesale-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`:`<div class="new">Por ${money(p.promo_price)} / ${unit}</div>`;
+    const offerRule=promotionQuantity(p)>0?`<div class="wholesale-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${p.promo_qty} ${unit}: ${money(p.promo_price)} / ${unit}</div>`:`<div class="new">Por ${money(p.promo_price)} / ${unit}</div>`;
     return `<article class="promo-card"><img loading="lazy" decoding="async" src="${esc(p.image_url||'')}" alt="${esc(p.name)}" width="320" height="220" onerror="this.style.display='none'"><div><div class="promo-name">${esc(p.name)}</div><div class="old">De <s>${money(p.price)}</s></div>${offerRule}${wholesale}<button class="feature-add" onclick="addCart('${p.id}')">🛒</button></div></article>`;
   }).join(''):'<div class="notice">Nenhuma promoção ativa no momento.</div>';
 }
