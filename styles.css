@@ -2893,3 +2893,14 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
 .promo-grid>.card .card-actions{margin-top:auto}
 .promo-grid>.notice{background:#fff;border-radius:12px;padding:18px;color:#333}
 @media(max-width:760px){.promo-section{padding:14px!important}.promo-grid>.card{flex-basis:165px;width:165px}.promo-grid>.card .pic{height:125px}}
+
+/* Gerenciamento avançado de produtos do painel Macrofood */
+.product-filters-advanced{grid-template-columns:minmax(240px,2fr) repeat(3,minmax(145px,1fr))}
+.product-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 12px}
+.product-tool-actions{display:flex;gap:8px;flex-wrap:wrap}
+.import-products-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid var(--mf-border,#ddd);border-radius:9px;font-weight:800;cursor:pointer;background:var(--mf-surface,#fff);color:var(--mf-text,#222)}
+.bulk-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px;margin:10px 0;border:1px solid var(--mf-border,#e5e5e5);border-radius:12px;background:var(--mf-surface-2,#fafafa);font-size:13px;font-weight:700}
+.bulk-toolbar label{display:flex;align-items:center;gap:7px}.bulk-toolbar select{min-height:38px;max-width:230px;padding:7px 10px;border:1px solid var(--mf-border,#ddd);border-radius:8px;background:var(--mf-surface,#fff);color:var(--mf-text,#222)}.bulk-toolbar select[hidden]{display:none}
+.product-admin-row{gap:10px}.product-admin-row .product-select{width:18px;height:18px;flex:0 0 18px}.product-admin-row .grow{min-width:0}.product-admin-row .grow b{display:block;overflow-wrap:anywhere}.product-admin-row .grow small{line-height:1.5}
+@media(max-width:1000px){.product-filters-advanced{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.product-filters-advanced{grid-template-columns:1fr}.product-tools{align-items:stretch}.product-tool-actions{width:100%}.product-tool-actions>*{flex:1}.bulk-toolbar{align-items:stretch}.bulk-toolbar>*{width:100%;max-width:none!important}.product-admin-row{flex-wrap:wrap}.product-admin-row .grow{flex:1 1 calc(100% - 55px)}.product-admin-row button{flex:1}}
