@@ -2875,3 +2875,21 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
 .promo-manager .promo-fields input:disabled,.promo-manager .promo-fields select:disabled{background:#f2f3f5;color:#9aa0a8;cursor:not-allowed}
 @media(max-width:1100px){.promo-manager .promo-fields{grid-template-columns:repeat(3,minmax(120px,1fr))}}
 @media(max-width:760px){.promo-manager .promo-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Cards de produtos alinhados mesmo quando alguns exibem preço de atacado. */
+.products-section .grid{align-items:stretch}
+.products-section .card{display:flex;flex-direction:column;height:100%;min-height:100%}
+.products-section .card .info{display:flex;flex-direction:column;flex:1;min-width:0}
+.products-section .card .name{min-height:40px;max-height:40px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.products-section .card .card-actions{margin-top:auto;padding-top:8px}
+.products-section .card .stars{min-height:20px}
+.products-section .card .wholesale-note{line-height:1.25}
+.promo-section{background:#ff7900!important;border-radius:18px!important;padding:20px!important;overflow:hidden}
+.promo-section .section-head h2,.promo-section .section-head p,.promo-section .see-all{color:#fff!important}
+.promo-grid{display:flex!important;gap:14px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:2px 2px 12px!important;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.promo-grid>.card{flex:0 0 190px;width:190px;scroll-snap-align:start;display:flex;flex-direction:column;min-width:0}
+.promo-grid>.card .pic{height:145px;flex:none}
+.promo-grid>.card .info{display:flex;flex-direction:column;flex:1}
+.promo-grid>.card .card-actions{margin-top:auto}
+.promo-grid>.notice{background:#fff;border-radius:12px;padding:18px;color:#333}
+@media(max-width:760px){.promo-section{padding:14px!important}.promo-grid>.card{flex-basis:165px;width:165px}.promo-grid>.card .pic{height:125px}}
