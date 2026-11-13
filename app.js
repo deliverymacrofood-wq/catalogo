@@ -382,7 +382,7 @@ function marketingPriceHtml(p){
 function productCard(p,featured=false){
   const img=p.image_url?`<img ${productImageAttrs(featured)} src="${esc(p.image_url)}" alt="${esc(p.name)}" width="320" height="240" onerror="this.style.display='none'">`:'📦';
   return `<article class="${featured?'feature-card':'card'}">
-    <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" data-product-open="${esc(String(p.id))}" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${img}</button>
+    <button type="button" class="product-open-image ${featured?'feature-pic':'pic'}" data-product-open="${esc(String(p.id))}" aria-label="Ver detalhes de ${esc(p.name)}">${featured?'<span class="featured-badge">🔥 MAIS VENDIDO</span>':''}${p.is_new?'<span class="new-badge">✨ NOVIDADE</span>':''}${promotionIsActive(p)?'<span class="product-offer-badge">OFERTA</span>':''}${img}</button>
     <div class="${featured?'feature-info':'info'}">
       ${featured?'':`<div class="sector">${esc(categoryRows.find(c=>c.id===p.category_id)?.name||p.sector||'')}</div>${p.department_id&&departmentRows.find(d=>d.id===p.department_id)?`<small class="product-department">${esc(departmentRows.find(d=>d.id===p.department_id).name)}</small>`:''}`}
       <button type="button" class="product-open-name ${featured?'feature-name':'name'}" data-product-open="${esc(String(p.id))}">${esc(p.name)}</button>${p.note?`<div class="product-note">📝 ${esc(p.note)}</div>`:''}
