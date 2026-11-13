@@ -2713,3 +2713,91 @@ body.catalog-page .site-header .brand-wrap .logo{
 }
 html[data-theme="dark"] body.catalog-page #mobileMenu .mobile-department-link{color:#eef2f5!important}
 html[data-theme="dark"] body.catalog-page #mobileMenu .mobile-department-link.mobile-department-all{color:#ff9a59!important;background:#30251f!important}
+
+
+/* Página de categoria: filtro independente ao lado da vitrine, sem caixa envolvendo tudo */
+@media(min-width:761px){
+ body.catalog-page.category-view .catalog-main{
+  display:block!important;
+  width:min( calc(100% - 48px), 1420px)!important;
+  max-width:1420px!important;
+  margin:22px auto 48px!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section{
+  display:grid!important;
+  grid-template-columns:220px minmax(0,1fr)!important;
+  grid-template-rows:auto 1fr!important;
+  gap:14px 22px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+ }
+ body.catalog-page.category-view .products-section>.section-head{
+  grid-column:2!important;grid-row:1!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  min-width:0!important;margin:0 0 2px!important;padding:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section>#productFilters{
+  grid-column:1!important;grid-row:1 / span 2!important;
+  position:sticky!important;top:165px!important;align-self:start!important;
+  width:100%!important;max-width:none!important;margin:0!important;
+  padding:16px!important;gap:13px!important;
+  background:#fff!important;border:1px solid #e5e8eb!important;
+  border-radius:14px!important;box-shadow:0 3px 12px rgba(20,30,40,.06)!important;
+ }
+ body.catalog-page.category-view .products-section>#grid{
+  grid-column:2!important;grid-row:2!important;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:14px!important;width:100%!important;min-width:0!important;
+  padding:0!important;margin:0!important;background:transparent!important;
+  border:0!important;box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section>#grid>.card{
+  min-width:0!important;width:100%!important;margin:0!important;
+ }
+}
+@media(min-width:761px) and (max-width:1050px){
+ body.catalog-page.category-view .products-section{grid-template-columns:195px minmax(0,1fr)!important;column-gap:16px!important}
+ body.catalog-page.category-view .products-section>#grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:760px){
+ body.catalog-page.category-view .catalog-main{
+  display:block!important;width:100%!important;max-width:none!important;
+  margin:12px auto 32px!important;padding:0 12px!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section{
+  display:flex!important;flex-direction:column!important;gap:12px!important;
+  width:100%!important;margin:0!important;padding:0!important;
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section>.section-head{
+  order:0!important;margin:0!important;padding:0 2px!important;background:transparent!important;
+ }
+ body.catalog-page.category-view .products-section>#productFilters{
+  order:1!important;position:static!important;width:100%!important;max-width:none!important;
+  margin:0!important;padding:12px!important;display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;
+  background:#fff!important;border:1px solid #e5e8eb!important;border-radius:12px!important;
+  box-shadow:0 2px 9px rgba(20,30,40,.05)!important;
+ }
+ body.catalog-page.category-view .products-section>#grid{
+  order:2!important;display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;width:100%!important;margin:0!important;padding:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+ body.catalog-page.category-view .products-section>#grid>.card{min-width:0!important;width:100%!important;margin:0!important}
+}
+html[data-theme="dark"] body.catalog-page.category-view .products-section>#productFilters{background:#171c21!important;border-color:#303840!important}
