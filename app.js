@@ -125,15 +125,17 @@ function selectCategory(category){
   const target=$('productsSection');
   if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
+const mainCategoryDefs=[{label:'Confeitaria',aliases:['Confeitaria']},{label:'Sorveteria',aliases:['Sorveteria']},{label:'Panificação',aliases:['Panificação','Padaria','Panificacao']},{label:'Restaurante',aliases:['Restaurante']},{label:'Ocidental',aliases:['Ocidental']},{label:'Bebidas',aliases:['Bebidas','Bebidas e bomboniere']},{label:'Resfriado',aliases:['Resfriado','Frios','Laticínios','Laticinios']},{label:'Congelados',aliases:['Congelados']}];
+function getMainAndExtraCategories(cats){const main=mainCategoryDefs.map(def=>{const c=cats.find(x=>def.aliases.some(a=>String(x.name||'').trim().toLowerCase()===a.toLowerCase()));return c?Object.assign({},c,{navLabel:def.label}):null}).filter(Boolean);const ids=new Set(main.map(c=>String(c.id)));return {main,extra:cats.filter(c=>!ids.has(String(c.id)))}}
 function renderCats(){
-  const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));
-  const departmentStatus=departmentLoadError?`<div class="department-load-warning">Não foi possível carregar os departamentos: ${esc(departmentLoadError.message||departmentLoadError)}. Confira a permissão de leitura da tabela departments no Supabase.</div>`:!departmentRows.length?'<div class="department-load-warning">Nenhum departamento foi retornado pelo banco. Confira se a migração foi executada no projeto conectado ao site.</div>':'';
-  $('cats').innerHTML=`<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat ${active==='Todos'?'active':''}" onclick="selectCategory('Todos')">Todos</button><button type="button" class="cat ${active==='Promoções'?'active':''}" onclick="selectCategory('Promoções')">🔥 Promoções</button>${cats.map(c=>`<button type="button" class="cat ${active===c.name?'active':''}" onclick="selectCategory('${esc(c.name)}')">${esc(c.name)}</button>`).join('')}</div>${departmentStatus}</div>`;
-  renderDesktopCategoryNav(cats);
+ const cats=categoryRows.length?categoryRows:sectors.filter(s=>!['Todos','Promoções'].includes(s)).map(name=>({id:'',name}));const groups=getMainAndExtraCategories(cats);
+ const departmentStatus=departmentLoadError?'<div class="department-load-warning">Não foi possível carregar os departamentos: '+esc(departmentLoadError.message||departmentLoadError)+'. Confira a permissão de leitura da tabela departments no Supabase.</div>':!departmentRows.length?'<div class="department-load-warning">Nenhum departamento foi retornado pelo banco. Confira se a migração foi executada no projeto conectado ao site.</div>':'';
+ $('cats').innerHTML='<div class="category-department-browser"><div class="category-main-links"><button type="button" class="cat '+(active==='Todos'?'active':'')+'" onclick="selectCategory(\'Todos\')">Todos</button><button type="button" class="cat '+(active==='Promoções'?'active':'')+'" onclick="selectCategory(\'Promoções\')">Promoções</button>'+groups.main.map(c=>'<button type="button" class="cat '+(active===c.name?'active':'')+'" onclick="selectCategory(\''+esc(c.name)+'\')">'+esc(c.navLabel)+'</button>').join('')+'</div>'+departmentStatus+'</div>';renderDesktopCategoryNav(cats);
 }
 function renderDesktopCategoryNav(cats){
-  const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
-  nav.innerHTML='<button type="button" class="desktop-nav-action" data-category="Todos">☰ Todos</button><button type="button" class="desktop-nav-action" data-category="Promoções">🔥 Promoções</button>'+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown">${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}<button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver tudo</button></div>`:''}</div>`;}).join('')+'<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>';
+ const nav=document.getElementById('desktopCategoryNav');if(!nav)return;const groups=getMainAndExtraCategories(cats||[]);
+ const renderGroup=c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return '<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="'+esc(c.name)+'" aria-haspopup="true">'+esc(c.navLabel||c.name)+(ds.length?' ⌄':'')+'</button>'+(ds.length?'<div class="desktop-category-dropdown">'+ds.map(d=>'<button type="button" class="desktop-department-link" data-category="'+esc(c.name)+'" data-department="'+esc(String(d.id))+'">'+esc(d.name)+'</button>').join('')+'<button type="button" class="desktop-department-link all" data-category="'+esc(c.name)+'">Ver tudo</button></div>':'')+'</div>'};
+ nav.innerHTML='<div class="desktop-all-categories"><button type="button" class="desktop-nav-action" data-category="Todos" aria-haspopup="true">☰ Todos⌄</button><div class="desktop-all-dropdown"><button type="button" class="desktop-department-link all" data-category="Todos">Ver tudo</button>'+groups.extra.map(renderGroup).join('')+'</div></div><button type="button" class="desktop-nav-action" data-category="Promoções">Promoções</button>'+groups.main.map(renderGroup).join('');
 }
 document.addEventListener('click',event=>{
  const action=event.target.closest('.desktop-nav-action[data-category]');if(action){selectCategory(action.getAttribute('data-category'));return;}
@@ -873,38 +875,13 @@ if (document.readyState === 'loading') {
 loadAccountHeader();
 
 function renderMobileMenuCategories(){
-  const container=document.getElementById('mobileMenuCategories');
-  if(!container)return;
-  container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
-  const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();handler?.();});return b;};
-  addButton('🛍️ Todos os produtos',()=>selectMobileCategory('Todos'));
-  addButton('🔥 Promoções',()=>selectMobileCategory('Promoções'));
-  const cats=categoryRows.length?categoryRows:sectors.filter(x=>!['Todos','Promoções'].includes(x)).map(name=>({name,id:''}));
-  cats.forEach(c=>{
-    const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));
-    const group=document.createElement('div');group.className='mobile-category-group';
-    const trigger=addButton('📦 '+c.name+(ds.length?'　⌄':''),()=>{
-      if(!ds.length){selectMobileCategory(c.name);return;}
-      const isOpen=group.classList.toggle('open');
-      trigger.setAttribute('aria-expanded',String(isOpen));
-    });
-    trigger.setAttribute('aria-expanded','false');
-    group.appendChild(trigger);
-    if(ds.length){
-      const panel=document.createElement('div');panel.className='mobile-department-panel';
-      ds.forEach(d=>{
-        const b=document.createElement('button');b.type='button';b.className='mobile-department-link';b.textContent=d.name;
-        b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectDepartment(d.id,c.name);closeMobileMenu();});
-        panel.appendChild(b);
-      });
-      const all=document.createElement('button');all.type='button';all.className='mobile-department-link mobile-department-all';all.textContent='Ver tudo';
-      all.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectMobileCategory(c.name);});
-      panel.appendChild(all);
-      group.appendChild(panel);
-    }
-    container.appendChild(group);
-  });
-  if(departmentLoadError)addButton('⚠ Falha ao carregar departamentos',()=>alert(departmentLoadError.message),'mobile-department-link');
+ const container=document.getElementById('mobileMenuCategories');if(!container)return;container.innerHTML='<div class="mobile-menu-label">COMPRE POR CATEGORIA</div>';
+ const addButton=(label,handler,cls='mobile-category-link')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();handler?.();});return b};
+ addButton('☰ Todos',()=>selectMobileCategory('Todos'));addButton('Promoções',()=>selectMobileCategory('Promoções'));
+ const cats=categoryRows.length?categoryRows:sectors.filter(x=>!['Todos','Promoções'].includes(x)).map(name=>({name,id:''}));const groups=getMainAndExtraCategories(cats);
+ const addGroup=c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id)),group=document.createElement('div');group.className='mobile-category-group';const trigger=addButton((c.navLabel||c.name)+(ds.length?'　⌄':''),()=>{if(!ds.length){selectMobileCategory(c.name);return}const open=group.classList.toggle('open');trigger.setAttribute('aria-expanded',String(open))});trigger.setAttribute('aria-expanded','false');group.appendChild(trigger);if(ds.length){const panel=document.createElement('div');panel.className='mobile-department-panel';ds.forEach(d=>panel.appendChild(addButton(d.name,()=>{selectDepartment(d.id,c.name);closeMobileMenu()},'mobile-department-link')));panel.appendChild(addButton('Ver tudo',()=>selectMobileCategory(c.name),'mobile-department-link mobile-department-all'));group.appendChild(panel)}container.appendChild(group)};
+ groups.extra.forEach(addGroup);groups.main.forEach(addGroup);addButton('Ver tudo',()=>selectMobileCategory('Todos'),'mobile-department-link mobile-department-all');
+ if(departmentLoadError)addButton('⚠ Falha ao carregar departamentos',()=>alert(departmentLoadError.message),'mobile-department-link');
 }
 function selectMobileCategory(name){
   active=name;activeDepartmentId='';render();closeMobileMenu();
