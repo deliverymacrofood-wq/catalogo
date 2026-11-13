@@ -2834,3 +2834,24 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
   color:#d95308!important;
   -webkit-text-fill-color:#d95308!important;
 }
+
+
+/* Menu Todos: botão sempre legível e departamentos somente por clique */
+@media(min-width:761px){
+ body.catalog-page .site-header .desktop-all-categories>.desktop-nav-action{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:42px!important;padding:0 12px!important;border:0!important;border-radius:8px!important;
+  background:rgba(255,255,255,.14)!important;color:#fff!important;
+  -webkit-text-fill-color:#fff!important;opacity:1!important;visibility:visible!important;
+  font-weight:900!important;text-shadow:none!important;
+ }
+ body.catalog-page .site-header .desktop-all-categories>.desktop-nav-action:hover,
+ body.catalog-page .site-header .desktop-all-categories>.desktop-nav-action:focus-visible{
+  background:rgba(255,255,255,.24)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
+ }
+ body.catalog-page .desktop-all-dropdown .desktop-category-item:hover .desktop-category-dropdown,
+ body.catalog-page .desktop-all-dropdown .desktop-category-item:focus-within .desktop-category-dropdown{display:none!important}
+ body.catalog-page .desktop-all-dropdown .desktop-category-item.open>.desktop-category-dropdown{display:block!important}
+ body.catalog-page .desktop-all-dropdown .desktop-category-trigger{justify-content:space-between!important}
+ body.catalog-page .desktop-all-dropdown{overscroll-behavior:contain;scrollbar-gutter:stable}
+}
