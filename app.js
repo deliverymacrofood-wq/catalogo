@@ -133,7 +133,7 @@ function renderCats(){
 }
 function renderDesktopCategoryNav(cats){
   const nav=document.getElementById('desktopCategoryNav');if(!nav)return;
-  nav.innerHTML='<button type="button" class="desktop-nav-action" data-category="Todos">☰ Todos</button><button type="button" class="desktop-nav-action" data-category="Promoções">🔥 Promoções</button>'+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown"><button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver todos de ${esc(c.name)}</button>${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}</div>`:''}</div>`;}).join('')+'<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>';
+  nav.innerHTML='<button type="button" class="desktop-nav-action" data-category="Todos">☰ Todos</button><button type="button" class="desktop-nav-action" data-category="Promoções">🔥 Promoções</button>'+(cats||[]).slice(0,7).map(c=>{const ds=departmentRows.filter(d=>String(d.category_id)===String(c.id));return `<div class="desktop-category-item"><button type="button" class="desktop-category-trigger" data-category="${esc(c.name)}" aria-haspopup="true">${esc(c.name)}${ds.length?' <span aria-hidden="true">⌄</span>':''}</button>${ds.length?`<div class="desktop-category-dropdown">${ds.map(d=>`<button type="button" class="desktop-department-link" data-category="${esc(c.name)}" data-department="${esc(String(d.id))}">${esc(d.name)}</button>`).join('')}<button type="button" class="desktop-department-link all" data-category="${esc(c.name)}">Ver tudo</button></div>`:''}</div>`;}).join('')+'<a class="desktop-nav-action" href="pedidos.html">📦 Meus pedidos</a>';
 }
 document.addEventListener('click',event=>{
  const action=event.target.closest('.desktop-nav-action[data-category]');if(action){selectCategory(action.getAttribute('data-category'));return;}
@@ -892,14 +892,14 @@ function renderMobileMenuCategories(){
     group.appendChild(trigger);
     if(ds.length){
       const panel=document.createElement('div');panel.className='mobile-department-panel';
-      const all=document.createElement('button');all.type='button';all.className='mobile-department-link mobile-department-all';all.textContent='Ver tudo';
-      all.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectMobileCategory(c.name);});
-      panel.appendChild(all);
       ds.forEach(d=>{
         const b=document.createElement('button');b.type='button';b.className='mobile-department-link';b.textContent=d.name;
         b.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectDepartment(d.id,c.name);closeMobileMenu();});
         panel.appendChild(b);
       });
+      const all=document.createElement('button');all.type='button';all.className='mobile-department-link mobile-department-all';all.textContent='Ver tudo';
+      all.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectMobileCategory(c.name);});
+      panel.appendChild(all);
       group.appendChild(panel);
     }
     container.appendChild(group);
