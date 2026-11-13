@@ -2933,3 +2933,25 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
  .product-editor-panel .wholesale-box .form{grid-template-columns:1fr}
  .product-list-scroll{max-height:58vh;min-height:160px;padding-right:6px}
 }
+
+/* Tema escuro no desktop: os cards da listagem de categoria permanecem brancos,
+   portanto o texto interno precisa manter contraste escuro. No celular o tema
+   escuro já usa cards escuros e esta regra não se aplica. */
+@media (min-width:761px){
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card,
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card>.info{
+  background:#fff!important;
+  color:#27313b!important;
+ }
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card .name,
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card .product-open-name{
+  color:#202832!important;
+  -webkit-text-fill-color:#202832!important;
+ }
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card .code,
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card .product-department,
+ html[data-theme="dark"] body.catalog-page.category-view .products-section>#grid>.card .product-note{
+  color:#586575!important;
+  -webkit-text-fill-color:#586575!important;
+ }
+}
