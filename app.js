@@ -308,33 +308,17 @@ function promoBreakdown(p,qty){
 function effectiveBasePrice(p){const normal=numericValue(p?.price);if(normal===null)return null;const promo=promotionIsActive(p)&&promotionQuantity(p)<=0?numericValue(p?.promo_price):null;return promo!==null&&promo>0&&promo<normal?promo:normal;}
 function wholesaleBreakdown(p,qty){
   qty=Math.max(0,Number(qty)||0);
-  const normalPrice=effectiveBasePrice(p);
-  const promo=promoBreakdown(p,qty);
-  if(promo)return {normalQty:promo.normalQty,wholesaleQty:promo.promoQty,normalPrice:Number(p.price),wholesalePrice:Number(p.promo_price),normalTotal:promo.normalQty*Number(p.price),wholesaleTotal:promo.promoQty*Number(p.promo_price),total:promo.total,discount:promo.discount,valid:true,promotion:true};
-  if(normalPrice===null){
-    return {normalQty:qty,wholesaleQty:0,normalPrice:null,wholesalePrice:null,normalTotal:null,wholesaleTotal:0,total:null,discount:null,valid:false,reason:'O produto está sem preço válido cadastrado.'};
-  }
-  const wholesalePrice=numericValue(p?.wholesale_price);
-  const wholesaleQty=Number(p?.wholesale_qty);
-  const valid=wholesalePrice!==null&&wholesalePrice>0&&wholesaleQty>0&&wholesalePrice<normalPrice;
-  if(!valid){
-    const total=normalPrice*qty;
-    return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:total,wholesaleTotal:0,total,discount:0,valid:true};
-  }
-  let wQty=0,nQty=qty;
-  if(p.wholesale_mode==='block'){
-    // “A cada X”: blocos completos no atacado e o restante no preço normal.
-    wQty=Math.floor(qty/wholesaleQty)*wholesaleQty;
-    nQty=qty-wQty;
-  }else if(qty>=wholesaleQty){
-    // “A partir de X”: toda a quantidade no preço de atacado.
-    wQty=qty;
-    nQty=0;
-  }
-  const normalTotal=nQty*normalPrice;
-  const wholesaleTotal=wQty*wholesalePrice;
-  const total=normalTotal+wholesaleTotal;
-  return {normalQty:nQty,wholesaleQty:wQty,normalPrice,wholesalePrice,normalTotal,wholesaleTotal,total,discount:(qty*normalPrice)-total,valid:true};
+  const normalPrice=numericValue(p?.price);
+  if(normalPrice===null)return {normalQty:qty,wholesaleQty:0,normalPrice:null,wholesalePrice:null,normalTotal:null,wholesaleTotal:0,total:null,discount:null,valid:false,reason:'O produto está sem preço válido cadastrado.'};
+  const promoActive=promotionIsActive(p),promoRetail=promoActive?promoBreakdown(p,qty):null;
+  const promoWholesalePrice=numericValue(p?.promo_wholesale_price),promoWholesaleQty=Number(p?.promo_wholesale_qty);
+  const hasPromoWholesale=promoActive&&promoWholesalePrice!==null&&promoWholesalePrice>0&&promoWholesalePrice<numericValue(p?.wholesale_price)&&promoWholesaleQty>0;
+  if(hasPromoWholesale){let wQty=0;if(p.promo_wholesale_mode==='block')wQty=Math.floor(qty/promoWholesaleQty)*promoWholesaleQty;else if(qty>=promoWholesaleQty)wQty=qty;if(wQty>0){const remaining=qty-wQty,retail=promoBreakdown(p,remaining),retailTotal=retail?retail.total:remaining*normalPrice,total=retailTotal+wQty*promoWholesalePrice;return {normalQty:remaining-(retail?.promoQty||0),wholesaleQty:wQty,normalPrice,wholesalePrice:promoWholesalePrice,normalTotal:(remaining-(retail?.promoQty||0))*normalPrice,wholesaleTotal:wQty*promoWholesalePrice,total,discount:qty*normalPrice-total,valid:true,promotion:true,promoWholesale:true};}}
+  if(promoRetail)return {normalQty:promoRetail.normalQty,wholesaleQty:promoRetail.promoQty,normalPrice,wholesalePrice:Number(p.promo_price),normalTotal:promoRetail.normalQty*normalPrice,wholesaleTotal:promoRetail.promoQty*Number(p.promo_price),total:promoRetail.total,discount:promoRetail.discount,valid:true,promotion:true};
+  const wholesalePrice=numericValue(p?.wholesale_price),wholesaleQty=Number(p?.wholesale_qty),valid=wholesalePrice!==null&&wholesalePrice>0&&wholesaleQty>0&&wholesalePrice<normalPrice;
+  if(!valid){const total=normalPrice*qty;return {normalQty:qty,wholesaleQty:0,normalPrice,wholesalePrice:null,normalTotal:total,wholesaleTotal:0,total,discount:0,valid:true};}
+  let wQty=0,nQty=qty;if(p.wholesale_mode==='block'){wQty=Math.floor(qty/wholesaleQty)*wholesaleQty;nQty=qty-wQty;}else if(qty>=wholesaleQty){wQty=qty;nQty=0;}
+  const normalTotal=nQty*normalPrice,wholesaleTotal=wQty*wholesalePrice,total=normalTotal+wholesaleTotal;return {normalQty:nQty,wholesaleQty:wQty,normalPrice,wholesalePrice,normalTotal,wholesaleTotal,total,discount:(qty*normalPrice)-total,valid:true};
 }
 function wholesaleTotal(p,qty){
   const b=wholesaleBreakdown(p,qty);
@@ -364,6 +348,7 @@ function priceHtml(p){
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
   if(promotionIsActive(p)&&promotionQuantity(p)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
+  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+='<div class="wholesale-note promo-note">🏷️ Oferta atacado: '+money(p.promo_wholesale_price)+' / '+unit+' '+(p.promo_wholesale_mode==='block'?'a cada':'a partir de')+' '+p.promo_wholesale_qty+' '+unit+'</div>';}
   if(p.wholesale_price!=null && Number(p.wholesale_price)>0 && Number(p.wholesale_price)<base && Number.isInteger(Number(p.wholesale_qty)) && Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
@@ -376,6 +361,7 @@ function marketingPriceHtml(p){
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
   if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
+  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+='<div class="wholesale-note promo-note">🏷️ Oferta atacado: '+money(p.promo_wholesale_price)+' / '+unit+' '+(p.promo_wholesale_mode==='block'?'a cada':'a partir de')+' '+p.promo_wholesale_qty+' '+unit+'</div>';}
   if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0){
     html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
   }
