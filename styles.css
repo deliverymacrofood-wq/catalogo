@@ -2868,3 +2868,10 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
 .catalog-page .product-offer-badge{position:absolute;z-index:5;top:10px;left:10px;display:inline-flex;align-items:center;justify-content:center;background:#d62828;color:#fff!important;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:950;line-height:1;letter-spacing:.2px;box-shadow:0 2px 7px rgba(0,0,0,.16);pointer-events:none}
 .catalog-page .product-open-image{position:relative}
 @media(max-width:760px){.catalog-page .product-offer-badge{top:7px;left:7px;padding:4px 7px;font-size:9px}}
+
+/* Campos extras para configurar preço promocional de varejo e atacado */
+.promo-manager .promo-fields{grid-template-columns:repeat(4,minmax(125px,1fr));align-items:end}
+.promo-manager .promo-fields label{min-width:0}
+.promo-manager .promo-fields input:disabled,.promo-manager .promo-fields select:disabled{background:#f2f3f5;color:#9aa0a8;cursor:not-allowed}
+@media(max-width:1100px){.promo-manager .promo-fields{grid-template-columns:repeat(3,minmax(120px,1fr))}}
+@media(max-width:760px){.promo-manager .promo-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
