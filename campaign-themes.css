@@ -124,3 +124,55 @@ body.catalog-page[data-campaign-theme="summer"]{
 .campaign-theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 .campaign-theme-option{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--surface,#fff)}
 @media(max-width:640px){.campaign-admin-card .form{grid-template-columns:1fr}.campaign-admin-actions>*{width:100%}}
+
+
+/* Contraste correto da navegação em todos os temas sazonais */
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav>.desktop-nav-action,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav .desktop-category-trigger{
+ color:var(--campaign-nav-text)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown,
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown *{
+ color:var(--campaign-secondary)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown .desktop-category-trigger,
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown .desktop-department-link{
+ color:var(--campaign-secondary)!important;
+ background:var(--campaign-card)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown .desktop-department-link.all{
+ color:var(--campaign-accent)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown .desktop-category-trigger:hover,
+body.catalog-page[data-campaign-theme] .site-header .desktop-all-dropdown .desktop-department-link:hover{
+ background:var(--campaign-tile)!important;
+ color:var(--campaign-accent)!important;
+}
+body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-nav #desktopCategoryNav>.desktop-nav-action,
+body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-nav .desktop-category-trigger{
+ color:#145532!important;
+}
+body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-all-dropdown .desktop-category-trigger,
+body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-all-dropdown .desktop-department-link{
+ color:#176b3a!important;
+}
+body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-all-dropdown .desktop-department-link.all{
+ color:#b32635!important;
+}
+
+/* Neve com trajetórias individuais e movimento lateral irregular */
+.christmas-effects{overflow:hidden}
+.christmas-effects .snowflake{
+ position:absolute;top:-12vh;left:var(--snow-left);width:var(--snow-size);height:var(--snow-size);
+ border-radius:50%;background:#fff;opacity:var(--snow-opacity);
+ box-shadow:0 0 5px #fff9;will-change:transform;
+ animation:snowflake-drift var(--snow-duration) var(--snow-delay) linear infinite;
+}
+@keyframes snowflake-drift{
+ 0%{transform:translate3d(0,-8vh,0)}
+ 22%{transform:translate3d(calc(var(--snow-drift)*.45),20vh,0)}
+ 48%{transform:translate3d(calc(var(--snow-drift)*-.22),48vh,0)}
+ 72%{transform:translate3d(calc(var(--snow-drift)*.72),78vh,0)}
+ 100%{transform:translate3d(var(--snow-drift),112vh,0)}
+}
+@media(prefers-reduced-motion:reduce){.christmas-effects .snowflake{animation:none;display:none}}
