@@ -176,3 +176,22 @@ body.catalog-page[data-campaign-theme="christmas"] .site-header .desktop-all-dro
  100%{transform:translate3d(var(--snow-drift),112vh,0)}
 }
 @media(prefers-reduced-motion:reduce){.christmas-effects .snowflake{animation:none;display:none}}
+
+
+/* Navegação "Todos" e departamentos: seletores correspondentes ao HTML real */
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories>.desktop-nav-action{
+  color:var(--campaign-nav-text)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-dropdown .desktop-department-link,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-dropdown .desktop-category-trigger,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-category-dropdown .desktop-department-link{
+  color:var(--campaign-secondary)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-dropdown .desktop-department-link.all,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-category-dropdown .desktop-department-link.all{
+  color:var(--campaign-secondary)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-dropdown .desktop-department-link:hover,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-category-dropdown .desktop-department-link:hover{
+  color:var(--campaign-accent)!important;
+}
