@@ -213,3 +213,36 @@ body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategor
   color:var(--campaign-accent)!important;
   -webkit-text-fill-color:var(--campaign-accent)!important;
 }
+
+
+/* Estampas sazonais discretas no fundo do catálogo */
+body.catalog-page[data-campaign-theme]{
+ background-color:var(--campaign-bg)!important;
+ background-repeat:repeat!important;
+ background-attachment:fixed!important;
+ background-size:190px 190px!important;
+}
+body.catalog-page[data-campaign-theme] .catalog-main{
+ background-color:transparent!important;
+}
+body.catalog-page[data-campaign-theme="christmas"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%23176b3a' stroke-width='2' opacity='.13'%3E%3Cpath d='M35 22v34m-15-17h30M24 29l22 22m0-22L24 51M135 115v38m-17-19h34m-29-12 24 24m0-24-24 24'/%3E%3Cpath d='M90 20l-12 18h24zM90 31L70 59h40zM90 48L65 78h50zM90 78v12M145 24l3 8 8 3-8 3-3 8-3-8-8-3 8-3z'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.catalog-page[data-campaign-theme="black-friday"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%23ff9b20' stroke-width='2' opacity='.13'%3E%3Cpath d='M32 24l4 11 11 4-11 4-4 11-4-11-11-4 11-4zM145 118l4 11 11 4-11 4-4 11-4-11-11-4 11-4z'/%3E%3Cpath d='M91 25l24 0 0 34-24 0zM98 32l10 0M98 40l10 0M98 48l7 0M35 119l22 0 0 30-22 0z'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.catalog-page[data-campaign-theme="new-year"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%23d6ad52' stroke-width='2' opacity='.16'%3E%3Cpath d='M40 20v38m-19-19h38M27 7l26 26m0-26L27 33M145 117v42m-21-21h42m-31-10 20 20m0-20-20 20'/%3E%3Ccircle cx='95' cy='100' r='17' stroke-dasharray='2 5'/%3E%3Cpath d='M95 75v-9m0 68v-9m25-25h9m-68 0h9m43-18 7-7m-50 50 7-7m36 0 7 7m-50-50 7 7'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.catalog-page[data-campaign-theme="carnival"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%237026a8' stroke-width='3' opacity='.13'%3E%3Cpath d='M28 25l8 18M45 19l-2 20M62 27l-11 15M135 115l8 18m9-25-2 20m18-12-11 15'/%3E%3Cpath d='M95 25c-15 15-15 30 0 45 15-15 15-30 0-45zM40 115l13 13-13 13-13-13z'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.catalog-page[data-campaign-theme="easter"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%2386518b' stroke-width='2' opacity='.14'%3E%3Cellipse cx='42' cy='45' rx='13' ry='18'/%3E%3Cpath d='M30 43q12 8 24 0M32 51q10-6 20 0M137 124q12-18 24 0 0 18-12 18t-12-18zM137 124h24M143 135h12'/%3E%3Cpath d='M90 20q-8 12 0 24 8-12 0-24zM91 44v15m-8-8h16'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.catalog-page[data-campaign-theme="summer"]{
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190' viewBox='0 0 190 190'%3E%3Cg fill='none' stroke='%23087e62' stroke-width='2' opacity='.14'%3E%3Ccircle cx='43' cy='42' r='13'/%3E%3Cpath d='M43 20v-8m0 60v-8M21 42h-8m60 0h-8M27 26l-6-6m44 44-6-6m0-32 6-6M21 64l6-6M125 120q28-32 43 0-22 25-43 0zM125 120l31-1m-15 1v20'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+@media(max-width:760px){
+ body.catalog-page[data-campaign-theme]{background-size:150px 150px!important}
+}
