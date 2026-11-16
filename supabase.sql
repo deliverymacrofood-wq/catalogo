@@ -872,3 +872,4 @@ create policy "admins send order chat" on public.order_chat_messages for insert 
 with check(sender_role='admin' and public.is_admin() and exists(
   select 1 from public.orders o where o.id=order_id and o.status in ('received','accepted','separating','waiting_payment','ready_pickup','paid')
 ));
+\n-- Tema global de campanhas sazonais. Leitura pública; escrita protegida pela política administrativa existente.\ninsert into public.site_settings(key,value) values('macrofood_campaign_theme','{"active":false,"theme":"default","effects":false,"startAt":"","endAt":""}') on conflict(key) do nothing;\n
