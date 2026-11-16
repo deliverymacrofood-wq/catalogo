@@ -195,3 +195,21 @@ body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategor
 body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-category-dropdown .desktop-department-link:hover{
   color:var(--campaign-accent)!important;
 }
+
+
+/* Override de máxima prioridade para o menu Todos (regras antigas do styles.css) */
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories > button.desktop-nav-action,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories > button.desktop-nav-action:first-child{
+  color:var(--campaign-nav-text)!important;
+  -webkit-text-fill-color:var(--campaign-nav-text)!important;
+  background:transparent!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories .desktop-all-dropdown button.desktop-department-link,
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories .desktop-all-dropdown button.desktop-department-link.all{
+  color:var(--campaign-secondary)!important;
+  -webkit-text-fill-color:var(--campaign-secondary)!important;
+}
+body.catalog-page[data-campaign-theme] .site-header .desktop-nav #desktopCategoryNav .desktop-all-categories .desktop-all-dropdown button.desktop-department-link:hover{
+  color:var(--campaign-accent)!important;
+  -webkit-text-fill-color:var(--campaign-accent)!important;
+}
