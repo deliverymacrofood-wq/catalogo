@@ -1,0 +1,41 @@
+/* Campanhas sazonais Macrofood - catálogo público */
+body.catalog-page[data-campaign-theme]{--campaign-bg:#fff;--campaign-card:#fff;--campaign-text:#252525;--campaign-accent:#ff7900;--campaign-secondary:#8f0038;--campaign-border:#e8e8e8;--campaign-tint:#fff0e5;background:var(--campaign-bg);color:var(--campaign-text)}
+body.catalog-page[data-campaign-theme] .site-header{background:linear-gradient(120deg,var(--campaign-secondary),var(--campaign-accent));color:#fff}
+body.catalog-page[data-campaign-theme] .search,body.catalog-page[data-campaign-theme] .search input{background:var(--campaign-card);color:var(--campaign-text)}
+body.catalog-page[data-campaign-theme] .cat{background:var(--campaign-card);color:var(--campaign-secondary);border:1px solid var(--campaign-border)}
+body.catalog-page[data-campaign-theme] .cat.active,body.catalog-page[data-campaign-theme] .primary,body.catalog-page[data-campaign-theme] .search-btn{background:var(--campaign-accent);color:#fff}
+body.catalog-page[data-campaign-theme] .card,body.catalog-page[data-campaign-theme] .product-card,body.catalog-page[data-campaign-theme] .modal-box,body.catalog-page[data-campaign-theme] .cart-panel{background:var(--campaign-card);color:var(--campaign-text);border-color:var(--campaign-border)}
+body.catalog-page[data-campaign-theme] .card h3,body.catalog-page[data-campaign-theme] .card .price,body.catalog-page[data-campaign-theme] .product-title,body.catalog-page[data-campaign-theme] .hero h2{color:var(--campaign-secondary)}
+body.catalog-page[data-campaign-theme] .hero{background:linear-gradient(135deg,var(--campaign-bg),var(--campaign-tint));color:var(--campaign-text)}
+body.catalog-page[data-campaign-theme] footer{background:var(--campaign-secondary);color:#fff}
+body.catalog-page[data-campaign-theme="black-friday"]{--campaign-bg:#111;--campaign-card:#202020;--campaign-text:#f7f7f7;--campaign-accent:#ff7900;--campaign-secondary:#f4a000;--campaign-border:#383838;--campaign-tint:#292016}
+body.catalog-page[data-campaign-theme="black-friday"] .site-header{background:linear-gradient(110deg,#080808,#282828 65%,#a64b00)}
+body.catalog-page[data-campaign-theme="christmas"]{--campaign-bg:#f5f8f3;--campaign-card:#fff;--campaign-text:#183323;--campaign-accent:#c52e35;--campaign-secondary:#176b3a;--campaign-border:#dce8dc;--campaign-tint:#e7f2e5}
+body.catalog-page[data-campaign-theme="christmas"] .site-header{background:linear-gradient(110deg,#145b32,#1d8249 65%,#b92732)}
+body.catalog-page[data-campaign-theme="new-year"]{--campaign-bg:#111;--campaign-card:#222;--campaign-text:#fff5d6;--campaign-accent:#d8ad48;--campaign-secondary:#c69a35;--campaign-border:#51452a;--campaign-tint:#332a18}
+body.catalog-page[data-campaign-theme="new-year"] .site-header{background:linear-gradient(110deg,#090909,#3b301b 70%,#b58a2b)}
+body.catalog-page[data-campaign-theme="carnival"]{--campaign-bg:#fbf5ff;--campaign-card:#fff;--campaign-text:#352044;--campaign-accent:#f0c419;--campaign-secondary:#7026a8;--campaign-border:#eadcf4;--campaign-tint:#f2e5ff}
+body.catalog-page[data-campaign-theme="carnival"] .site-header{background:linear-gradient(110deg,#512080,#a32b9b 65%,#e7a91b)}
+body.catalog-page[data-campaign-theme="easter"]{--campaign-bg:#fff8fb;--campaign-card:#fff;--campaign-text:#493044;--campaign-accent:#dc8bb4;--campaign-secondary:#8c527d;--campaign-border:#f0dce9;--campaign-tint:#fbe8f2}
+body.catalog-page[data-campaign-theme="easter"] .site-header{background:linear-gradient(110deg,#8c527d,#d58ab0 65%,#e9c47d)}
+body.catalog-page[data-campaign-theme="summer"]{--campaign-bg:#fffaf0;--campaign-card:#fff;--campaign-text:#49351e;--campaign-accent:#f28a22;--campaign-secondary:#23824d;--campaign-border:#f1e4cc;--campaign-tint:#fff0ce}
+body.catalog-page[data-campaign-theme="summer"] .site-header{background:linear-gradient(110deg,#17834d,#e9a52c 70%,#ed7020)}
+.campaign-effects{position:fixed;inset:0;z-index:19;pointer-events:none;overflow:hidden}
+.campaign-effects:before{content:"";position:absolute;inset:-20%;background-size:130px 150px;animation:campaign-fall 18s linear infinite}
+.christmas-effects:before{background-image:radial-gradient(circle,#fff 0 2px,transparent 3px),radial-gradient(circle,#fff9 0 1px,transparent 2px)}
+.new-year-effects:before{background-image:radial-gradient(circle,#f5d77b 0 2px,transparent 3px),radial-gradient(circle,#fff 0 1px,transparent 2px)}
+.carnival-effects:before{background-image:radial-gradient(ellipse,#e8c52d 0 3px,transparent 4px),radial-gradient(ellipse,#dc62c4 0 3px,transparent 4px),radial-gradient(ellipse,#48b9d5 0 3px,transparent 4px)}
+@keyframes campaign-fall{from{transform:translateY(-5%)}to{transform:translateY(15%)}}
+@media(prefers-reduced-motion:reduce){.campaign-effects:before{animation:none}}
+/* Painel administrativo */
+.campaign-admin-card .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.campaign-admin-card .form label{display:flex;flex-direction:column;gap:7px}
+.campaign-admin-card .form label.full,.campaign-admin-actions{grid-column:1/-1}
+.campaign-admin-card .form input:not([type=checkbox]),.campaign-admin-card .form select{width:100%;min-height:44px;border:1px solid var(--line,#ddd);border-radius:9px;padding:10px;background:var(--surface,#fff);color:var(--text,#222)}
+.campaign-admin-card .form small,.campaign-theme-option small{display:block;color:var(--muted,#777);font-size:12px;line-height:1.45}
+.campaign-active-row{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;padding:15px;border:1px solid var(--line,#ddd);border-radius:12px}
+.campaign-active-row input{width:22px;height:22px;accent-color:#f36b12}
+.campaign-admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+.campaign-theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.campaign-theme-option{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--surface,#fff)}
+@media(max-width:640px){.campaign-admin-card .form{grid-template-columns:1fr}.campaign-admin-actions>*{width:100%}}
