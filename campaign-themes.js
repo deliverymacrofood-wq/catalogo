@@ -7,7 +7,7 @@
   if(!document.body)return;
   if(t)document.body.setAttribute('data-campaign-theme',t);else document.body.removeAttribute('data-campaign-theme');
   document.querySelector('.campaign-effects')?.remove();
-  if(active&&c?.effects&&['christmas','new-year','carnival'].includes(t)){const el=document.createElement('div');el.className='campaign-effects '+t+'-effects';el.setAttribute('aria-hidden','true');document.body.appendChild(el)}
+  if(active&&c?.effects&&['christmas','new-year','carnival'].includes(t)){const el=document.createElement('div');el.className='campaign-effects '+t+'-effects';el.setAttribute('aria-hidden','true');if(t==='christmas'){const count=52;for(let i=0;i<count;i++){const flake=document.createElement('span');flake.className='snowflake';const size=(2+Math.random()*4).toFixed(1)+'px';flake.style.setProperty('--snow-left',(Math.random()*100).toFixed(2)+'%');flake.style.setProperty('--snow-size',size);flake.style.setProperty('--snow-opacity',(0.35+Math.random()*0.6).toFixed(2));flake.style.setProperty('--snow-duration',(9+Math.random()*13).toFixed(2)+'s');flake.style.setProperty('--snow-delay',(-Math.random()*22).toFixed(2)+'s');flake.style.setProperty('--snow-drift',(-90+Math.random()*180).toFixed(1)+'px');el.appendChild(flake)}}document.body.appendChild(el)}
   const colors={'black-friday':'#171717',christmas:'#176b3a','new-year':'#171717',carnival:'#7026a8',easter:'#9a5a8b',summer:'#e66b16'};
   const meta=document.querySelector('meta[name="theme-color"]');if(meta&&t)meta.content=colors[t]||'#f36b12';
   document.title=t?'MacroFood — '+({'black-friday':'Black Friday',christmas:'Natal','new-year':'Ano Novo',carnival:'Carnaval',easter:'Páscoa',summer:'Verão'}[t]||'Catálogo'):'MacroFood — Catálogo';
