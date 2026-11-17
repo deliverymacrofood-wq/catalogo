@@ -348,13 +348,10 @@ function searchProducts(value, focusResults=false){
 function wholesaleHighlightHtml(price,qty,mode,unit,base,label='PREÇO ESPECIAL DE ATACADO'){
   const value=numericValue(price),minimum=Number(qty);
   if(value===null||value<=0||!Number.isFinite(minimum)||minimum<=0||base===null||value>=base)return '';
-  const saving=base-value;
   const rule=mode==='block'?'A cada':'A partir de';
   return `<div class="wholesale-highlight" aria-label="Preço especial de atacado">
-    <div class="wholesale-highlight__heading"><span class="wholesale-highlight__tag">🏷</span><span>${label}</span></div>
-    <div class="wholesale-highlight__price">${money(value)} <small>/ ${unit}</small></div>
-    <div class="wholesale-highlight__minimum">📦 ${rule} ${minimum} ${unit==='kg'?'kg':'unidades'}</div>
-    <div class="wholesale-highlight__saving">Você economiza ${money(saving)} por ${unit==='kg'?'kg':'unidade'}!</div>
+    <div class="wholesale-highlight__heading">🏷 ${label}</div>
+    <div class="wholesale-highlight__details"><strong>${money(value)} <small>/ ${unit}</small></strong><span>📦 ${rule} ${minimum} ${unit==='kg'?'kg':'unidades'}</span></div>
   </div>`;
 }
 function priceHtml(p){
