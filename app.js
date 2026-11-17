@@ -519,7 +519,8 @@ function render(){
   renderCats();
   const categoryView=active!=='Todos';document.body.classList.toggle('category-view',categoryView);
   const title=$('productsTitle'); const subtitle=$('productsSubtitle');
-  const searchTerm=String(($('search')?.value||$('mobileSearch')?.value||'')).trim();\n   if(title) title.textContent=searchTerm?'Resultados da busca':active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
+  const searchTerm=String(($('search')?.value||$('mobileSearch')?.value||'')).trim();
+   if(title) title.textContent=searchTerm?'Resultados da busca':active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
   if(subtitle) subtitle.textContent=searchTerm?'Pesquisando por: '+searchTerm:active==='Todos'?'Confira nosso catálogo completo.':active==='Promoções'?'Confira os produtos com desconto.':activeDepartmentId?`Departamento: ${departmentRows.find(d=>String(d.id)===String(activeDepartmentId))?.name||''}`:`Produtos da categoria ${active}.`;
   renderNew();
   renderPromos();
