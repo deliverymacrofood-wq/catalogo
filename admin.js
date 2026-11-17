@@ -119,12 +119,12 @@ function switchProductEditorTab(name){
 }
 async function load(){let data=[],error=null;try{for(let from=0;;from+=500){const r=await client.from('products').select('*').order('created_at',{ascending:false}).range(from,from+499);if(r.error){error=r.error;break}if(r.data?.length)data.push(...r.data);if(!r.data||r.data.length<500)break}}catch(e){error=e}if(error){$('list').innerHTML='<div class="notice">'+esc(error.message||error)+'</div>';return}products=data||[];renderProductList()}
 function normalizeAdminProductSearch(value){
- return String(value??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
+ return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
 }
 function adminProductSearchMatches(query,values){
- const wanted=normalizeAdminProductSearch(query).split(/\\s+/).filter(Boolean);
+ const wanted=normalizeAdminProductSearch(query).split(/\s+/).filter(Boolean);
  if(!wanted.length)return true;
- const available=normalizeAdminProductSearch(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\\s+/).filter(Boolean);
+ const available=normalizeAdminProductSearch(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\s+/).filter(Boolean);
  return wanted.every(q=>available.some(word=>word.startsWith(q)||word.includes(q)));
 }
 let selectedProductIds=new Set();
