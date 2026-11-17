@@ -348,8 +348,13 @@ function searchProducts(value, focusResults=false){
   const input=$('search'); const mobile=$('mobileSearch');
   if(input && input.value!==value) input.value=value;
   if(mobile && mobile.value!==value) mobile.value=value;
+  const searching=value.trim().length>0;
+  const wasSearching=Boolean(String(input?.dataset.lastSearch||mobile?.dataset.lastSearch||'').trim());
+  if(searching){active='Todos';activeDepartmentId='';}
+  if(input)input.dataset.lastSearch=value;
+  if(mobile)mobile.dataset.lastSearch=value;
   render();
-  if(focusResults){
+  if(focusResults||(searching&&!wasSearching)){
     const target=$('productsSection');
     if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}),30);
   }
@@ -514,8 +519,8 @@ function render(){
   renderCats();
   const categoryView=active!=='Todos';document.body.classList.toggle('category-view',categoryView);
   const title=$('productsTitle'); const subtitle=$('productsSubtitle');
-  if(title) title.textContent=active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
-  if(subtitle) subtitle.textContent=active==='Todos'?'Confira nosso catálogo completo.':active==='Promoções'?'Confira os produtos com desconto.':activeDepartmentId?`Departamento: ${departmentRows.find(d=>String(d.id)===String(activeDepartmentId))?.name||''}`:`Produtos da categoria ${active}.`;
+  const searchTerm=String(($('search')?.value||$('mobileSearch')?.value||'')).trim();\n   if(title) title.textContent=searchTerm?'Resultados da busca':active==='Todos'?'Todos os produtos':active==='Promoções'?'Promoções':active;
+  if(subtitle) subtitle.textContent=searchTerm?'Pesquisando por: '+searchTerm:active==='Todos'?'Confira nosso catálogo completo.':active==='Promoções'?'Confira os produtos com desconto.':activeDepartmentId?`Departamento: ${departmentRows.find(d=>String(d.id)===String(activeDepartmentId))?.name||''}`:`Produtos da categoria ${active}.`;
   renderNew();
   renderPromos();
   refreshOrderAvailabilityUI();
