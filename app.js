@@ -345,6 +345,18 @@ function searchProducts(value, focusResults=false){
     if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}),30);
   }
 }
+function wholesaleHighlightHtml(price,qty,mode,unit,base,label='PREÇO ESPECIAL DE ATACADO'){
+  const value=numericValue(price),minimum=Number(qty);
+  if(value===null||value<=0||!Number.isFinite(minimum)||minimum<=0||base===null||value>=base)return '';
+  const saving=base-value;
+  const rule=mode==='block'?'A cada':'A partir de';
+  return `<div class="wholesale-highlight" aria-label="Preço especial de atacado">
+    <div class="wholesale-highlight__heading"><span class="wholesale-highlight__tag">🏷</span><span>${label}</span></div>
+    <div class="wholesale-highlight__price">${money(value)} <small>/ ${unit}</small></div>
+    <div class="wholesale-highlight__minimum">📦 ${rule} ${minimum} ${unit==='kg'?'kg':'unidades'}</div>
+    <div class="wholesale-highlight__saving">Você economiza ${money(saving)} por ${unit==='kg'?'kg':'unidade'}!</div>
+  </div>`;
+}
 function priceHtml(p){
   const unit=unitLabel(p);
   const base=effectiveBasePrice(p);
@@ -356,9 +368,9 @@ function priceHtml(p){
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="price">${money(p.price)} / ${unit}</div>`;
   if(promotionIsActive(p)&&promotionQuantity(p)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
-  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+='<div class="wholesale-note promo-note">🏷️ Oferta atacado: '+money(p.promo_wholesale_price)+' / '+unit+' '+(p.promo_wholesale_mode==='block'?'a cada':'a partir de')+' '+p.promo_wholesale_qty+' '+unit+'</div>';}
+  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+=wholesaleHighlightHtml(p.promo_wholesale_price,p.promo_wholesale_qty,p.promo_wholesale_mode,unit,effectiveBasePrice(p),'🔥 OFERTA ESPECIAL DE ATACADO');}
   if(p.wholesale_price!=null && Number(p.wholesale_price)>0 && Number(p.wholesale_price)<base && Number.isInteger(Number(p.wholesale_qty)) && Number(p.wholesale_qty)>0){
-    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
+    html+=wholesaleHighlightHtml(p.wholesale_price,p.wholesale_qty,p.wholesale_mode,unit,base);
   }
   return html;
 }
@@ -369,9 +381,9 @@ function marketingPriceHtml(p){
     ? `<div class="oldprice">De: <s>${money(p.price)}</s></div><div class="feature-price">Por: ${money(p.promo_price)} / ${unit}</div>`
     : `<div class="feature-price">Por: ${money(p.price)} / ${unit}</div>`;
   if(promotionIsActive(p)&&Number(p.promo_qty)>0){html+=`<div class="wholesale-note promo-note">Oferta ${p.promo_mode==='block'?'a cada':'a partir de'} ${promotionQuantityLabel(p)} ${unit}: ${money(p.promo_price)} / ${unit}</div>`;}
-  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+='<div class="wholesale-note promo-note">🏷️ Oferta atacado: '+money(p.promo_wholesale_price)+' / '+unit+' '+(p.promo_wholesale_mode==='block'?'a cada':'a partir de')+' '+p.promo_wholesale_qty+' '+unit+'</div>';}
+  if(promotionIsActive(p)&&Number(p.promo_wholesale_price)>0&&Number(p.promo_wholesale_qty)>0){html+=wholesaleHighlightHtml(p.promo_wholesale_price,p.promo_wholesale_qty,p.promo_wholesale_mode,unit,effectiveBasePrice(p),'🔥 OFERTA ESPECIAL DE ATACADO');}
   if(p.wholesale_price!=null&&Number(p.wholesale_price)<effectiveBasePrice(p)&&Number(p.wholesale_qty)>0){
-    html+=`<div class="wholesale-note">🏷️ Atacado: ${money(p.wholesale_price)} / ${unit} ${p.wholesale_mode==='block'?'a cada':'a partir de'} ${p.wholesale_qty} ${unit}</div>`;
+    html+=wholesaleHighlightHtml(p.wholesale_price,p.wholesale_qty,p.wholesale_mode,unit,effectiveBasePrice(p));
   }
   return html;
 }
