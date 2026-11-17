@@ -2956,3 +2956,19 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
  }
 }
 \n/* Administração de temas sazonais */\n.campaign-admin-card .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.campaign-admin-card .form label{display:flex;flex-direction:column;gap:7px}.campaign-admin-card .form label.full,.campaign-admin-actions{grid-column:1/-1}.campaign-admin-card .form input:not([type=checkbox]),.campaign-admin-card .form select{width:100%;min-height:44px;border:1px solid var(--line,#ddd);border-radius:9px;padding:10px;background:var(--surface,#fff);color:var(--text,#222)}.campaign-admin-card .form small,.campaign-theme-option small{display:block;color:var(--muted,#777);font-size:12px;line-height:1.45}.campaign-active-row{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;padding:15px;border:1px solid var(--line,#ddd);border-radius:12px}.campaign-active-row input{width:22px;height:22px;accent-color:#f36b12}.campaign-admin-actions{display:flex;gap:10px;flex-wrap:wrap}.campaign-theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.campaign-theme-option{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--surface,#fff)}@media(max-width:640px){.campaign-admin-card .form{grid-template-columns:1fr}.campaign-admin-actions>*{width:100%}}
+
+/* Destaque de preço especial de atacado — alto contraste e leitura mobile */
+.catalog-page .wholesale-highlight{
+  display:flex;flex-direction:column;gap:5px;margin:10px 0 9px;padding:10px 11px;
+  border:1.5px solid #238447;border-left:5px solid #16803b;border-radius:12px;
+  background:linear-gradient(135deg,#f0fff4 0%,#dcfce7 100%);color:#123b24;
+  box-shadow:0 2px 7px rgba(22,128,59,.10);line-height:1.25;min-width:0;
+}
+.catalog-page .wholesale-highlight__heading{display:flex;align-items:center;gap:6px;color:#14532d!important;font-size:10px;font-weight:950;letter-spacing:.045em;line-height:1.3;text-transform:uppercase;}
+.catalog-page .wholesale-highlight__tag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 23px;width:23px;height:23px;border-radius:7px;background:#166534;color:#fff!important;font-size:13px;}
+.catalog-page .wholesale-highlight__price{color:#075c2c!important;font-size:clamp(21px,6vw,27px);font-weight:1000;letter-spacing:-.04em;line-height:1.05;overflow-wrap:anywhere;}
+.catalog-page .wholesale-highlight__price small{color:#14532d!important;font-size:11px;font-weight:800;letter-spacing:0;}
+.catalog-page .wholesale-highlight__minimum{display:flex;align-items:center;gap:5px;color:#123b24!important;font-size:12px;font-weight:900;line-height:1.35;}
+.catalog-page .wholesale-highlight__saving{align-self:flex-start;padding:3px 7px;border-radius:6px;background:#166534;color:#fff!important;font-size:10px;font-weight:850;line-height:1.35;}
+@media(min-width:700px){.catalog-page .wholesale-highlight{padding:11px 13px;gap:6px}.catalog-page .wholesale-highlight__heading{font-size:11px}.catalog-page .wholesale-highlight__price{font-size:25px}.catalog-page .wholesale-highlight__minimum{font-size:12px}}
+@media(prefers-color-scheme:dark){.catalog-page .wholesale-highlight{background:linear-gradient(135deg,#eaffef,#d5f5df);border-color:#238447}.catalog-page .wholesale-highlight *{opacity:1}}
