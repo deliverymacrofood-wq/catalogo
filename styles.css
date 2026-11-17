@@ -2972,3 +2972,13 @@ body.catalog-page .site-header .desktop-all-dropdown .desktop-department-link:fo
 .catalog-page .wholesale-highlight__saving{align-self:flex-start;padding:3px 7px;border-radius:6px;background:#166534;color:#fff!important;font-size:10px;font-weight:850;line-height:1.35;}
 @media(min-width:700px){.catalog-page .wholesale-highlight{padding:11px 13px;gap:6px}.catalog-page .wholesale-highlight__heading{font-size:11px}.catalog-page .wholesale-highlight__price{font-size:25px}.catalog-page .wholesale-highlight__minimum{font-size:12px}}
 @media(prefers-color-scheme:dark){.catalog-page .wholesale-highlight{background:linear-gradient(135deg,#eaffef,#d5f5df);border-color:#238447}.catalog-page .wholesale-highlight *{opacity:1}}
+
+
+/* Ajuste compacto do atacado: mantém a altura e o layout original dos produtos */
+.catalog-page .wholesale-highlight{display:block;margin:6px 0 5px;padding:5px 7px;border:1px solid #b8dfc2;border-left:3px solid #218447;border-radius:7px;background:#f0faf2;color:#173d25;box-shadow:none;line-height:1.2;min-width:0}
+.catalog-page .wholesale-highlight__heading{display:flex;align-items:center;gap:4px;margin:0 0 3px;color:#176333!important;font-size:9px;font-weight:850;letter-spacing:.015em;line-height:1.2;text-transform:uppercase}
+.catalog-page .wholesale-highlight__details{display:flex;align-items:baseline;justify-content:space-between;gap:5px;flex-wrap:wrap}
+.catalog-page .wholesale-highlight__details strong{color:#126332!important;font-size:16px;font-weight:950;line-height:1.1;white-space:nowrap}
+.catalog-page .wholesale-highlight__details strong small{color:#245b38!important;font-size:9px;font-weight:750}
+.catalog-page .wholesale-highlight__details span{color:#244b32!important;font-size:10px;font-weight:800;line-height:1.2}
+@media(min-width:700px){.catalog-page .wholesale-highlight{padding:5px 7px}.catalog-page .wholesale-highlight__details strong{font-size:15px}}
