@@ -333,6 +333,15 @@ function wholesaleTotal(p,qty){
   return b.valid && Number.isFinite(b.total) ? b.total : null;
 }
 function unitLabel(p){return p?.unit==='kg'?'kg':'un.';}
+function normalizeProductSearchText(value){
+  return String(value??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
+}
+function productSearchMatches(query,values){
+  const wanted=normalizeProductSearchText(query).split(/\\s+/).filter(Boolean);
+  if(!wanted.length)return true;
+  const available=normalizeProductSearchText(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\\s+/).filter(Boolean);
+  return wanted.every(q=>available.some(word=>word.startsWith(q)||word.includes(q)));
+}
 function syncSearch(value){ searchProducts(value); }
 function searchProducts(value, focusResults=false){
   value=String(value||'');
@@ -521,7 +530,7 @@ function render(){
     const departmentOk=!activeDepartmentId||String(p.department_id)===String(activeDepartmentId);
     const deptName=departmentRows.find(d=>String(d.id)===String(p.department_id))?.name||'';
     const price=effectiveBasePrice(p),offerOk=!productFilters.offers||promotionIsActive(p);
-    return categoryOk&&departmentOk&&offerOk&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max))&&(!q||String(p.name||'').toLowerCase().includes(q)||String(p.sector||'').toLowerCase().includes(q)||deptName.toLowerCase().includes(q));
+    const categoryName=categoryRows.find(c=>String(c.id)===String(p.category_id))?.name||'';\n    return categoryOk&&departmentOk&&offerOk&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max))&&productSearchMatches(q,[p.name,p.product_code,p.brand,p.manufacturer,p.sector,categoryName,deptName]);
   });
   if(productFilters.sort==='price-asc')list.sort((x,y)=>(effectiveBasePrice(x)??Infinity)-(effectiveBasePrice(y)??Infinity));else if(productFilters.sort==='price-desc')list.sort((x,y)=>(effectiveBasePrice(y)??-Infinity)-(effectiveBasePrice(x)??-Infinity));else if(productFilters.sort==='name')list.sort((x,y)=>String(x.name).localeCompare(String(y.name),'pt-BR'));else if(bestSellerIds.length){const rank=new Map(bestSellerIds.map((id,i)=>[String(id),i]));list.sort((x,y)=>(rank.get(String(x.id))??999999)-(rank.get(String(y.id))??999999));}
   if($('productFilterCount'))$('productFilterCount').textContent=list.length+' produto(s) encontrado(s)';
