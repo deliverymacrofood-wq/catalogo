@@ -118,14 +118,25 @@ function switchProductEditorTab(name){
  form.querySelectorAll('[data-editor-panel]').forEach(p=>p.classList.toggle('active',p.dataset.editorPanel===name));
 }
 async function load(){let data=[],error=null;try{for(let from=0;;from+=500){const r=await client.from('products').select('*').order('created_at',{ascending:false}).range(from,from+499);if(r.error){error=r.error;break}if(r.data?.length)data.push(...r.data);if(!r.data||r.data.length<500)break}}catch(e){error=e}if(error){$('list').innerHTML='<div class="notice">'+esc(error.message||error)+'</div>';return}products=data||[];renderProductList()}
+function normalizeAdminProductSearch(value){
+ return String(value??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
+}
+function adminProductSearchMatches(query,values){
+ const wanted=normalizeAdminProductSearch(query).split(/\\s+/).filter(Boolean);
+ if(!wanted.length)return true;
+ const available=normalizeAdminProductSearch(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\\s+/).filter(Boolean);
+ return wanted.every(q=>available.some(word=>word.startsWith(q)||word.includes(q)));
+}
 let selectedProductIds=new Set();
 function renderProductList(){
  const list=$('list'),count=$('productFilterCount');if(!list)return;
  const term=($('productSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');
  const category=$('productCategoryFilter')?.value||'',department=$('productDepartmentFilter')?.value||'',status=$('productStatusFilter')?.value||'',stock=$('productStockFilter')?.value||'';
  const filtered=products.filter(p=>{
-  const hay=[p.name,p.product_code,p.brand,p.sector].join(' ').toLocaleLowerCase('pt-BR');
-  return (!term||hay.includes(term))&&(!category||String(p.sector||'')===category)&&(!department||String(p.department_id||'')===department)&&(!status||(status==='active'?p.active!==false:p.active===false))&&(!stock||(stock==='yes'?p.in_stock!==false:p.in_stock===false));
+  const categoryName=categoryRows.find(x=>String(x.id)===String(p.category_id))?.name||'';
+  const departmentName=departmentRows.find(x=>String(x.id)===String(p.department_id))?.name||'';
+  const matches=adminProductSearchMatches(term,[p.name,p.product_code,p.brand,p.manufacturer,p.sector,categoryName,departmentName]);
+  return matches&&(!category||String(p.sector||'')===category)&&(!department||String(p.department_id||'')===department)&&(!status||(status==='active'?p.active!==false:p.active===false))&&(!stock||(stock==='yes'?p.in_stock!==false:p.in_stock===false));
  });
  if(count)count.textContent=`${filtered.length} produto(s) exibido(s) de ${products.length}`;
  if($('selectAllProducts'))$('selectAllProducts').checked=filtered.length>0&&filtered.every(p=>selectedProductIds.has(String(p.id)));
@@ -337,8 +348,8 @@ async function promoTab(){
  $('promoSearch').oninput=renderPromoProducts;renderPromoProducts();
 }
 function renderPromoProducts(){
- const target=$('promoProducts');if(!target)return;const term=($('promoSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');
- const rows=products.filter(p=>!term||String(p.name||'').toLocaleLowerCase('pt-BR').includes(term)||String(p.product_code||'').includes(term));$('promoCount').textContent=rows.length+' produto(s)';
+ const target=$('promoProducts');if(!target)return;const term=($('promoSearch')?.value||'').trim();
+ const rows=products.filter(p=>adminProductSearchMatches(term,[p.name,p.product_code,p.brand,p.manufacturer,p.sector,categoryRows.find(c=>String(c.id)===String(p.category_id))?.name,departmentRows.find(d=>String(d.id)===String(p.department_id))?.name]));$('promoCount').textContent=rows.length+' produto(s)';
  target.innerHTML=rows.length?rows.map(p=>'<div class="promo-product-row"><div class="promo-product-info"><b>'+esc(p.name)+'</b><small>Preço normal: '+money(p.price)+(p.promo_price!=null?' • Oferta atual: '+money(p.promo_price):'')+'</small></div><div class="promo-fields">'+
  '<label>Preço promocional (varejo)<input id="pr_'+p.id+'" type="number" step="0.01" min="0" value="'+(p.promo_price??'')+'" placeholder="Ex.: 18,90"></label>'+
  '<label>Regra varejo<select id="pm_'+p.id+'"><option value="threshold" '+(p.promo_mode!=='block'?'selected':'')+'>A partir de X '+(p.unit==='kg'?'kg':'unidades')+'</option><option value="block" '+(p.promo_mode==='block'?'selected':'')+'>A cada X '+(p.unit==='kg'?'kg':'unidades')+'</option></select></label>'+
