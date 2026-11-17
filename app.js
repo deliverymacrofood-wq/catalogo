@@ -334,12 +334,12 @@ function wholesaleTotal(p,qty){
 }
 function unitLabel(p){return p?.unit==='kg'?'kg':'un.';}
 function normalizeProductSearchText(value){
-  return String(value??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
+  return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g,' ').trim();
 }
 function productSearchMatches(query,values){
-  const wanted=normalizeProductSearchText(query).split(/\\s+/).filter(Boolean);
+  const wanted=normalizeProductSearchText(query).split(/\s+/).filter(Boolean);
   if(!wanted.length)return true;
-  const available=normalizeProductSearchText(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\\s+/).filter(Boolean);
+  const available=normalizeProductSearchText(values.filter(v=>v!==null&&v!==undefined).join(' ')).split(/\s+/).filter(Boolean);
   return wanted.every(q=>available.some(word=>word.startsWith(q)||word.includes(q)));
 }
 function syncSearch(value){ searchProducts(value); }
